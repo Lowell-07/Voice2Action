@@ -7,6 +7,7 @@ import { Problem } from '@/lib/definitions';
 import { Button } from './ui/button';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import Image from 'next/image';
+import { useRef } from 'react';
 
 // Fix for default icon path in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -28,10 +29,24 @@ const getDotColor = (likeCount: number) => {
 };
 
 export default function MapView({ problems }: MapViewProps) {
+  const mapRef = useRef<HTMLDivElement>(null);
   const defaultPosition: [number, number] = [20.5937, 78.9629]; // Center of India
 
+  // This check prevents re-initialization on hot reloads
+  if (mapRef.current?.style.display === 'none') {
+    return <div ref={mapRef} style={{ height: '100%', width: '100%' }} />;
+  }
+
   return (
-    <MapContainer center={defaultPosition} zoom={5} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+    <MapContainer
+      whenReady={() => {
+        // A workaround to prevent re-initialization in React StrictMode
+        // or with fast refresh.
+        if (mapRef.current) {
+          mapRef.current.style.display = 'none';
+        }
+      }}
+      center={defaultPosition} zoom={5} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
