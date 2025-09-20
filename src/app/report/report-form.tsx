@@ -17,14 +17,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Camera, FileVideo, Loader2, MapPin, Mic, UploadCloud } from 'lucide-react';
+import { Camera, FileVideo, Loader2, MapPin, Mic, Sparkles, UploadCloud } from 'lucide-react';
 import { getLocationSuggestion } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { departments } from '@/lib/data';
 
 const reportFormSchema = z.object({
   location: z.string().min(1, 'Location is required.'),
   description: z.string().min(1, "Please provide a description.").max(500, 'Description must be 500 characters or less.'),
+  department: z.string().min(1, 'Please select a department.'),
   media: z.any().optional(),
   voicemail: z.any().optional(),
 });
@@ -44,6 +47,7 @@ export default function ReportForm() {
     defaultValues: {
       location: '',
       description: '',
+      department: '',
     },
   });
 
@@ -182,6 +186,37 @@ export default function ReportForm() {
                  </div>
             </div>
         </div>
+
+        <FormField
+          control={form.control}
+          name="department"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-lg">Department Category*</FormLabel>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <Button type="button" variant="outline" className='sm:w-auto w-full'>
+                        <Sparkles className="h-4 w-4 mr-2" /> Suggest Department
+                    </Button>
+                    <div className="flex items-center gap-4 w-full">
+                        <span className="text-muted-foreground">Or</span>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {departments.map(dept => (
+                                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className='flex justify-end'>
             <Button type="submit" size="lg" disabled={isSubmitting}>

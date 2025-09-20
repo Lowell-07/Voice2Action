@@ -13,9 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockProblems } from '@/lib/data';
-
-const departments = Array.from(new Set(mockProblems.map(p => p.department)));
+import { departments } from '@/lib/data';
 
 export default function DepartmentLoginPage() {
   const router = useRouter();

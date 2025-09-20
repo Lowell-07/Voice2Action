@@ -12,7 +12,7 @@ type AuthUser =
 
 type AuthContextType = {
   user: AuthUser;
-  login: (type: 'user' | 'admin' | 'department') => void;
+  login: (type: 'user' | 'admin' | 'department', department?: string) => void;
   logout: () => void;
 };
 
@@ -23,13 +23,13 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'guest' });
 
-  const login = (type: 'user' | 'admin' | 'department') => {
+  const login = (type: 'user' | 'admin' | 'department', department?: string) => {
     if (type === 'user') {
       setUser({ type: 'user', data: mockUsers[0] });
     } else if (type === 'admin') {
       setUser({ type: 'admin', data: { name: 'Admin User', email: 'admin@voice2action.com' } });
     } else {
-       setUser({ type: 'department', data: { name: 'Dept Head', department: 'Public Works' } });
+       setUser({ type: 'department', data: { name: 'Dept Head', department: department || 'Roads & Transport' } });
     }
   };
 

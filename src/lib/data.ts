@@ -55,12 +55,19 @@ export const mockUsers: User[] = [
   },
 ];
 
+export const departments = [
+    "Electric Department",
+    "Municipal Department",
+    "Water & Sewerage",
+    "Roads & Transport",
+];
+
 export const mockProblems: Problem[] = [
   {
     id: 'prob-1',
     title: 'Massive Pothole on Main St',
     description: 'A very large and dangerous pothole has formed in the middle of Main Street, causing traffic issues and potential vehicle damage. It has been there for over two weeks.',
-    department: 'Public Works Department',
+    department: 'Roads & Transport',
     issueType: 'Roads & Streets',
     status: 'Resolved',
     location: {
@@ -80,7 +87,7 @@ export const mockProblems: Problem[] = [
     id: 'prob-2',
     title: 'Garbage not collected for a week',
     description: 'The garbage bins in our locality have not been cleared for over a week. It is causing a huge mess and a health hazard.',
-    department: 'Sanitation Department',
+    department: 'Municipal Department',
     issueType: 'Waste Management',
     status: 'Pending',
     location: {
@@ -101,7 +108,7 @@ export const mockProblems: Problem[] = [
     id: 'prob-3',
     title: 'Streetlight out',
     description: 'The streetlight on the corner of 5th and Elm has been out for three nights in a row, making the area very dark and unsafe.',
-    department: 'Electricity Department',
+    department: 'Electric Department',
     issueType: 'Streetlights',
     status: 'In Progress',
     location: {
@@ -121,7 +128,7 @@ export const mockProblems: Problem[] = [
     id: 'prob-4',
     title: 'Major water pipe leak',
     description: 'There is a huge water leakage from a pipe on the main road. A lot of clean water is being wasted and it is flooding the street.',
-    department: 'Water Supply Department',
+    department: 'Water & Sewerage',
     issueType: 'Water & Sewage',
     status: 'Pending',
     location: {
@@ -141,7 +148,7 @@ export const mockProblems: Problem[] = [
     id: 'prob-5',
     title: 'Broken playground equipment',
     description: 'The main swing set at the community park is broken and has sharp edges, making it dangerous for children.',
-    department: 'Parks and Recreation',
+    department: 'Municipal Department',
     issueType: 'Public Spaces',
     status: 'Pending',
     location: {
@@ -161,7 +168,7 @@ export const mockProblems: Problem[] = [
     id: 'prob-6',
     title: 'Illegal dumping in vacant lot',
     description: 'A vacant lot in our area is being used for illegal dumping of construction debris. It\'s an eyesore and environmentally harmful.',
-    department: 'Sanitation Department',
+    department: 'Municipal Department',
     issueType: 'Waste Management',
     status: 'In Progress',
     location: {
@@ -181,7 +188,7 @@ export const mockProblems: Problem[] = [
     id: 'prob-7',
     title: 'Power outage every evening',
     description: 'We are experiencing daily power cuts from 7 PM to 8 PM. It is highly disruptive for everyone in the neighborhood.',
-    department: 'Electricity Department',
+    department: 'Electric Department',
     issueType: 'Streetlights',
     status: 'Pending',
     location: {

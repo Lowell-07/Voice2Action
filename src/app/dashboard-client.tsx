@@ -10,18 +10,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { indianStates, mockProblems } from '@/lib/data';
+import { indianStates, mockProblems, departments } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle, Clock, FileText, Globe, MapPin, AlertTriangle, Building, Recycle, Lightbulb, Waves, Trees } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, FileText, Globe, MapPin, AlertTriangle, Building, Recycle, Lightbulb, Waves, Trees, HardHat, TramFront } from 'lucide-react';
 
 const departmentIcons: { [key: string]: React.ReactNode } = {
-    'Public Works Department': <Building className="w-8 h-8 text-primary" />,
-    'Sanitation Department': <Recycle className="w-8 h-8 text-primary" />,
-    'Electricity Department': <Lightbulb className="w-8 h-8 text-primary" />,
-    'Water Supply Department': <Waves className="w-8 h-8 text-primary" />,
-    'Parks and Recreation': <Trees className="w-8 h-8 text-primary" />,
+    'Electric Department': <Lightbulb className="w-8 h-8 text-primary" />,
+    'Municipal Department': <Building className="w-8 h-8 text-primary" />,
+    'Water & Sewerage': <Waves className="w-8 h-8 text-primary" />,
+    'Roads & Transport': <TramFront className="w-8 h-8 text-primary" />,
   };
 
 export default function DashboardClient() {
@@ -33,8 +32,6 @@ export default function DashboardClient() {
 
   const solvedProblems = problemsInState.filter(p => p.status === 'Resolved').length;
   const reportedProblems = problemsInState.length;
-
-  const departmentCategories = Array.from(new Set(mockProblems.map(p => p.department)));
 
   return (
     <main className="flex-1">
@@ -103,7 +100,7 @@ export default function DashboardClient() {
             </div>
             {selectedState ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {departmentCategories.map((department) => {
+                    {departments.map((department) => {
                         const problems = problemsInState.filter(p => p.department === department);
                         return (
                             <Card key={department} className="bg-card/80 backdrop-blur-sm border-border/20 p-6 flex flex-col items-center text-center">

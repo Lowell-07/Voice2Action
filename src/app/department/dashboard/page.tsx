@@ -32,7 +32,7 @@ export default function DepartmentDashboardPage() {
   const router = useRouter();
   
   const [reports, setReports] = useState(
-    mockProblems.filter(p => p.department === 'Public Works Department' && p.status !== 'Resolved')
+    mockProblems.filter(p => p.department === 'Roads & Transport' && p.status !== 'Resolved')
   );
   
   useEffect(() => {

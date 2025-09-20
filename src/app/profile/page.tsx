@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Lightbulb, FileText, Settings } from 'lucide-react';
+import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Lightbulb, FileText, Settings, Building, Waves, TramFront } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProblems } from '@/lib/data';
@@ -15,7 +15,10 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 
 const departmentIcons: { [key: string]: React.ReactNode } = {
-  'Electricity Department': <Lightbulb className="w-5 h-5 text-muted-foreground" />,
+  'Electric Department': <Lightbulb className="w-5 h-5 text-muted-foreground" />,
+  'Municipal Department': <Building className="w-5 h-5 text-muted-foreground" />,
+  'Water & Sewerage': <Waves className="w-5 h-5 text-muted-foreground" />,
+  'Roads & Transport': <TramFront className="w-5 h-5 text-muted-foreground" />,
   'Default': <FileText className="w-5 h-5 text-muted-foreground" />,
 };
 
