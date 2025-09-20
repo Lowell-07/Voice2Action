@@ -4,13 +4,15 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Lightbulb, FileText } from 'lucide-react';
+import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Lightbulb, FileText, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProblems } from '@/lib/data';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 
 const departmentIcons: { [key: string]: React.ReactNode } = {
   'Electricity Department': <Lightbulb className="w-5 h-5 text-muted-foreground" />,
@@ -23,7 +25,7 @@ const getIconForDepartment = (department: string) => {
 
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -148,6 +150,43 @@ export default function ProfilePage() {
                         ))}
                     </div>
                 </CardContent>
+            </Card>
+          </div>
+
+          <div>
+             <div className='mb-6 mt-12'>
+                <h2 className="text-2xl font-headline font-bold">Preferences</h2>
+                <p className="text-muted-foreground">Customize your Voice2Action experience</p>
+            </div>
+            <Card className="bg-card/50 backdrop-blur-sm border-border/20">
+                <CardContent className="p-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="font-semibold">Email Notifications</p>
+                            <p className="text-sm text-muted-foreground">Receive updates on your reports</p>
+                        </div>
+                        <Switch defaultChecked />
+                    </div>
+                    <Separator />
+                     <div className="flex items-center justify-between">
+                        <div>
+                            <p className="font-semibold">SMS Alerts</p>
+                            <p className="text-sm text-muted-foreground">Get SMS updates on issue resolution</p>
+                        </div>
+                        <Switch />
+                    </div>
+                    <Separator />
+                     <div className="flex items-center justify-between">
+                        <div>
+                            <p className="font-semibold">Public Profile</p>
+                            <p className="text-sm text-muted-foreground">Make your contributions visible to others</p>
+                        </div>
+                        <Switch defaultChecked/>
+                    </div>
+                </CardContent>
+                <CardFooter className='justify-end'>
+                    <Button variant="destructive" onClick={logout}>Logout</Button>
+                </CardFooter>
             </Card>
           </div>
 
