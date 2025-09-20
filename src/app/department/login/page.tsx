@@ -9,8 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { mockProblems } from '@/lib/data';
+
+const departments = Array.from(new Set(mockProblems.map(p => p.department)));
 
 export default function DepartmentLoginPage() {
   const router = useRouter();
@@ -36,35 +40,48 @@ export default function DepartmentLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/50 px-4 py-12">
-      <Card className="w-full max-w-md shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
+      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-primary/20">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Logo />
           </div>
           <CardTitle className="text-3xl font-headline">Department Login</CardTitle>
-          <CardDescription>Access your department's dashboard.</CardDescription>
+          <CardDescription>Access your department's issue dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="dept-id">Department ID</Label>
-              <Input id="dept-id" placeholder="Enter your department ID" required />
+                <Label htmlFor="department">Department</Label>
+                <Select required>
+                    <SelectTrigger id="department">
+                        <SelectValue placeholder="Select your department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {departments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" placeholder="Enter your username" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" required />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
               Login
             </Button>
           </form>
         </CardContent>
-         <CardFooter>
-          <p className="text-xs text-muted-foreground text-center w-full">
-            Not department staff? <Link href="/login" className="underline">Go to user login</Link>.
-          </p>
+         <CardFooter className="flex-col gap-2">
+           <Button variant="link" size="sm" asChild>
+            <Link href="/login">Return to User Login</Link>
+          </Button>
         </CardFooter>
       </Card>
     </div>

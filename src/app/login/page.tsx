@@ -71,8 +71,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/50 px-4 py-12">
-      <Card className="w-full max-w-md shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
+      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-primary/20">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Logo />
@@ -126,7 +126,7 @@ export default function LoginPage() {
                 </Button>
             )}
           <p className="text-xs text-muted-foreground text-center w-full">
-            Looking for admin or department login? <Link href="/admin/login" className="underline">Click here</Link>.
+            Staff? <Link href="/admin/login" className="underline">Admin</Link> or <Link href="/department/login" className="underline">Department</Link> Login
           </p>
         </CardFooter>
       </Card>
