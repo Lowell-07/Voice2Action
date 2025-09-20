@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Camera, FileVideo, Loader2, MapPin, Mic, Sparkles, UploadCloud } from 'lucide-react';
-import { getLocationSuggestion } from './actions';
+import { getLocationSuggestion, getDepartmentSuggestion } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,6 +39,7 @@ export default function ReportForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggestingLocation, setIsSuggestingLocation] = useState(false);
+  const [isSuggestingDepartment, setIsSuggestingDepartment] = useState(false);
   const [fileCount, setFileCount] = useState(0);
   const [submitted, setSubmitted] = useState(false);
 
@@ -70,6 +71,35 @@ export default function ReportForm() {
     setIsSuggestingLocation(false);
   };
   
+  const handleDepartmentSuggest = async () => {
+      const description = form.getValues('description');
+      if (!description.trim()) {
+          toast({
+              title: 'Description Needed',
+              description: 'Please enter a problem description before suggesting a department.',
+              variant: 'destructive',
+          });
+          return;
+      }
+      
+      setIsSuggestingDepartment(true);
+      const result = await getDepartmentSuggestion(description);
+      if (result.success && result.suggestedDepartment) {
+          form.setValue('department', result.suggestedDepartment);
+          toast({
+              title: 'Department Suggested!',
+              description: `We've suggested the "${result.suggestedDepartment}".`,
+          });
+      } else {
+          toast({
+              title: 'Suggestion Failed',
+              description: result.error,
+              variant: 'destructive'
+          });
+      }
+      setIsSuggestingDepartment(false);
+  }
+
   function onSubmit(data: ReportFormValues) {
     setIsSubmitting(true);
     console.log(data);
@@ -194,12 +224,12 @@ export default function ReportForm() {
             <FormItem>
               <FormLabel className="text-lg">Department Category*</FormLabel>
                 <div className="flex flex-col sm:flex-row gap-4">
-                    <Button type="button" variant="outline" className='sm:w-auto w-full'>
-                        <Sparkles className="h-4 w-4 mr-2" /> Suggest Department
+                    <Button type="button" variant="outline" className='sm:w-auto w-full' onClick={handleDepartmentSuggest} disabled={isSuggestingDepartment}>
+                         {isSuggestingDepartment ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />} Suggest Department
                     </Button>
                     <div className="flex items-center gap-4 w-full">
                         <span className="text-muted-foreground">Or</span>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                             <FormControl>
                                 <SelectTrigger>
                                 <SelectValue placeholder="Select a department" />
