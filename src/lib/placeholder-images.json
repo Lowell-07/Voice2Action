@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "map-india",
+      "description": "A stylized map of India showing various locations.",
+      "imageUrl": "https://picsum.photos/seed/map/1200/800",
+      "imageHint": "india map"
+    },
+    {
+      "id": "pothole-1",
+      "description": "A large pothole on a busy city street.",
+      "imageUrl": "https://picsum.photos/seed/pothole1/600/400",
+      "imageHint": "pothole street"
+    },
+    {
+      "id": "garbage-1",
+      "description": "An overflowing garbage bin on a sidewalk.",
+      "imageUrl": "https://picsum.photos/seed/garbage1/600/400",
+      "imageHint": "garbage overflow"
+    },
+    {
+      "id": "streetlight-1",
+      "description": "A broken streetlight in a residential area at night.",
+      "imageUrl": "https://picsum.photos/seed/light1/600/400",
+      "imageHint": "broken streetlight"
+    },
+    {
+      "id": "water-leak-1",
+      "description": "Water leaking from a burst pipe onto the road.",
+      "imageUrl": "https://picsum.photos/seed/water1/600/400",
+      "imageHint": "water leak"
+    },
+    {
+      "id": "park-1",
+      "description": "Broken swing set in a public park.",
+      "imageUrl": "https://picsum.photos/seed/park1/600/400",
+      "imageHint": "broken park"
+    }
+  ]
 }
