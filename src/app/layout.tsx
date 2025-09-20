@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { cn } from '@/lib/utils';
+import 'leaflet/dist/leaflet.css';
 
 export const metadata: Metadata = {
   title: 'Voice2Action',
