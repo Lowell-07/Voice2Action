@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
-import { Header } from '@/components/layout/header';
 import { Loader2, Mail, Phone, Edit, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,6 @@ export default function ProfilePage() {
   if (user.type !== 'user') {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <div className="flex-1 flex items-center justify-center">
             <div className='flex items-center gap-2 text-lg text-muted-foreground'>
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -45,7 +43,6 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary/30">
-      <Header />
       <main className="flex-1 py-8 md:py-12">
         <div className="container max-w-7xl mx-auto px-4 space-y-12">
           

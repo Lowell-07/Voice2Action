@@ -3,6 +3,7 @@ import './globals.css';
 import { Providers } from '@/components/providers';
 import { cn } from '@/lib/utils';
 import 'leaflet/dist/leaflet.css';
+import { Header } from '@/components/layout/header';
 
 export const metadata: Metadata = {
   title: 'Voice2Action',
@@ -30,7 +31,12 @@ export default function RootLayout({
           'min-h-screen bg-background font-body antialiased'
         )}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+            <Header />
+            <div className="pb-16 md:pb-0">
+                {children}
+            </div>
+        </Providers>
       </body>
     </html>
   );

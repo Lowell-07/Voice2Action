@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Header } from '@/components/layout/header';
 import ReportForm from './report-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -21,7 +20,6 @@ export default function ReportProblemPage() {
   if (user.type === 'guest') {
     return (
         <div className="flex flex-col min-h-screen">
-        <Header />
             <div className="flex-1 flex items-center justify-center">
                 <div className='flex items-center gap-2 text-lg text-muted-foreground'>
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -34,7 +32,6 @@ export default function ReportProblemPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
       <main className="flex-1 py-8 md:py-12">
         <div className="container max-w-4xl mx-auto px-4">
             <Card className="shadow-xl">

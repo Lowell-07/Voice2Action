@@ -1,5 +1,4 @@
 import DashboardClient from '@/app/dashboard-client';
-import { Header } from '@/components/layout/header';
 import Image from 'next/image';
 
 export default function DashboardPage() {
@@ -14,7 +13,6 @@ export default function DashboardPage() {
           className="opacity-20"
         />
       </div>
-      <Header />
       <DashboardClient />
     </div>
   );

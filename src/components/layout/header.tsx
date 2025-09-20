@@ -6,118 +6,121 @@ import {
   LayoutDashboard,
   LogIn,
   LogOut,
-  Menu,
-  Presentation,
-  UserCircle,
-  X,
-  FilePenLine,
+  User,
+  PlusCircle,
+  Compass,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { useAuth } from '@/hooks/use-auth';
-import { useState } from 'react';
 
-const mainNavLinks = [
-  { href: '/', label: 'Dashboard', icon: <LayoutDashboard /> },
-  { href: '/explore', label: 'Explore', icon: <Presentation /> },
-];
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
-const userNavLinks = [
-  { href: '/report', label: 'Report Problem', icon: <FilePenLine /> },
-  { href: '/profile', label: 'Profile', icon: <UserCircle /> },
+
+const mobileNavLinks = [
+  { href: '/', label: 'Dashboard', icon: <LayoutDashboard className="w-6 h-6" /> },
+  { href: '/explore', label: 'Explore', icon: <Compass className="w-6 h-6" /> },
+  { href: '/report', label: 'Report', icon: <PlusCircle className="w-6 h-6" /> },
+  { href: '/profile', label: 'Profile', icon: <User className="w-6 h-6" /> },
 ];
 
 export function Header() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const navLinks = [...mainNavLinks];
-  if (user.type !== 'guest') {
-    navLinks.push(...userNavLinks);
-  }
-
-  const renderNavLinks = (isMobile = false) =>
-    navLinks.map((link) => (
-      <Button
-        key={link.href}
-        variant={pathname === link.href ? 'link' : 'ghost'}
-        asChild
-        className={cn('justify-start text-foreground/80 hover:text-foreground', pathname === link.href && 'text-foreground font-semibold', isMobile ? 'w-full' : '')}
-        onClick={() => isMobile && setMobileMenuOpen(false)}
-      >
-        <Link href={link.href}>
-          {isMobile && link.icon}
-          <span>{link.label}</span>
-        </Link>
-      </Button>
-    ));
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-transparent backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-7xl items-center justify-between">
-        <Logo />
+    <>
+      {/* Desktop Header */}
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-transparent backdrop-blur supports-[backdrop-filter]:bg-background/60 hidden md:block">
+        <div className="container flex h-16 max-w-7xl items-center justify-between">
+          <Logo />
+          <nav className="flex items-center gap-4">
+            {user.type === 'guest' ? (
+              <Button asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Link>
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                     <Avatar className='h-10 w-10'>
+                       {user.type === 'user' && user.data.avatarUrl && <AvatarImage src={user.data.avatarUrl} alt={user.data.name} />}
+                       <AvatarFallback>
+                         {user.type === 'user' && user.data.name.charAt(0)}
+                         {user.type === 'admin' && user.data.name.charAt(0)}
+                       </AvatarFallback>
+                     </Avatar>
+                   </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user.type === 'user' && user.data.name}
+                        {user.type === 'admin' && user.data.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.type === 'user' && user.data.email}
+                        {user.type === 'admin' && user.data.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </nav>
+        </div>
+      </header>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-2 md:flex">
-          {renderNavLinks()}
-          {user.type === 'guest' ? (
-            <Button asChild>
-              <Link href="/login">
-                <LogIn />
-                Login
-              </Link>
-            </Button>
-          ) : (
-            <Button variant="outline" onClick={logout}>
-              <LogOut />
-              Logout
-            </Button>
+      {/* Mobile Bottom Nav */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-sm">
+        <nav className="container flex items-center justify-around h-16">
+          {user.type !== 'guest' ? mobileNavLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 text-xs font-medium",
+                pathname === link.href ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {link.icon}
+              <span>{link.label}</span>
+            </Link>
+          )) : (
+             <Button asChild className='w-full'>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login to continue
+                </Link>
+              </Button>
           )}
         </nav>
-
-        {/* Mobile Navigation */}
-        <div className="md:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background/95">
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-6">
-                   <Logo />
-                   <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
-                     <X />
-                   </Button>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {renderNavLinks(true)}
-                  <hr className="my-2" />
-                  {user.type === 'guest' ? (
-                    <Button asChild onClick={() => setMobileMenuOpen(false)}>
-                      <Link href="/login">
-                        <LogIn />
-                        Login
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button variant="outline" onClick={() => { logout(); setMobileMenuOpen(false); }}>
-                      <LogOut />
-                      Logout
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
       </div>
-    </header>
+    </>
   );
 }

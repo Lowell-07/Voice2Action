@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Header } from '@/components/layout/header';
 import { Loader2, MapPin } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,6 @@ export default function DepartmentDashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary/30">
-      <Header />
       <main className="flex-1 py-8 md:py-12">
         <div className="container max-w-5xl mx-auto px-4">
           <Card className="shadow-xl">

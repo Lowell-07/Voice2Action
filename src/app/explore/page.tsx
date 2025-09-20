@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { mockProblems } from '@/lib/data';
@@ -21,7 +20,6 @@ export default function ExplorePage() {
     
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
       <main className="flex-1">
         <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
           <div className="text-center mb-12">
