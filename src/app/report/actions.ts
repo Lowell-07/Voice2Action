@@ -1,14 +1,31 @@
 'use server';
 
-import { suggestLocationFromGPS } from '@/ai/flows/suggest-location-from-gps';
 import { suggestDepartment } from '@/ai/flows/suggest-department';
 import { suggestAddressCompletions } from '@/ai/flows/suggest-address-completions';
 import { departments } from '@/lib/data';
 
 export async function getLocationSuggestion(coordinates: {latitude: number, longitude: number}): Promise<{success: boolean, locationName?: string, error?: string}> {
   try {
-    const result = await suggestLocationFromGPS(coordinates);
-    return { success: true, locationName: result.locationName };
+    const { latitude, longitude } = coordinates;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Voice2Action App' // OSM requires a user agent
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from OpenStreetMap: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data && data.display_name) {
+       return { success: true, locationName: data.display_name };
+    } else {
+       return { success: false, error: 'Could not find a location name for the given coordinates.' };
+    }
   } catch (error) {
     console.error('Error suggesting location:', error);
     return { success: false, error: 'Failed to get location suggestion.' };
