@@ -3,13 +3,29 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Check, X, UserCircle, MapPin } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Check, X, MoreHorizontal } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProblems } from '@/lib/data';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { format } from 'date-fns';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -45,47 +61,74 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-secondary/30">
+    <div className="flex flex-col min-h-screen bg-transparent">
       <main className="flex-1 py-8 md:py-12">
-        <div className="container max-w-5xl mx-auto px-4">
-          <Card className="shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-3xl font-headline text-primary">Admin Dashboard</CardTitle>
-              <CardDescription className="text-lg">Review and approve new reports from users.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                {reports.length > 0 ? reports.map((report, index) => (
-                    <div key={report.id}>
-                        <Card className='bg-background'>
-                            <CardHeader>
-                                <CardTitle>{report.title}</CardTitle>
-                                <div className='flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground'>
-                                    <span className='flex items-center gap-1'><UserCircle className='w-4 h-4'/>{report.reportedBy.name}</span>
-                                    <span className='flex items-center gap-1'><MapPin className='w-4 h-4'/>{report.location.city}, {report.location.state}</span>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p>{report.description}</p>
-                                <Badge variant="outline" className='mt-4'>{report.department}</Badge>
-                            </CardContent>
-                            <CardFooter className='flex justify-end gap-2'>
-                                <Button variant="destructive" size="sm" onClick={() => handleApproval(report.id, false)}>
-                                    <X className="w-4 h-4 mr-2" /> Reject
-                                </Button>
+        <div className="container max-w-7xl mx-auto px-4">
+            <div className='text-center mb-12'>
+              <h1 className="text-4xl md:text-5xl font-headline text-foreground">Admin Dashboard</h1>
+              <p className="text-muted-foreground mt-2">Review and validate reported civic issues.</p>
+            </div>
 
-                                <Button size="sm" onClick={() => handleApproval(report.id, true)}>
-                                    <Check className="w-4 h-4 mr-2" /> Approve
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                        {index < reports.length - 1 && <Separator className='my-6' />}
+          <Card className="shadow-xl bg-card/50 backdrop-blur-sm border-border/20">
+            <CardHeader>
+                <div className='flex justify-between items-center'>
+                    <div>
+                        <CardTitle>All Reported Issues</CardTitle>
+                        <CardDescription>Here are all the issues that have been reported by users. Click a row to see details.</CardDescription>
                     </div>
-                )) : (
-                    <div className='text-center py-16'>
-                        <h3 className='text-xl font-semibold'>All Caught Up!</h3>
-                        <p className='text-muted-foreground'>There are no pending reports to review.</p>
-                    </div>
-                )}
+                </div>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reports.length > 0 ? reports.map((report) => (
+                      <TableRow key={report.id}>
+                        <TableCell>{format(new Date(report.createdAt), 'dd MMM, yyyy')}</TableCell>
+                        <TableCell className="font-medium">{report.title}</TableCell>
+                        <TableCell>{report.department}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Awaiting Approval</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleApproval(report.id, true)}>
+                                <Check className="mr-2 h-4 w-4" />
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleApproval(report.id, false)} className="text-red-500">
+                                <X className="mr-2 h-4 w-4" />
+                                Reject
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    )) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="text-center h-24">
+                                All Caught Up! No pending reports.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
             </CardContent>
           </Card>
         </div>
