@@ -1,12 +1,11 @@
+
 "use client";
 
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Problem } from '@/lib/definitions';
-import { Button } from './ui/button';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import Image from 'next/image';
-import { useRef, useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import type { MutableRefObject } from 'react';
 
 // Fix for default icon path in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -18,6 +17,7 @@ L.Icon.Default.mergeOptions({
 
 interface MapViewProps {
   problems: Problem[];
+  mapRef: MutableRefObject<L.Map | null>;
 }
 
 const getDotColor = (likeCount: number) => {
@@ -27,21 +27,25 @@ const getDotColor = (likeCount: number) => {
     return 'green';
 };
 
-export default function MapView({ problems }: MapViewProps) {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const defaultPosition: [number, number] = [20.5937, 78.9629]; // Center of India
-
-  useEffect(() => {
-    if (mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView(defaultPosition, 5);
-
+export default function MapView({ problems, mapRef }: MapViewProps) {
+  const mapContainerRef = (node: HTMLDivElement | null) => {
+    if (node && !mapRef.current) { // Prevents re-initialization
+      const map = L.map(node, {
+          zoomControl: false // We can add custom zoom controls if needed
+      }).setView([20.5937, 78.9629], 5);
+      
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(mapRef.current);
-      
+      }).addTo(map);
+
+      // Set z-index of the tile pane
+      (map.getPane('tilePane') as HTMLElement).style.zIndex = '0';
+      (map.getPane('shadowPane') as HTMLElement).style.zIndex = '0';
+      (map.getPane('markerPane') as HTMLElement).style.zIndex = '1';
+      (map.getPane('popupPane') as HTMLElement).style.zIndex = '2';
+
       problems.forEach(problem => {
-        const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng]).addTo(mapRef.current!);
+        const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng]).addTo(map);
         
         const popupContent = `
             <div class="w-64">
@@ -63,17 +67,21 @@ export default function MapView({ problems }: MapViewProps) {
           color: getDotColor(problem.likes),
           fillColor: getDotColor(problem.likes),
           fillOpacity: 0.5,
-        }).addTo(mapRef.current!);
+        }).addTo(map);
       });
-    }
 
+      mapRef.current = map;
+    }
+  };
+
+  useEffect(() => {
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, [problems, defaultPosition]);
+  }, [mapRef]);
 
 
   return (

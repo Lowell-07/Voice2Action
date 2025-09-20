@@ -1,14 +1,15 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { mockProblems } from '@/lib/data';
 import { MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Problem } from '@/lib/definitions';
 import { Loader2 } from 'lucide-react';
+import type L from 'leaflet';
 
 const MapView = dynamic(() => import('@/components/map-view'), {
   ssr: false,
@@ -17,6 +18,34 @@ const MapView = dynamic(() => import('@/components/map-view'), {
 
 export default function ExplorePage() {
     const { toast } = useToast();
+    const mapRef = useRef<L.Map | null>(null);
+
+    const handleGPSClick = () => {
+      if (navigator.geolocation) {
+        toast({ title: "Locating...", description: "Zooming into your current location." });
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            if (mapRef.current) {
+              mapRef.current.setView([latitude, longitude], 13);
+            }
+          },
+          () => {
+            toast({
+              title: 'Error',
+              description: 'Unable to retrieve your location.',
+              variant: 'destructive',
+            });
+          }
+        );
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Geolocation is not supported by this browser.',
+          variant: 'destructive',
+        });
+      }
+    };
     
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -33,14 +62,14 @@ export default function ExplorePage() {
 
           <Card className="shadow-lg">
             <CardContent className="p-2 md:p-4 relative">
-              <div className="absolute top-4 left-4 z-[1000]">
-                <Button onClick={() => toast({ title: "Locating...", description: "Zooming into your current location." })}>
+              <div className="absolute top-4 left-4 z-10">
+                <Button onClick={handleGPSClick}>
                   <MapPin className="mr-2 h-4 w-4" /> Use My GPS Location
                 </Button>
               </div>
               
               <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden">
-                <MapView problems={mockProblems} />
+                <MapView problems={mockProblems} mapRef={mapRef} />
               </div>
                <div className="p-4 text-center text-muted-foreground text-sm">
                 Interactive map powered by Leaflet. The markers represent issues, with colors indicating popularity.
