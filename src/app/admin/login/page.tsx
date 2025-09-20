@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminLoginPage() {
@@ -44,8 +44,8 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/50 px-4 py-12">
-      <Card className="w-full max-w-md shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
+      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-primary/20">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Logo />
@@ -64,15 +64,18 @@ export default function AdminLoginPage() {
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
               Login
             </Button>
           </form>
         </CardContent>
-        <CardFooter>
-          <p className="text-xs text-muted-foreground text-center w-full">
-            Not an admin? <Link href="/login" className="underline">Go to user login</Link>.
-          </p>
+        <CardFooter className="flex-col gap-2">
+          <Button variant="link" size="sm" asChild>
+            <Link href="/login">Return to User Login</Link>
+          </Button>
+           <Button variant="link" size="sm" asChild>
+            <Link href="/department/login">Department Login</Link>
+          </Button>
         </CardFooter>
       </Card>
     </div>
