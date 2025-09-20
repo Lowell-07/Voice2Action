@@ -19,6 +19,7 @@ const MapView = dynamic(() => import('@/components/map-view'), {
 export default function ExplorePage() {
     const { toast } = useToast();
     const mapRef = useRef<L.Map | null>(null);
+    const userLocationMarkerRef = useRef<L.Marker | null>(null);
 
     const handleGPSClick = () => {
       if (navigator.geolocation) {
@@ -28,6 +29,24 @@ export default function ExplorePage() {
             const { latitude, longitude } = position.coords;
             if (mapRef.current) {
               mapRef.current.setView([latitude, longitude], 13);
+              
+              if (userLocationMarkerRef.current) {
+                userLocationMarkerRef.current.setLatLng([latitude, longitude]);
+              } else {
+                 const userIcon = new L.Icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41],
+                    className: 'blinking-marker' 
+                });
+
+                userLocationMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon }).addTo(mapRef.current);
+              }
+               userLocationMarkerRef.current?.bindPopup("Your Location").openPopup();
             }
           },
           () => {
@@ -62,7 +81,7 @@ export default function ExplorePage() {
 
           <Card className="shadow-lg">
             <CardContent className="p-2 md:p-4 relative">
-              <div className="absolute top-4 left-4 z-10">
+              <div className="absolute top-4 left-4 z-[51]">
                 <Button onClick={handleGPSClick}>
                   <MapPin className="mr-2 h-4 w-4" /> Use My GPS Location
                 </Button>
@@ -78,6 +97,11 @@ export default function ExplorePage() {
           </Card>
         </div>
       </main>
+      <style jsx global>{`
+        .blinking-marker .leaflet-marker-icon {
+            filter: hue-rotate(120deg);
+        }
+      `}</style>
     </div>
   );
 }
