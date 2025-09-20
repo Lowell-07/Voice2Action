@@ -1,6 +1,5 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Problem } from '@/lib/definitions';
@@ -29,59 +28,55 @@ const getDotColor = (likeCount: number) => {
 };
 
 export default function MapView({ problems }: MapViewProps) {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const [isClient, setIsClient] = useState(false);
   const defaultPosition: [number, number] = [20.5937, 78.9629]; // Center of India
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    if (mapContainerRef.current && !mapRef.current) {
+      mapRef.current = L.map(mapContainerRef.current).setView(defaultPosition, 5);
 
-  if (!isClient) {
-    return null; // Don't render on the server
-  }
-
-  return (
-    <MapContainer
-      center={defaultPosition} 
-      zoom={5} 
-      scrollWheelZoom={true} 
-      style={{ height: '100%', width: '100%' }}
-      whenCreated={map => mapRef.current = map}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {problems.map(problem => (
-        <Marker key={problem.id} position={[problem.location.coordinates.lat, problem.location.coordinates.lng]}>
-          <Popup>
-            <div className="w-64">
-              <div className="relative w-full h-32 mb-2 rounded-md overflow-hidden">
-                <Image src={`https://picsum.photos/seed/${problem.media.images[0]}/600/400`} alt={problem.title} layout="fill" objectFit="cover" />
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(mapRef.current);
+      
+      problems.forEach(problem => {
+        const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng]).addTo(mapRef.current!);
+        
+        const popupContent = `
+            <div class="w-64">
+              <div class="relative w-full h-32 mb-2 rounded-md overflow-hidden">
+                <img src="https://picsum.photos/seed/${problem.media.images[0]}/600/400" alt="${problem.title}" style="width: 100%; height: 100%; object-fit: cover;" />
               </div>
-              <h3 className="font-bold text-lg mb-1">{problem.title}</h3>
-              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{problem.description}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold">{problem.likes} Likes</span>
-                <div className="flex gap-1">
-                    <Button size="icon" variant="outline" className="h-8 w-8">
-                        <ThumbsUp className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8">
-                        <ThumbsDown className="h-4 w-4" />
-                    </Button>
-                </div>
+              <h3 class="font-bold text-lg mb-1">${problem.title}</h3>
+              <p class="text-sm text-muted-foreground mb-2 line-clamp-2">${problem.description}</p>
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold">${problem.likes} Likes</span>
               </div>
             </div>
-          </Popup>
-          <Circle 
-            center={[problem.location.coordinates.lat, problem.location.coordinates.lng]} 
-            radius={20000} // Adjust radius as needed
-            pathOptions={{ color: getDotColor(problem.likes), fillColor: getDotColor(problem.likes), fillOpacity: 0.5 }}
-          />
-        </Marker>
-      ))}
-    </MapContainer>
+        `;
+
+        marker.bindPopup(popupContent);
+
+        L.circle([problem.location.coordinates.lat, problem.location.coordinates.lng], {
+          radius: 20000,
+          color: getDotColor(problem.likes),
+          fillColor: getDotColor(problem.likes),
+          fillOpacity: 0.5,
+        }).addTo(mapRef.current!);
+      });
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [problems, defaultPosition]);
+
+
+  return (
+    <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
   );
 }
