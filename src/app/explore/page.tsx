@@ -68,7 +68,7 @@ export default function ExplorePage() {
                 </Button>
               </div>
               
-              <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden">
+              <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden z-0">
                 <MapView problems={mockProblems} mapRef={mapRef} />
               </div>
                <div className="p-4 text-center text-muted-foreground text-sm">
