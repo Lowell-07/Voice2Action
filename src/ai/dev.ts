@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/suggest-location-from-gps.ts';
 import '@/ai/flows/suggest-department.ts';
+import '@/ai/flows/suggest-address-completions.ts';

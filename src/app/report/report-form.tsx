@@ -16,13 +16,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Camera, FileVideo, Loader2, MapPin, Mic, Sparkles, UploadCloud } from 'lucide-react';
-import { getLocationSuggestion, getDepartmentSuggestion } from './actions';
+import { getLocationSuggestion, getDepartmentSuggestion, getAddressCompletions } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { departments } from '@/lib/data';
+import { Combobox } from '@/components/ui/combobox';
+import { useDebounce } from '@/hooks/use-debounce';
+
 
 const reportFormSchema = z.object({
   location: z.string().min(1, 'Location is required.'),
@@ -42,6 +45,9 @@ export default function ReportForm() {
   const [isSuggestingDepartment, setIsSuggestingDepartment] = useState(false);
   const [fileCount, setFileCount] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -51,6 +57,26 @@ export default function ReportForm() {
       department: '',
     },
   });
+  
+  const fetchAddressCompletions = useCallback(async (query: string) => {
+    if (query.length < 3) {
+      setLocationSuggestions([]);
+      return;
+    }
+    setIsFetchingSuggestions(true);
+    const result = await getAddressCompletions(query);
+    if (result.success && result.suggestions) {
+      setLocationSuggestions(result.suggestions);
+    }
+    setIsFetchingSuggestions(false);
+  }, []);
+
+  const debouncedFetch = useDebounce(fetchAddressCompletions, 500);
+
+  const handleLocationInputChange = (value: string) => {
+    form.setValue('location', value);
+    debouncedFetch(value);
+  }
 
   const handleLocationSuggest = () => {
     setIsSuggestingLocation(true);
@@ -70,6 +96,7 @@ export default function ReportForm() {
         const result = await getLocationSuggestion({ latitude, longitude });
         if (result.success && result.locationName) {
           form.setValue('location', result.locationName);
+          setLocationSuggestions([]);
           toast({
             title: 'Location Suggested!',
             description: `We've suggested a location based on your GPS.`,
@@ -168,9 +195,17 @@ export default function ReportForm() {
                 </Button>
                 <div className="flex items-center gap-4 w-full">
                   <span className="text-muted-foreground">Or</span>
-                   <FormControl>
-                    <Input placeholder="Enter address or coordinates" {...field} />
-                   </FormControl>
+                   <Combobox
+                        items={locationSuggestions.map(s => ({label: s, value: s}))}
+                        value={field.value}
+                        onValueChange={handleLocationInputChange}
+                        onSelect={(value) => {
+                            form.setValue('location', value);
+                            setLocationSuggestions([]);
+                        }}
+                        isLoading={isFetchingSuggestions}
+                        placeholder="Enter address..."
+                    />
                 </div>
               </div>
               <FormMessage />
