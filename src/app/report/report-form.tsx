@@ -15,52 +15,34 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Camera, FileVideo, Loader2, MapPin, Mic, UploadCloud } from 'lucide-react';
 import { getLocationSuggestion } from './actions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
 
 const reportFormSchema = z.object({
   location: z.string().min(1, 'Location is required.'),
-  department: z.string().min(1, 'Please select a department.'),
-  issueType: z.string().min(1, 'Please select an issue type.'),
-  description: z.string().max(500, 'Description must be 100 words or less.').optional(),
-  photos: z.any().optional(),
-  videos: z.any().optional(),
+  description: z.string().min(1, "Please provide a description.").max(500, 'Description must be 500 characters or less.'),
+  media: z.any().optional(),
   voicemail: z.any().optional(),
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
-const departments = [
-  'Public Works Department',
-  'Sanitation Department',
-  'Electricity Department',
-  'Water Supply Department',
-  'Parks and Recreation',
-];
-const issueTypes = ['Roads & Streets', 'Waste Management', 'Streetlights', 'Water & Sewage', 'Public Spaces'];
 
 export default function ReportForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggestingLocation, setIsSuggestingLocation] = useState(false);
-  const [photoCount, setPhotoCount] = useState(0);
-  const [videoCount, setVideoCount] = useState(0);
+  const [fileCount, setFileCount] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
       location: '',
-      department: '',
-      issueType: '',
       description: '',
     },
   });
@@ -89,14 +71,29 @@ export default function ReportForm() {
     console.log(data);
     setTimeout(() => {
         setIsSubmitting(false);
-        toast({
-          title: 'Report Submitted!',
-          description: 'Your report has been sent to an administrator for review. Thank you!',
-        });
+        setSubmitted(true);
         form.reset();
-        setPhotoCount(0);
-        setVideoCount(0);
+        setFileCount(0);
     }, 2000);
+  }
+  
+  if (submitted) {
+    return (
+        <Alert className="bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg text-center py-10">
+            <AlertTitle className="text-2xl font-headline text-primary">Report Submitted Successfully!</AlertTitle>
+            <AlertDescription className="mt-2 text-lg">
+                Thank you for helping improve your community. Your report is under review.
+            </AlertDescription>
+            <div className='mt-6 flex justify-center gap-4'>
+                 <Button asChild>
+                    <Link href="/dashboard">Go to Dashboard</Link>
+                </Button>
+                <Button variant="outline" onClick={() => setSubmitted(false)}>
+                    Report Another Issue
+                </Button>
+            </div>
+        </Alert>
+    )
   }
 
   return (
@@ -107,109 +104,65 @@ export default function ReportForm() {
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg">Location (Mandatory)</FormLabel>
-              <div className="flex gap-2">
-                <FormControl>
-                  <Input placeholder="e.g., Connaught Place, New Delhi" {...field} />
-                </FormControl>
-                <Button type="button" variant="outline" onClick={handleLocationSuggest} disabled={isSuggestingLocation}>
-                  {isSuggestingLocation ? <Loader2 className="h-4 w-4 animate-spin"/> : <MapPin className="h-4 w-4" />}
+              <FormLabel className="text-lg">Location*</FormLabel>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button type="button" variant="outline" onClick={handleLocationSuggest} disabled={isSuggestingLocation} className='sm:w-auto w-full'>
+                  {isSuggestingLocation ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <MapPin className="h-4 w-4 mr-2" />} Use GPS
                 </Button>
+                <div className="flex items-center gap-4 w-full">
+                  <span className="text-muted-foreground">Or</span>
+                   <FormControl>
+                    <Input placeholder="Enter address or coordinates" {...field} />
+                   </FormControl>
+                </div>
               </div>
-              <FormDescription>
-                Point out the area or use GPS for an AI-powered suggestion.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-            <FormField
-              control={form.control}
-              name="department"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-lg">Civic Service Department</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a department" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="issueType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-lg">Issue Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an issue type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {issueTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        </div>
+         <FormField
+          control={form.control}
+          name="media"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-lg">Upload Images, Videos or Documents*</FormLabel>
+                <FormControl>
+                    <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg">
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                             <div className="flex gap-4 text-muted-foreground">
+                                <Camera className="w-8 h-8" />
+                                <FileVideo className="w-8 h-8" />
+                            </div>
+                            <p className="text-sm text-muted-foreground">Click or drag & drop to upload (Up to 5 files)</p>
+                            <Button type="button" variant="secondary" size="sm">
+                                <UploadCloud className="w-4 h-4 mr-2"/> Choose Files
+                            </Button>
+                        </div>
+                        <Input 
+                          type="file" 
+                          multiple 
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={(e) => { field.onChange(e.target.files); setFileCount(e.target.files?.length || 0); }}
+                        />
+                    </div>
+                </FormControl>
+              <FormDescription>Accepted types: .jpg, .png, .gif, .pdf, .txt, .docx, .mp4, .mov. {fileCount > 0 && `${fileCount} files selected.`}</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="text-lg font-medium">Upload Media</h3>
-            <p className="text-sm text-muted-foreground">Photos and videos help departments understand the issue better. Media will be compressed for efficiency.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="photos"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Camera/> Photos (up to 15)</FormLabel>
-                      <FormControl>
-                        <Input type="file" accept="image/*" multiple onChange={(e) => { field.onChange(e.target.files); setPhotoCount(e.target.files?.length || 0); }} />
-                      </FormControl>
-                      <FormDescription>{photoCount} photos selected.</FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="videos"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><FileVideo/> Videos (up to 5)</FormLabel>
-                      <FormControl>
-                        <Input type="file" accept="video/*" multiple onChange={(e) => { field.onChange(e.target.files); setVideoCount(e.target.files?.length || 0); }}/>
-                      </FormControl>
-                      <FormDescription>{videoCount} videos selected.</FormDescription>
-                    </FormItem>
-                  )}
-                />
-            </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <FormField
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+           <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-lg">Description (Optional)</FormLabel>
+                  <FormLabel className="text-lg">Problem Description*</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Tell us a little more about the problem (approx. 100 words)"
+                      placeholder="Describe the issue in detail. Include when you noticed it, how it affects you or others, and any other relevant information..."
                       className="resize-none"
                       rows={5}
                       {...field}
@@ -219,11 +172,12 @@ export default function ReportForm() {
                 </FormItem>
               )}
             />
+
             <div className="space-y-2">
-                 <h3 className="text-lg font-medium flex items-center gap-2"><Mic /> Voicemail (Optional)</h3>
-                 <div className="flex items-center justify-center w-full h-full p-4 border-2 border-dashed rounded-lg">
+                 <h3 className="text-lg font-medium">Voice Message (Optional)</h3>
+                 <div className="flex items-center justify-center w-full h-full p-4 border-2 border-dashed rounded-lg min-h-[140px]">
                     <Button type="button" variant="outline">
-                        Record Voicemail
+                        <Mic className="w-4 h-4 mr-2" /> Record Voice Note
                     </Button>
                  </div>
             </div>
