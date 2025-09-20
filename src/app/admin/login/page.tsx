@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" type="text" placeholder="lowell" value={username} onChange={e => setUsername(e.target.value)} required />
+              <Input id="username" type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
