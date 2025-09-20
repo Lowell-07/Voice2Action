@@ -66,7 +66,7 @@ export default function DepartmentDashboardPage() {
       <main className="flex-1 py-8 md:py-12">
         <div className="container max-w-7xl mx-auto px-4">
             <div className='text-center mb-12'>
-              <h1 className="text-4xl md:text-5xl font-headline text-foreground">Municipal Department Dashboard</h1>
+              <h1 className="text-4xl md:text-5xl font-headline text-foreground">{user.data.department} Dashboard</h1>
               <p className="text-muted-foreground mt-2">Review and manage reported issues for your department.</p>
             </div>
 
