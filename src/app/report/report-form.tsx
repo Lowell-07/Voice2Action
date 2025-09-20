@@ -52,23 +52,46 @@ export default function ReportForm() {
     },
   });
 
-  const handleLocationSuggest = async () => {
+  const handleLocationSuggest = () => {
     setIsSuggestingLocation(true);
-    const result = await getLocationSuggestion();
-    if (result.success && result.locationName) {
-      form.setValue('location', result.locationName);
+    if (!navigator.geolocation) {
       toast({
-        title: 'Location Suggested!',
-        description: `We've suggested a location based on your GPS.`,
-      });
-    } else {
-      toast({
-        title: 'Error',
-        description: result.error,
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support geolocation.',
         variant: 'destructive',
       });
+      setIsSuggestingLocation(false);
+      return;
     }
-    setIsSuggestingLocation(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const result = await getLocationSuggestion({ latitude, longitude });
+        if (result.success && result.locationName) {
+          form.setValue('location', result.locationName);
+          toast({
+            title: 'Location Suggested!',
+            description: `We've suggested a location based on your GPS.`,
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error,
+            variant: 'destructive',
+          });
+        }
+        setIsSuggestingLocation(false);
+      },
+      (error) => {
+        toast({
+          title: 'Geolocation Error',
+          description: 'Could not retrieve your location. Please ensure location services are enabled.',
+          variant: 'destructive',
+        });
+        setIsSuggestingLocation(false);
+      }
+    );
   };
   
   const handleDepartmentSuggest = async () => {

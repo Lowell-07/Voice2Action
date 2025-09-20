@@ -4,13 +4,7 @@ import { suggestLocationFromGPS } from '@/ai/flows/suggest-location-from-gps';
 import { suggestDepartment } from '@/ai/flows/suggest-department';
 import { departments } from '@/lib/data';
 
-export async function getLocationSuggestion(): Promise<{success: boolean, locationName?: string, error?: string}> {
-  // Hardcoded GPS for demonstration purposes (New Delhi)
-  const coordinates = {
-    latitude: 28.6139,
-    longitude: 77.2090,
-  };
-
+export async function getLocationSuggestion(coordinates: {latitude: number, longitude: number}): Promise<{success: boolean, locationName?: string, error?: string}> {
   try {
     const result = await suggestLocationFromGPS(coordinates);
     return { success: true, locationName: result.locationName };
