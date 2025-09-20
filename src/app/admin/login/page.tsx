@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
   const { user, login } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     // Mock authentication
     setTimeout(() => {
-      if (email === 'admin@voice2action.com' && password === 'admin123') {
+      if (username === 'lowell' && password === 'lowell') {
         login('admin');
         toast({ title: "Admin Login Successful" });
         router.push('/admin/dashboard');
@@ -55,8 +56,8 @@ export default function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="admin@voice2action.com" value={email} onChange={e => setEmail(e.target.value)} required />
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" type="text" placeholder="lowell" value={username} onChange={e => setUsername(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
