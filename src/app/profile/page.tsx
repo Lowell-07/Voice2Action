@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Lightbulb, FileText, Settings } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProblems } from '@/lib/data';
 import Link from 'next/link';
@@ -195,3 +195,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
