@@ -7,7 +7,7 @@ import type { Problem } from '@/lib/definitions';
 import { Button } from './ui/button';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import Image from 'next/image';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 // Fix for default icon path in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -30,7 +30,16 @@ const getDotColor = (likeCount: number) => {
 
 export default function MapView({ problems }: MapViewProps) {
   const mapRef = useRef<L.Map | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const defaultPosition: [number, number] = [20.5937, 78.9629]; // Center of India
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null; // Don't render on the server
+  }
 
   return (
     <MapContainer
