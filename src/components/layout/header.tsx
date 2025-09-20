@@ -44,20 +44,20 @@ export function Header() {
     navLinks.map((link) => (
       <Button
         key={link.href}
-        variant={pathname === link.href ? 'secondary' : 'ghost'}
+        variant={pathname === link.href ? 'link' : 'ghost'}
         asChild
-        className={cn('justify-start', isMobile ? 'w-full' : '')}
+        className={cn('justify-start text-foreground/80 hover:text-foreground', pathname === link.href && 'text-foreground font-semibold', isMobile ? 'w-full' : '')}
         onClick={() => isMobile && setMobileMenuOpen(false)}
       >
         <Link href={link.href}>
-          {link.icon}
+          {isMobile && link.icon}
           <span>{link.label}</span>
         </Link>
       </Button>
     ));
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-transparent backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-7xl items-center justify-between">
         <Logo />
 
@@ -88,7 +88,7 @@ export function Header() {
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background/95">
               <div className="p-4">
                 <div className="flex justify-between items-center mb-6">
                    <Logo />
