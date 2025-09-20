@@ -27,6 +27,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 
+const desktopNavLinks = [
+    { href: '/', label: 'Dashboard' },
+    { href: '/explore', label: 'Explore' },
+    { href: '/report', label: 'Report a Problem' },
+];
+
 const mobileNavLinks = [
   { href: '/', label: 'Dashboard', icon: <LayoutDashboard className="w-6 h-6" /> },
   { href: '/explore', label: 'Explore', icon: <Compass className="w-6 h-6" /> },
@@ -43,7 +49,24 @@ export function Header() {
       {/* Desktop Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-transparent backdrop-blur supports-[backdrop-filter]:bg-background/60 hidden md:block">
         <div className="container flex h-16 max-w-7xl items-center justify-between">
-          <Logo />
+          <div className='flex items-center gap-6'>
+            <Logo />
+            <nav className="flex items-center gap-4">
+              {desktopNavLinks.map(link => (
+                  <Link 
+                      key={link.href} 
+                      href={link.href}
+                      className={cn(
+                          "text-sm font-medium transition-colors hover:text-primary",
+                          pathname === link.href ? "text-foreground" : "text-muted-foreground"
+                      )}
+                  >
+                      {link.label}
+                  </Link>
+              ))}
+            </nav>
+          </div>
+
           <nav className="flex items-center gap-4">
             {user.type === 'guest' ? (
               <Button asChild>
