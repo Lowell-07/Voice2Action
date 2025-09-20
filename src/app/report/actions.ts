@@ -9,7 +9,7 @@ export async function getLocationSuggestion(coordinates: {latitude: number, long
   try {
     const result = await suggestLocationFromGPS(coordinates);
     return { success: true, locationName: result.locationName };
-  } catch (error) => {
+  } catch (error) {
     console.error('Error suggesting location:', error);
     return { success: false, error: 'Failed to get location suggestion.' };
   }
