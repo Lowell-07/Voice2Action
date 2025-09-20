@@ -43,6 +43,19 @@ export default function AdminLoginPage() {
     }, 1000);
   };
 
+  if (user.type === 'admin') {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1 flex items-center justify-center">
+          <div className='flex items-center gap-2 text-lg text-muted-foreground'>
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Redirecting to dashboard...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
       <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-primary/20">

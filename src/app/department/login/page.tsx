@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -38,6 +39,19 @@ export default function DepartmentLoginPage() {
       setIsLoading(false);
     }, 1000);
   };
+  
+  if (user.type === 'department') {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1 flex items-center justify-center">
+          <div className='flex items-center gap-2 text-lg text-muted-foreground'>
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Redirecting to dashboard...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
