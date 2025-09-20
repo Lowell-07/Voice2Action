@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Check, X, UserCircle, MapPin } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProblems } from '@/lib/data';
 import { Separator } from '@/components/ui/separator';
@@ -72,6 +72,7 @@ export default function AdminDashboardPage() {
                                 <Button variant="destructive" size="sm" onClick={() => handleApproval(report.id, false)}>
                                     <X className="w-4 h-4 mr-2" /> Reject
                                 </Button>
+
                                 <Button size="sm" onClick={() => handleApproval(report.id, true)}>
                                     <Check className="w-4 h-4 mr-2" /> Approve
                                 </Button>
