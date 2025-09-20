@@ -4,11 +4,23 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Lightbulb, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { mockProblems } from '@/lib/data';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+
+const departmentIcons: { [key: string]: React.ReactNode } = {
+  'Electricity Department': <Lightbulb className="w-5 h-5 text-muted-foreground" />,
+  'Default': <FileText className="w-5 h-5 text-muted-foreground" />,
+};
+
+const getIconForDepartment = (department: string) => {
+    return departmentIcons[department] || departmentIcons['Default'];
+}
+
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -111,6 +123,34 @@ export default function ProfilePage() {
               </Card>
             </div>
           </div>
+
+          <div>
+             <div className='mb-6 mt-12'>
+                <h2 className="text-2xl font-headline font-bold">Recent Reports</h2>
+                <p className="text-muted-foreground">Your latest civic issue reports</p>
+            </div>
+            <Card className="bg-card/50 backdrop-blur-sm border-border/20">
+                <CardContent className="p-0">
+                    <div className="space-y-4">
+                        {userProblems.map((problem, index) => (
+                            <div key={problem.id} className={`flex items-center justify-between p-4 ${index < userProblems.length - 1 ? 'border-b border-border/50' : ''}`}>
+                                <div className="flex items-center gap-4">
+                                    {getIconForDepartment(problem.department)}
+                                    <div>
+                                        <p className="font-semibold">{problem.title}</p>
+                                        <p className="text-sm text-muted-foreground">Reported {format(new Date(problem.createdAt), 'dd MMM, yyyy')}</p>
+                                    </div>
+                                </div>
+                                <Badge variant={problem.status === 'Resolved' ? 'default' : problem.status === 'In Progress' ? 'secondary' : 'outline'}>
+                                    {problem.status === 'Pending' ? 'Awaiting Approval' : problem.status}
+                                </Badge>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+          </div>
+
         </div>
       </main>
     </div>
