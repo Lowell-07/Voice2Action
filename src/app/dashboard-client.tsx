@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import {
   Select,
@@ -32,6 +32,19 @@ export default function DashboardClient() {
 
   const solvedProblems = problemsInState.filter(p => p.status === 'Resolved').length;
   const reportedProblems = problemsInState.length;
+  
+  const stateProblemCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    for (const state of indianStates) {
+        counts[state.name] = 0;
+    }
+    for (const problem of mockProblems) {
+        if (counts[problem.location.state] !== undefined) {
+            counts[problem.location.state]++;
+        }
+    }
+    return counts;
+  }, []);
 
   return (
     <main className="flex-1">
@@ -62,7 +75,10 @@ export default function DashboardClient() {
                 <SelectContent>
                   {indianStates.map((state) => (
                     <SelectItem key={state.code} value={state.name}>
-                      {state.name}
+                        <div className="flex justify-between w-full">
+                            <span>{state.name}</span>
+                            <span className="text-muted-foreground ml-4">{stateProblemCounts[state.name]} reports</span>
+                        </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
