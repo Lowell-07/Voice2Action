@@ -68,9 +68,9 @@ export default function DashboardClient() {
                 </div>
             </CardHeader>
             <CardContent>
-              <Select onValueChange={setSelectedState}>
+              <Select onValueChange={setSelectedState} value={selectedState || ""}>
                 <SelectTrigger className="w-full h-12 text-lg bg-background/50">
-                  <SelectValue placeholder="All States" />
+                  <SelectValue placeholder="Select a State" />
                 </SelectTrigger>
                 <SelectContent>
                   {indianStates.map((state) => (
@@ -118,12 +118,28 @@ export default function DashboardClient() {
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {departments.map((department) => {
                         const problems = problemsInState.filter(p => p.department === department);
-                        return (
-                            <Card key={department} className="bg-card/80 backdrop-blur-sm border-border/20 p-6 flex flex-col items-center text-center">
+                        const categoryCard = (
+                             <CardContent className="p-6 flex flex-col items-center text-center">
                                 {departmentIcons[department] || <FileText className="w-8 h-8 text-primary" />}
                                 <h3 className="text-lg font-semibold mt-4">{department.replace(' Department', '')}</h3>
                                 <p className="text-3xl font-bold my-2">{problems.length}</p>
                                 <p className="text-sm text-muted-foreground">Reports</p>
+                            </CardContent>
+                        );
+
+                        if (problems.length > 0) {
+                            return (
+                                <Link key={department} href={`/explore/issues?state=${encodeURIComponent(selectedState)}&department=${encodeURIComponent(department)}`}>
+                                    <Card className="bg-card/80 backdrop-blur-sm border-border/20 h-full transition-all hover:border-primary/50 hover:shadow-lg">
+                                        {categoryCard}
+                                    </Card>
+                                </Link>
+                            )
+                        }
+
+                        return (
+                             <Card key={department} className="bg-card/70 backdrop-blur-sm border-border/20 h-full opacity-60">
+                                {categoryCard}
                             </Card>
                         )
                     })}

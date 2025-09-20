@@ -35,6 +35,18 @@
       "description": "Broken swing set in a public park.",
       "imageUrl": "https://picsum.photos/seed/park1/600/400",
       "imageHint": "broken park"
+    },
+    {
+      "id": "garbage-2",
+      "description": "Illegal dumping site in a vacant lot.",
+      "imageUrl": "https://picsum.photos/seed/garbage2/600/400",
+      "imageHint": "illegal dumping"
+    },
+    {
+      "id": "streetlight-2",
+      "description": "A dark street due to a power outage.",
+      "imageUrl": "https://picsum.photos/seed/light2/600/400",
+      "imageHint": "power outage"
     }
   ]
 }
