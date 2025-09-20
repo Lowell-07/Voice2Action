@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-3xl font-headline">
             {otpSent ? "Verify OTP" : "User Login"}
-          </A_CardTitle>
+          </CardTitle>
           <CardDescription>
             {otpSent ? `Enter the OTP sent to +91 ${mobile}` : "Access your profile and report issues."}
           </CardDescription>
@@ -124,7 +125,7 @@ export default function LoginPage() {
                     Change mobile number
                 </Button>
             )}
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center w-full">
             Looking for admin or department login? <Link href="/admin/login" className="underline">Click here</Link>.
           </p>
         </CardFooter>
