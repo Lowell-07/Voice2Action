@@ -33,7 +33,7 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
   const { problems, updateProblem } = useProblems();
 
-  const pendingReports = problems.filter(p => p.status === 'Pending');
+  const pendingReports = problems.filter(p => p.status === 'Pending' || p.status === 'Awaiting Approval');
 
   useEffect(() => {
     if (user.type !== 'admin') {
