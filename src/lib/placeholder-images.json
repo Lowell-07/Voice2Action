@@ -47,6 +47,12 @@
       "description": "A dark street due to a power outage.",
       "imageUrl": "https://picsum.photos/seed/light2/600/400",
       "imageHint": "power outage"
+    },
+    {
+      "id": "tree-1",
+      "description": "A large tree has fallen across a road.",
+      "imageUrl": "https://picsum.photos/seed/tree1/600/400",
+      "imageHint": "fallen tree"
     }
   ]
 }

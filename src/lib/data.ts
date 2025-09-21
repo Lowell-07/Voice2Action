@@ -204,4 +204,25 @@ export const mockProblems: Problem[] = [
     reportedBy: mockUsers[1],
     createdAt: '2024-06-02T09:00:00Z',
   },
+  {
+    id: 'prob-8',
+    title: 'Fallen tree blocking road',
+    description: 'A large tree has fallen across Oak Avenue, completely blocking traffic. Needs to be cleared urgently.',
+    department: 'Roads & Transport',
+    issueType: 'Roads & Streets',
+    status: 'Pending',
+    location: {
+      state: 'Delhi',
+      city: 'New Delhi',
+      coordinates: { lat: 28.6139, lng: 77.2080 },
+    },
+    media: {
+      images: ['tree-1'],
+      videos: [],
+    },
+    likes: 0,
+    reportedBy: mockUsers[0],
+    createdAt: new Date().toISOString(),
+  }
 ];
+
