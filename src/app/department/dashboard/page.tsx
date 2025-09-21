@@ -25,18 +25,12 @@ export default function DepartmentDashboardPage() {
   const router = useRouter();
   const { problems, updateProblem } = useProblems();
   
-  const departmentReports = problems.filter(p => p.department === user.data.department && (p.status === 'In Progress' || p.status === 'Resolved'));
-
   useEffect(() => {
     if (user.type !== 'department') {
       router.push('/department/login');
     }
   }, [user, router]);
   
-  const handleStatusChange = (reportId: string, newStatus: string) => {
-    updateProblem(reportId, { status: newStatus as any });
-  };
-
   if (user.type !== 'department') {
     return (
       <div className="flex flex-col min-h-screen">
@@ -49,6 +43,12 @@ export default function DepartmentDashboardPage() {
       </div>
     );
   }
+
+  const departmentReports = problems.filter(p => p.department === user.data.department && (p.status === 'In Progress' || p.status === 'Resolved'));
+
+  const handleStatusChange = (reportId: string, newStatus: string) => {
+    updateProblem(reportId, { status: newStatus as any });
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent">
