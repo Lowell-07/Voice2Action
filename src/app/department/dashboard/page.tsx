@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2, LogOut, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockProblems } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -16,25 +15,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useProblems } from '@/context/problem-context';
 
 export default function DepartmentDashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { problems, updateProblem } = useProblems();
   
-  const [reports, setReports] = useState(
-    mockProblems.filter(p => p.department === 'Roads & Transport' && p.status !== 'Resolved')
-  );
-  
+  const departmentReports = problems.filter(p => p.department === user.data.department && (p.status === 'In Progress' || p.status === 'Resolved'));
+
   useEffect(() => {
     if (user.type !== 'department') {
       router.push('/department/login');
@@ -42,11 +34,8 @@ export default function DepartmentDashboardPage() {
   }, [user, router]);
   
   const handleStatusChange = (reportId: string, newStatus: string) => {
-    // In a real app, you'd call an API here.
-    // For now, we just update the local state for demonstration.
-    setReports(reports.map(r => r.id === reportId ? { ...r, status: newStatus as any } : r));
+    updateProblem(reportId, { status: newStatus as any });
   };
-
 
   if (user.type !== 'department') {
     return (
@@ -94,13 +83,13 @@ export default function DepartmentDashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reports.length > 0 ? reports.map((report) => (
+                    {departmentReports.length > 0 ? departmentReports.map((report) => (
                       <TableRow key={report.id}>
                         <TableCell>{format(new Date(report.createdAt), 'dd MMM, yyyy')}</TableCell>
                         <TableCell className="font-medium">{report.title}</TableCell>
                         <TableCell>
                           <Badge variant={report.status === 'Resolved' ? 'default' : report.status === 'In Progress' ? 'secondary' : 'outline'}>
-                            {report.status === 'Pending' ? 'Awaiting Approval' : report.status}
+                            {report.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -110,12 +99,10 @@ export default function DepartmentDashboardPage() {
                                   <SelectValue placeholder="Update Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Pending">Pending</SelectItem>
                                   <SelectItem value="In Progress">In Progress</SelectItem>
                                   <SelectItem value="Resolved">Resolved</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <Button size="sm">Update</Button>
                             </div>
                         </TableCell>
                       </TableRow>

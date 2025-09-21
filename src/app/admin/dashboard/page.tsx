@@ -6,7 +6,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Check, X, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockProblems } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -26,12 +25,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { format } from 'date-fns';
+import { useProblems } from '@/context/problem-context';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [reports, setReports] = useState(mockProblems.filter(p => p.status === 'Pending'));
+  const { problems, updateProblem } = useProblems();
+
+  const pendingReports = problems.filter(p => p.status === 'Pending');
 
   useEffect(() => {
     if (user.type !== 'admin') {
@@ -40,7 +42,8 @@ export default function AdminDashboardPage() {
   }, [user, router]);
   
   const handleApproval = (id: string, approved: boolean) => {
-    setReports(reports.filter(r => r.id !== id));
+    const newStatus = approved ? 'In Progress' : 'Rejected';
+    updateProblem(id, { status: newStatus as any });
     toast({
         title: `Report ${approved ? 'Approved' : 'Rejected'}`,
         description: `The report has been processed.`,
@@ -90,7 +93,7 @@ export default function AdminDashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reports.length > 0 ? reports.map((report) => (
+                    {pendingReports.length > 0 ? pendingReports.map((report) => (
                       <TableRow key={report.id}>
                         <TableCell>{format(new Date(report.createdAt), 'dd MMM, yyyy')}</TableCell>
                         <TableCell className="font-medium">{report.title}</TableCell>

@@ -10,11 +10,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { indianStates, mockProblems, departments } from '@/lib/data';
+import { indianStates, departments } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle, Clock, FileText, Globe, MapPin, AlertTriangle, Building, Recycle, Lightbulb, Waves, Trees, HardHat, TramFront } from 'lucide-react';
+import { useProblems } from '@/context/problem-context';
 
 const departmentIcons: { [key: string]: React.ReactNode } = {
     'Electric Department': <Lightbulb className="w-8 h-8 text-primary" />,
@@ -25,9 +26,10 @@ const departmentIcons: { [key: string]: React.ReactNode } = {
 
 export default function DashboardClient() {
   const [selectedState, setSelectedState] = useState<string | null>(null);
+  const { problems } = useProblems();
 
   const problemsInState = selectedState
-    ? mockProblems.filter((p) => p.location.state === selectedState)
+    ? problems.filter((p) => p.location.state === selectedState)
     : [];
 
   const solvedProblems = problemsInState.filter(p => p.status === 'Resolved').length;
@@ -38,13 +40,13 @@ export default function DashboardClient() {
     for (const state of indianStates) {
         counts[state.name] = 0;
     }
-    for (const problem of mockProblems) {
+    for (const problem of problems) {
         if (counts[problem.location.state] !== undefined) {
             counts[problem.location.state]++;
         }
     }
     return counts;
-  }, []);
+  }, [problems]);
 
   return (
     <main className="flex-1">

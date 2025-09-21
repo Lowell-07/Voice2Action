@@ -22,12 +22,16 @@ import { getLocationSuggestion, getDepartmentSuggestion, getAddressCompletions }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { departments } from '@/lib/data';
+import { departments, indianStates } from '@/lib/data';
 import { Combobox } from '@/components/ui/combobox';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useProblems } from '@/context/problem-context';
+import { useAuth } from '@/hooks/use-auth';
+import type { Problem } from '@/lib/definitions';
 
 
 const reportFormSchema = z.object({
+  title: z.string().min(1, 'Title is required.'),
   location: z.string().min(1, 'Location is required.'),
   description: z.string().min(1, "Please provide a description.").max(500, 'Description must be 500 characters or less.'),
   department: z.string().min(1, 'Please select a department.'),
@@ -40,6 +44,8 @@ type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 export default function ReportForm() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { addProblem } = useProblems();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggestingLocation, setIsSuggestingLocation] = useState(false);
   const [isSuggestingDepartment, setIsSuggestingDepartment] = useState(false);
@@ -52,6 +58,7 @@ export default function ReportForm() {
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
+      title: '',
       location: '',
       description: '',
       department: '',
@@ -77,6 +84,9 @@ export default function ReportForm() {
     form.setValue('location', value);
     debouncedFetch(value);
   }
+  
+  let latitude = 0;
+  let longitude = 0;
 
   const handleLocationSuggest = () => {
     setIsSuggestingLocation(true);
@@ -92,7 +102,8 @@ export default function ReportForm() {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude } = position.coords;
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
         const result = await getLocationSuggestion({ latitude, longitude });
         if (result.success && result.locationName) {
           form.setValue('location', result.locationName);
@@ -151,14 +162,44 @@ export default function ReportForm() {
   }
 
   function onSubmit(data: ReportFormValues) {
+    if (user.type !== 'user') return;
+
     setIsSubmitting(true);
-    console.log(data);
+
+    const randomState = indianStates[Math.floor(Math.random() * indianStates.length)];
+
+    const newProblem: Problem = {
+      id: `prob-${Date.now()}`,
+      title: data.title,
+      description: data.description,
+      department: data.department,
+      issueType: 'General',
+      status: 'Pending',
+      location: {
+        state: randomState.name,
+        city: 'Unknown',
+        coordinates: { lat: latitude, lng: longitude },
+      },
+      media: {
+        images: [`new-report-${Date.now()}`],
+        videos: [],
+      },
+      likes: 0,
+      reportedBy: {
+        id: user.data.id,
+        name: user.data.name,
+        avatarUrl: user.data.avatarUrl,
+      },
+      createdAt: new Date().toISOString(),
+    };
+
     setTimeout(() => {
+        addProblem(newProblem);
         setIsSubmitting(false);
         setSubmitted(true);
         form.reset();
         setFileCount(0);
-    }, 2000);
+    }, 1000);
   }
   
   if (submitted) {
@@ -170,7 +211,7 @@ export default function ReportForm() {
             </AlertDescription>
             <div className='mt-6 flex justify-center gap-4'>
                  <Button asChild>
-                    <Link href="/dashboard">Go to Dashboard</Link>
+                    <Link href="/profile">View My Reports</Link>
                 </Button>
                 <Button variant="outline" onClick={() => setSubmitted(false)}>
                     Report Another Issue
@@ -183,6 +224,21 @@ export default function ReportForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-lg">Title*</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g. Massive Pothole on Main St" {...field} />
+                </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         <FormField
           control={form.control}
           name="location"
@@ -218,7 +274,7 @@ export default function ReportForm() {
           name="media"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg">Upload Images, Videos or Documents*</FormLabel>
+              <FormLabel className="text-lg">Upload Images or Videos*</FormLabel>
                 <FormControl>
                     <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg">
                         <div className="flex flex-col items-center justify-center space-y-2">
@@ -239,7 +295,7 @@ export default function ReportForm() {
                         />
                     </div>
                 </FormControl>
-              <FormDescription>Accepted types: .jpg, .png, .gif, .pdf, .txt, .docx, .mp4, .mov. {fileCount > 0 && `${fileCount} files selected.`}</FormDescription>
+              <FormDescription>Accepted types: .jpg, .png, .mp4, .mov. {fileCount > 0 && `${fileCount} files selected.`}</FormDescription>
               <FormMessage />
             </FormItem>
           )}

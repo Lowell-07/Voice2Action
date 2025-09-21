@@ -5,11 +5,11 @@ import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { mockProblems } from '@/lib/data';
 import { MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type L from 'leaflet';
+import { useProblems } from '@/context/problem-context';
 
 const MapView = dynamic(() => import('@/components/map-view'), {
   ssr: false,
@@ -20,6 +20,7 @@ export default function ExplorePage() {
     const { toast } = useToast();
     const mapRef = useRef<L.Map | null>(null);
     const userLocationMarkerRef = useRef<L.Marker | null>(null);
+    const { problems } = useProblems();
 
     const handleGPSClick = () => {
       if (navigator.geolocation) {
@@ -88,7 +89,7 @@ export default function ExplorePage() {
               </div>
               
               <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden z-0">
-                <MapView problems={mockProblems} mapRef={mapRef} />
+                <MapView problems={problems} mapRef={mapRef} />
               </div>
                <div className="p-4 text-center text-muted-foreground text-sm">
                 Interactive map powered by Leaflet. The markers represent issues, with colors indicating popularity.

@@ -7,12 +7,12 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Lightbulb, FileText, Settings, Building, Waves, TramFront } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockProblems } from '@/lib/data';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useProblems } from '@/context/problem-context';
 
 const departmentIcons: { [key: string]: React.ReactNode } = {
   'Electric Department': <Lightbulb className="w-5 h-5 text-muted-foreground" />,
@@ -30,6 +30,7 @@ const getIconForDepartment = (department: string) => {
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { problems } = useProblems();
 
   useEffect(() => {
     if (user.type === 'guest') {
@@ -50,7 +51,7 @@ export default function ProfilePage() {
     );
   }
   
-  const userProblems = mockProblems.filter(p => p.reportedBy.id === user.data.id);
+  const userProblems = problems.filter(p => p.reportedBy.id === user.data.id);
   const resolvedCount = userProblems.filter(p => p.status === 'Resolved').length;
   const pendingCount = userProblems.filter(p => p.status === 'Pending').length;
   const inProgressCount = userProblems.filter(p => p.status === 'In Progress').length;

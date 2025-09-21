@@ -2,7 +2,6 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { mockProblems } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -10,9 +9,11 @@ import Link from 'next/link';
 import { ArrowLeft, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { useProblems } from '@/context/problem-context';
 
 export default function IssuesPage() {
   const searchParams = useSearchParams();
+  const { problems } = useProblems();
   const state = searchParams.get('state');
   const department = searchParams.get('department');
 
@@ -40,7 +41,7 @@ export default function IssuesPage() {
     );
   }
 
-  const filteredProblems = mockProblems.filter(
+  const filteredProblems = problems.filter(
     (p) => p.location.state === state && p.department === department
   );
 
@@ -115,4 +116,3 @@ export default function IssuesPage() {
     </main>
   );
 }
-
