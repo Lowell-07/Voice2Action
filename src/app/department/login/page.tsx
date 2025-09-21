@@ -20,6 +20,7 @@ export default function DepartmentLoginPage() {
   const { user, login } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
 
   useEffect(() => {
     if (user.type === 'department') {
@@ -29,9 +30,13 @@ export default function DepartmentLoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedDepartment) {
+        toast({ title: "Department not selected", description: "Please select your department to log in.", variant: "destructive"});
+        return;
+    }
     setIsLoading(true);
     setTimeout(() => {
-      login('department');
+      login('department', selectedDepartment);
       toast({ title: "Department Login Successful" });
       router.push('/department/dashboard');
       setIsLoading(false);
@@ -65,7 +70,7 @@ export default function DepartmentLoginPage() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                <Select required>
+                <Select required onValueChange={setSelectedDepartment} value={selectedDepartment}>
                     <SelectTrigger id="department">
                         <SelectValue placeholder="Select your department" />
                     </SelectTrigger>
