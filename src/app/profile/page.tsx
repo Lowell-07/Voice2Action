@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Mail, Phone, Edit, Settings, ArrowLeft, MapPin, Star, FileText, AlertTriangle, BadgeCheck, Clock } from 'lucide-react';
+import { Loader2, Mail, Phone, Edit, Settings, ArrowLeft, MapPin, Star, FileText, AlertTriangle, BadgeCheck, Clock, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -13,11 +13,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { problems } = useProblems();
+  const { problems, deleteProblem } = useProblems();
+  const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (user.type === 'guest') {
@@ -52,6 +64,13 @@ export default function ProfilePage() {
         default: return 'destructive';
     }
   };
+
+  const handleDelete = () => {
+    if(problemToDelete) {
+        deleteProblem(problemToDelete);
+        setProblemToDelete(null);
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent">
@@ -100,7 +119,7 @@ export default function ProfilePage() {
                 </Card>
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
                     <CardHeader>
-                        <CardTitle className="text-lg">Activity Stats</CardTitle>
+                        <CardTitle className="text-lg">Activity Status</CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-3 divide-x divide-border/50 text-center">
                         <div className="p-4">
@@ -133,7 +152,31 @@ export default function ProfilePage() {
                                     <p className="font-semibold">{problem.title}</p>
                                     <p className="text-sm text-muted-foreground">{problem.location.address} &middot; Reported {formatDistanceToNow(new Date(problem.createdAt), { addSuffix: true })}</p>
                                 </div>
-                                <Badge variant={getStatusVariant(problem.status)}>{problem.status}</Badge>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={getStatusVariant(problem.status)}>{problem.status}</Badge>
+                                  {problem.status === 'Awaiting Approval' && (
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setProblemToDelete(problem.id)}>
+                                          <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete your
+                                            reported issue and remove it from our servers.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel onClick={() => setProblemToDelete(null)}>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+                                </div>
                             </div>
                         ))}
                          <div className="text-center pt-4">

@@ -10,6 +10,7 @@ type ProblemContextType = {
   problems: Problem[];
   addProblem: (problem: Problem) => void;
   updateProblem: (problemId: string, updates: Partial<Problem>) => void;
+  deleteProblem: (problemId: string) => void;
   voteOnProblem: (problemId: string, voteType: 'like' | 'dislike') => void;
 };
 
@@ -30,6 +31,10 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
         prevProblems.map(p => p.id === problemId ? { ...p, ...updates } : p)
     );
   };
+
+  const deleteProblem = (problemId: string) => {
+    setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
+  }
   
   const voteOnProblem = useCallback((problemId: string, voteType: 'like' | 'dislike') => {
     setProblems(prevProblems => {
@@ -61,7 +66,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   }, [userVotes]);
 
 
-  const value = useMemo(() => ({ problems, addProblem, updateProblem, voteOnProblem }), [problems, voteOnProblem]);
+  const value = useMemo(() => ({ problems, addProblem, updateProblem, deleteProblem, voteOnProblem }), [problems, voteOnProblem]);
 
   return <ProblemContext.Provider value={value}>{children}</ProblemContext.Provider>;
 }
