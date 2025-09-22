@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Camera, FileVideo, Loader2, MapPin, Mic, Sparkles, UploadCloud, Video, X } from 'lucide-react';
+import { Camera, FileUp, FileVideo, Image as ImageIcon, Loader2, MapPin, Mic, Sparkles, UploadCloud, Video, X } from 'lucide-react';
 import { getLocationSuggestion, getDepartmentSuggestion, getAddressCompletions } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -37,6 +37,7 @@ import {
   DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const reportFormSchema = z.object({
@@ -58,18 +59,19 @@ export default function ReportForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggestingLocation, setIsSuggestingLocation] = useState(false);
   const [isSuggestingDepartment, setIsSuggestingDepartment] = useState(false);
-  const [fileCount, setFileCount] = useState(0);
+  
   const [submitted, setSubmitted] = useState(false);
   
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
 
-  // Camera state
+  // Camera and file state
   const [showCamera, setShowCamera] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [mediaFile, setMediaFile] = useState<{file: File | null, preview: string | null}>({ file: null, preview: null });
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -80,6 +82,8 @@ export default function ReportForm() {
       department: '',
     },
   });
+
+  const locationValue = form.watch('location');
   
   useEffect(() => {
     if (showCamera) {
@@ -115,8 +119,7 @@ export default function ReportForm() {
   }, [showCamera, toast]);
   
   const handleCameraOpen = () => {
-    const location = form.getValues('location');
-    if (!location) {
+    if (!locationValue) {
       toast({
         variant: 'destructive',
         title: 'Location Required',
@@ -124,9 +127,24 @@ export default function ReportForm() {
       });
       return;
     }
-    setCapturedImage(null);
+    setMediaFile({ file: null, preview: null});
     setShowCamera(true);
   };
+
+  const dataUrlToFile = (dataUrl: string, filename: string): File | null => {
+      const arr = dataUrl.split(',');
+      if (arr.length < 2) { return null; }
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      if (!mimeMatch) { return null; }
+      const mime = mimeMatch[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while(n--){
+          u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new File([u8arr], filename, {type:mime});
+  }
   
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -145,20 +163,41 @@ export default function ReportForm() {
         const timestamp = new Date().toLocaleString();
         
         context.fillStyle = 'white';
-        context.font = '20px Arial';
+        context.font = '16px Arial';
         context.shadowColor = 'black';
-        context.shadowBlur = 5;
+        context.shadowBlur = 4;
 
         const text = `${location} | ${timestamp}`;
-        context.fillText(text, 10, videoHeight - 20);
+        context.fillText(text, 10, videoHeight - 15);
 
         const dataUrl = canvas.toDataURL('image/jpeg');
-        setCapturedImage(dataUrl);
-        form.setValue('media', dataUrl);
+        const file = dataUrlToFile(dataUrl, `capture-${Date.now()}.jpg`);
+        setMediaFile({ file: file, preview: dataUrl });
+        form.setValue('media', file);
         setShowCamera(false);
       }
     }
   };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        const previewUrl = URL.createObjectURL(file);
+        setMediaFile({ file, preview: previewUrl });
+        form.setValue('media', file);
+    }
+  };
+
+  const clearMedia = () => {
+      if (mediaFile.preview) {
+          URL.revokeObjectURL(mediaFile.preview);
+      }
+      setMediaFile({ file: null, preview: null });
+      form.setValue('media', null);
+      if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+      }
+  }
 
   const fetchAddressCompletions = useCallback(async (query: string) => {
     if (query.length < 3) {
@@ -276,7 +315,7 @@ export default function ReportForm() {
         coordinates: { lat: latitude, lng: longitude },
       },
       media: {
-        images: capturedImage ? [capturedImage] : [`new-report-${Date.now()}`],
+        images: mediaFile.preview ? [mediaFile.preview] : [`new-report-${Date.now()}`],
         videos: [],
       },
       likes: 0,
@@ -293,8 +332,7 @@ export default function ReportForm() {
         setIsSubmitting(false);
         setSubmitted(true);
         form.reset();
-        setFileCount(0);
-        setCapturedImage(null);
+        clearMedia();
     }, 1000);
   }
   
@@ -371,50 +409,67 @@ export default function ReportForm() {
           name="media"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg">Upload Images or Videos*</FormLabel>
+              <FormLabel className="text-lg">File Upload & Camera</FormLabel>
+               <FormDescription>Upload a file or take a picture with your camera.</FormDescription>
                 <FormControl>
-                    <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg">
-                        {capturedImage ? (
-                            <div className="relative">
-                                <Image src={capturedImage} alt="Captured report" width={200} height={150} className="rounded-md object-contain"/>
-                                <Button
-                                  variant="destructive"
-                                  size="icon"
-                                  className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
-                                  onClick={() => {
-                                      setCapturedImage(null);
-                                      form.setValue('media', null);
-                                  }}
-                                >
-                                    <X className="h-4 w-4"/>
-                                </Button>
-                            </div>
-                        ) : (
-                          <>
-                           <Input 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Camera Box */}
+                        <div className='border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center space-y-4'>
+                            <h3 className="font-semibold">Camera</h3>
+                            <Camera className="w-10 h-10 text-muted-foreground"/>
+                            <p className="font-medium">Take a photo</p>
+                            <p className="text-sm text-muted-foreground">Use your camera to capture an image</p>
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div tabIndex={locationValue ? -1 : 0}>
+                                            <Button type="button" onClick={handleCameraOpen} disabled={!locationValue}>
+                                                <Camera className="w-4 h-4 mr-2"/> Start Camera
+                                            </Button>
+                                        </div>
+                                    </TooltipTrigger>
+                                    {!locationValue && (
+                                        <TooltipContent>
+                                            <p>Please enter a location first.</p>
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        {/* File Upload Box */}
+                        <div className='relative border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center space-y-4'>
+                             <Input 
                               type="file" 
-                              multiple 
                               accept="image/*,video/*"
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              onChange={(e) => { field.onChange(e.target.files); setFileCount(e.target.files?.length || 0) }}
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
                             />
-                            <div className="flex flex-col items-center justify-center space-y-2 text-center">
-                                <div className="flex gap-4 text-muted-foreground">
-                                    <UploadCloud className="w-8 h-8" />
-                                    <FileVideo className="w-8 h-8" />
-                                </div>
-                                <p className="text-sm text-muted-foreground">Click or drag & drop to upload (Up to 5 files)</p>
-                                <Button type="button" variant="secondary" size="sm" onClick={handleCameraOpen}>
-                                    <Camera className="w-4 h-4 mr-2"/> Use Camera
-                                </Button>
-                            </div>
-                          </>
-                        )}
+                            <h3 className="font-semibold">File Upload</h3>
+                             <FileUp className="w-10 h-10 text-muted-foreground"/>
+                            <p className="font-medium">Drop your file here, or browse</p>
+                            <p className="text-sm text-muted-foreground">Supports images and videos</p>
+                        </div>
                     </div>
                 </FormControl>
-              <FormDescription>
-                {fileCount > 0 ? `${fileCount} files selected.` : 'Accepted types: .jpg, .png, .mp4, .mov.'}
-              </FormDescription>
+                {mediaFile.file && (
+                    <div className="mt-4 border rounded-lg p-4 flex items-center justify-between">
+                       <div className="flex items-center gap-4">
+                           {mediaFile.preview ? (
+                                <Image src={mediaFile.preview} alt="preview" width={60} height={45} className="rounded-md object-cover" />
+                           ) : (
+                               <ImageIcon className="w-10 h-10 text-muted-foreground" />
+                           )}
+                           <div>
+                                <p className="text-sm font-medium">{mediaFile.file.name}</p>
+                                <p className="text-xs text-muted-foreground">{(mediaFile.file.size / 1024).toFixed(2)} KB</p>
+                           </div>
+                       </div>
+                       <Button variant="ghost" size="icon" onClick={clearMedia}>
+                           <X className="w-4 h-4" />
+                       </Button>
+                    </div>
+                )}
               <FormMessage />
             </FormItem>
           )}
@@ -518,5 +573,7 @@ export default function ReportForm() {
     </>
   );
 }
+
+    
 
     
