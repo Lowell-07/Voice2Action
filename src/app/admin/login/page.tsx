@@ -31,16 +31,14 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setIsLoading(true);
     // Mock authentication
-    setTimeout(() => {
-      if (username === 'lowell' && password === 'lowell') {
-        login('admin');
-        toast({ title: "Admin Login Successful" });
-        router.push('/admin/dashboard');
-      } else {
-        toast({ title: "Invalid Credentials", variant: "destructive" });
-      }
+    if (username === 'lowell' && password === 'lowell') {
+      login('admin');
+      toast({ title: "Admin Login Successful" });
+      router.push('/admin/dashboard');
+    } else {
+      toast({ title: "Invalid Credentials", variant: "destructive" });
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   if (user.type === 'admin') {
