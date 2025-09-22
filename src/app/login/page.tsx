@@ -22,8 +22,7 @@ export default function LoginPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState('');
-  const [existingUser, setExistingUser] = useState<any>(null);
-
+  
   useEffect(() => {
     if (user.type === 'user') {
       router.push('/profile');
@@ -42,23 +41,10 @@ export default function LoginPage() {
     }
     setIsLoading(true);
 
-    const { exists, user: foundUser } = await checkUserExists(mobile);
-
-    setIsLoading(false);
-    if (!exists) {
-        toast({
-            title: "Account Not Found",
-            description: "No account exists with this mobile number. Please register.",
-            variant: "destructive",
-        });
-        router.push('/register');
-        return;
-    }
-
-    setExistingUser(foundUser);
-    
-    // Simulate OTP sending
+    // Simulate OTP sending without checking for user first.
+    // The check will happen upon OTP verification.
     setTimeout(() => {
+        setIsLoading(false);
         setOtpSent(true);
         toast({
             title: "OTP Sent!",
@@ -67,7 +53,7 @@ export default function LoginPage() {
     }, 1000);
   };
   
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       if (otp !== '123456') {
           toast({
@@ -78,9 +64,22 @@ export default function LoginPage() {
           return;
       }
       setIsLoading(true);
+
+      const { exists, user: foundUser } = await checkUserExists(mobile);
+
+      if (!exists) {
+          toast({
+              title: "Account Not Found",
+              description: "No account exists with this mobile number. Please register.",
+              variant: "destructive",
+          });
+          router.push('/register');
+          setIsLoading(false);
+          return;
+      }
       
       // Directly call login with the user found earlier
-      login('user', undefined, undefined, existingUser);
+      login('user', undefined, undefined, foundUser);
 
       setTimeout(() => {
           setIsLoading(false);
@@ -143,7 +142,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex-col gap-4">
            {otpSent && (
-                <Button variant="link" size="sm" onClick={() => {setOtpSent(false); setOtp(''); setExistingUser(null);}}>
+                <Button variant="link" size="sm" onClick={() => {setOtpSent(false); setOtp('');}}>
                     Change mobile number
                 </Button>
             )}
