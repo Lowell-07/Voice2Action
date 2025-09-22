@@ -21,12 +21,6 @@ export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  useEffect(() => {
-    if (user.type === 'admin') {
-      router.push('/admin/dashboard');
-    }
-  }, [user, router]);
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
