@@ -13,14 +13,23 @@ import { Button } from '@/components/ui/button';
 import { indianStates } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { TrendingUp, Globe, MapPin, Calendar, ThumbsUp, ThumbsDown, Building } from 'lucide-react';
+import { TrendingUp, Globe, MapPin, Calendar, ThumbsUp, ThumbsDown, Building, Share, Flag, CalendarDays, Frown, ArrowLeft } from 'lucide-react';
 import { useProblems } from '@/context/problem-context';
 import { format } from 'date-fns';
+import type { Problem } from '@/lib/definitions';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 export default function DashboardClient() {
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const { problems, voteOnProblem } = useProblems();
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
+
 
   const problemsInState = useMemo(() => {
     if (!selectedState) return [];
@@ -43,6 +52,7 @@ export default function DashboardClient() {
   }, [problems]);
 
   return (
+    <>
     <main className="flex-1">
       <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="text-center mb-12">
@@ -137,8 +147,8 @@ export default function DashboardClient() {
                                         {problem.dislikes}
                                     </Button>
                                 </div>
-                                <Button variant="secondary" asChild>
-                                    <Link href={`/explore/issues/${problem.id}`}>View Details</Link>
+                                <Button variant="secondary" onClick={() => setSelectedProblem(problem)}>
+                                    View Details
                                 </Button>
                             </div>
                         </Card>
@@ -157,5 +167,145 @@ export default function DashboardClient() {
 
       </div>
     </main>
+
+    <Dialog open={!!selectedProblem} onOpenChange={(isOpen) => !isOpen && setSelectedProblem(null)}>
+        <DialogContent className="max-w-4xl w-full p-0">
+            {selectedProblem && (
+                 <div className="grid grid-cols-1 lg:grid-cols-3">
+                  {/* Left Column */}
+                  <div className="lg:col-span-2 space-y-6 p-6">
+                    <Card className="bg-transparent border-0 shadow-none">
+                      <CardHeader className="p-0 mb-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <Badge variant={selectedProblem.status === 'Resolved' ? 'default' : selectedProblem.status === 'In Progress' ? 'secondary' : 'outline'}>
+                                {selectedProblem.status}
+                              </Badge>
+                               <Badge variant="outline">Priority</Badge>
+                               <Badge variant="outline">Infrastructure</Badge>
+                            </div>
+                            <DialogTitle className="text-3xl font-headline">{selectedProblem.title}</DialogTitle>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon">
+                              <Share className="w-5 h-5" />
+                            </Button>
+                             <Button variant="ghost" size="icon">
+                              <Flag className="w-5 h-5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-6">
+                           <Image 
+                                src={`https://picsum.photos/seed/${selectedProblem.media.images[0]}/1200/675`}
+                                alt={selectedProblem.title}
+                                fill
+                                className="object-cover"
+                                data-ai-hint="issue photo"
+                            />
+                        </div>
+                        <Card className="bg-card/50 backdrop-blur-sm border-border/20">
+                            <CardHeader>
+                                <CardTitle>Issue Description</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-muted-foreground">{selectedProblem.description}</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-card/50 backdrop-blur-sm border-border/20 mt-6">
+                           <CardContent className="p-4 flex justify-between items-center">
+                               <div className="flex items-center gap-4">
+                                   <Button variant="outline" size="lg" onClick={() => voteOnProblem(selectedProblem.id, 'like')}>
+                                       <ThumbsUp className="w-5 h-5 mr-2" />
+                                       {selectedProblem.likes}
+                                   </Button>
+                                   <Button variant="outline" size="lg" onClick={() => voteOnProblem(selectedProblem.id, 'dislike')}>
+                                       <ThumbsDown className="w-5 h-5 mr-2" />
+                                       {selectedProblem.dislikes}
+                                   </Button>
+                               </div>
+                               <p className="text-muted-foreground text-sm">{selectedProblem.likes + selectedProblem.dislikes} total votes</p>
+                           </CardContent>
+                        </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6 p-6 bg-card/50 border-l border-border/20">
+                    <Card className="bg-transparent border-0 shadow-none">
+                      <CardHeader className="p-0 mb-4">
+                        <CardTitle>Issue Details</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0 space-y-4">
+                        <div className="flex items-start gap-4">
+                          <MapPin className="w-5 h-5 text-muted-foreground mt-1" />
+                          <div>
+                            <p className="font-semibold">Location</p>
+                            <p className="text-muted-foreground">{selectedProblem.location.address}</p>
+                          </div>
+                        </div>
+                         <div className="flex items-start gap-4">
+                          <Building className="w-5 h-5 text-muted-foreground mt-1" />
+                          <div>
+                            <p className="font-semibold">Department</p>
+                            <p className="text-muted-foreground">{selectedProblem.department}</p>
+                          </div>
+                        </div>
+                         <div className="flex items-start gap-4">
+                          <CalendarDays className="w-5 h-5 text-muted-foreground mt-1" />
+                          <div>
+                            <p className="font-semibold">Report ID</p>
+                            <p className="text-muted-foreground">{selectedProblem.id}</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <p className="text-muted-foreground">Reported</p>
+                            <p>{format(new Date(selectedProblem.createdAt), 'dd/MM/yyyy')}</p>
+                        </div>
+                         <div className="flex justify-between text-sm">
+                            <p className="text-muted-foreground">Last Updated</p>
+                            <p>{format(new Date(selectedProblem.createdAt), 'dd/MM/yyyy')}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-transparent border-0 shadow-none">
+                      <CardHeader className="p-0 mb-4">
+                        <CardTitle>Status Timeline</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <ul className="space-y-6">
+                          <li className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                              <div className="w-3 h-3 bg-primary rounded-full" />
+                              <div className="w-px h-full bg-border" />
+                            </div>
+                            <div>
+                              <p className="font-semibold">Issue Reported</p>
+                              <p className="text-sm text-muted-foreground">{format(new Date(selectedProblem.createdAt), 'dd/MM/yyyy')}</p>
+                            </div>
+                          </li>
+                          <li className="flex gap-4">
+                             <div className="flex flex-col items-center">
+                                <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+                            </div>
+                            <div>
+                              <p className="font-semibold">Under Review</p>
+                              <p className="text-sm text-muted-foreground">Department assigned and investigating</p>
+                            </div>
+                          </li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+            )}
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
