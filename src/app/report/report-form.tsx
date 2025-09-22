@@ -16,8 +16,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useCallback } from 'react';
-import { Camera, FileVideo, Loader2, MapPin, Mic, Sparkles, UploadCloud } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { Camera, FileVideo, Loader2, MapPin, Mic, Sparkles, UploadCloud, Video, X } from 'lucide-react';
 import { getLocationSuggestion, getDepartmentSuggestion, getAddressCompletions } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -28,6 +28,14 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useProblems } from '@/context/problem-context';
 import { useAuth } from '@/hooks/use-auth';
 import type { Problem } from '@/lib/definitions';
+import Image from 'next/image';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 
 const reportFormSchema = z.object({
@@ -55,6 +63,13 @@ export default function ReportForm() {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
 
+  // Camera state
+  const [showCamera, setShowCamera] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
@@ -65,6 +80,85 @@ export default function ReportForm() {
     },
   });
   
+  useEffect(() => {
+    if (showCamera) {
+      const getCameraPermission = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          setHasCameraPermission(true);
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions to use this feature.',
+          });
+          setShowCamera(false);
+        }
+      };
+
+      getCameraPermission();
+
+      return () => {
+          if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+          }
+      };
+    }
+  }, [showCamera, toast]);
+  
+  const handleCameraOpen = () => {
+    const location = form.getValues('location');
+    if (!location) {
+      toast({
+        variant: 'destructive',
+        title: 'Location Required',
+        description: 'Please enter a location before taking a photo.',
+      });
+      return;
+    }
+    setCapturedImage(null);
+    setShowCamera(true);
+  };
+  
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+
+      if (context) {
+        const { videoWidth, videoHeight } = video;
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+        
+        context.drawImage(video, 0, 0, videoWidth, videoHeight);
+
+        const location = form.getValues('location');
+        const timestamp = new Date().toLocaleString();
+        
+        context.fillStyle = 'white';
+        context.font = '20px Arial';
+        context.shadowColor = 'black';
+        context.shadowBlur = 5;
+
+        const text = `${location} | ${timestamp}`;
+        context.fillText(text, 10, videoHeight - 20);
+
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        setCapturedImage(dataUrl);
+        form.setValue('media', dataUrl);
+        setShowCamera(false);
+      }
+    }
+  };
+
   const fetchAddressCompletions = useCallback(async (query: string) => {
     if (query.length < 3) {
       setLocationSuggestions([]);
@@ -174,14 +268,14 @@ export default function ReportForm() {
       description: data.description,
       department: data.department,
       issueType: 'General',
-      status: 'Pending',
+      status: 'Awaiting Approval',
       location: {
         state: randomState.name,
         city: 'Unknown',
         coordinates: { lat: latitude, lng: longitude },
       },
       media: {
-        images: [`new-report-${Date.now()}`],
+        images: capturedImage ? [capturedImage] : [`new-report-${Date.now()}`],
         videos: [],
       },
       likes: 0,
@@ -199,6 +293,7 @@ export default function ReportForm() {
         setSubmitted(true);
         form.reset();
         setFileCount(0);
+        setCapturedImage(null);
     }, 1000);
   }
   
@@ -222,6 +317,7 @@ export default function ReportForm() {
   }
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
@@ -277,25 +373,59 @@ export default function ReportForm() {
               <FormLabel className="text-lg">Upload Images or Videos*</FormLabel>
                 <FormControl>
                     <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg">
-                        <div className="flex flex-col items-center justify-center space-y-2">
-                             <div className="flex gap-4 text-muted-foreground">
-                                <Camera className="w-8 h-8" />
-                                <FileVideo className="w-8 h-8" />
+                        {capturedImage ? (
+                            <div className="relative">
+                                <Image src={capturedImage} alt="Captured report" width={200} height={150} className="rounded-md"/>
+                                <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
+                                  onClick={() => {
+                                      setCapturedImage(null);
+                                      form.setValue('media', null);
+                                  }}
+                                >
+                                    <X className="h-4 w-4"/>
+                                </Button>
                             </div>
-                            <p className="text-sm text-muted-foreground">Click or drag & drop to upload (Up to 5 files)</p>
-                            <Button type="button" variant="secondary" size="sm">
-                                <UploadCloud className="w-4 h-4 mr-2"/> Choose Files
-                            </Button>
-                        </div>
-                        <Input 
-                          type="file" 
-                          multiple 
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          onChange={(e) => { field.onChange(e.target.files); setFileCount(e.target.files?.length || 0); }}
-                        />
+                        ) : (
+                          <>
+                            <div className="flex flex-col items-center justify-center space-y-2">
+                                <div className="flex gap-4 text-muted-foreground">
+                                    <UploadCloud className="w-8 h-8" />
+                                    <FileVideo className="w-8 h-8" />
+                                </div>
+                                <p className="text-sm text-muted-foreground">Click or drag & drop to upload (Up to 5 files)</p>
+                                <div className="flex gap-4">
+                                  <Button type="button" variant="secondary" size="sm">
+                                      <UploadCloud className="w-4 h-4 mr-2"/> Choose Files
+                                  </Button>
+                                  <span className="text-muted-foreground">or</span>
+                                   <Button type="button" variant="secondary" size="sm" onClick={handleCameraOpen}>
+                                      <Camera className="w-4 h-4 mr-2"/> Use Camera
+                                  </Button>
+                                </div>
+                            </div>
+                            <Input 
+                              type="file" 
+                              multiple 
+                              accept="image/*,video/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => { 
+                                field.onChange(e.target.files); 
+                                setFileCount(e.target.files?.length || 0); 
+                                if (e.target.files && e.target.files.length > 0) {
+                                  setCapturedImage(URL.createObjectURL(e.target.files[0]));
+                                }
+                              }}
+                            />
+                          </>
+                        )}
                     </div>
                 </FormControl>
-              <FormDescription>Accepted types: .jpg, .png, .mp4, .mov. {fileCount > 0 && `${fileCount} files selected.`}</FormDescription>
+              <FormDescription>
+                {fileCount > 0 ? `${fileCount} files selected.` : 'Accepted types: .jpg, .png, .mp4, .mov.'}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -370,5 +500,34 @@ export default function ReportForm() {
         </div>
       </form>
     </Form>
+    <Dialog open={showCamera} onOpenChange={setShowCamera}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Live Camera</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+            <canvas ref={canvasRef} className="hidden" />
+            {hasCameraPermission === false && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertTitle>Camera Access Denied</AlertTitle>
+                <AlertDescription>
+                  Please enable camera permissions in your browser settings to use this feature.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCamera(false)}>Cancel</Button>
+            <Button onClick={handleCapture} disabled={!hasCameraPermission}>
+              <Camera className="mr-2 h-4 w-4" />
+              Capture Photo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
+
+    
