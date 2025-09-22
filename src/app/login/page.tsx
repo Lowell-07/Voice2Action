@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -43,6 +44,7 @@ export default function LoginPage() {
 
     const { exists, user: foundUser } = await checkUserExists(mobile);
 
+    setIsLoading(false);
     if (!exists) {
         toast({
             title: "Account Not Found",
@@ -50,7 +52,6 @@ export default function LoginPage() {
             variant: "destructive",
         });
         router.push('/register');
-        setIsLoading(false);
         return;
     }
 
@@ -59,7 +60,6 @@ export default function LoginPage() {
     // Simulate OTP sending
     setTimeout(() => {
         setOtpSent(true);
-        setIsLoading(false);
         toast({
             title: "OTP Sent!",
             description: "An OTP has been sent to your mobile number (use 123456).",
@@ -78,15 +78,18 @@ export default function LoginPage() {
           return;
       }
       setIsLoading(true);
+      
+      // Directly call login with the user found earlier
+      login('user', undefined, undefined, existingUser);
+
       setTimeout(() => {
-          login('user', undefined, undefined, existingUser);
           setIsLoading(false);
           toast({
               title: "Login Successful!",
               description: "Welcome back!",
           });
           router.push('/profile');
-      }, 1000);
+      }, 500); // Short delay to allow state to propagate
   };
 
   return (

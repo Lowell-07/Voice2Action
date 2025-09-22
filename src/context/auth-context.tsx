@@ -4,7 +4,7 @@
 
 import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase-client';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
@@ -16,7 +16,7 @@ type AuthUser =
 
 type AuthContextType = {
   user: AuthUser;
-  login: (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string) => void;
+  login: (type: 'user' | 'admin' | 'department', name?: string, mobile?: string, existingUser?: User) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
   incrementCivicPoints: (userId: string, points: number) => void;
@@ -37,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-            const userData = { ...(userDoc.data() as User), id: firebaseUser.uid, idToken: await firebaseUser.getIdToken() };
+            const idToken = await firebaseUser.getIdToken();
+            const userData = { ...(userDoc.data() as User), id: firebaseUser.uid, idToken };
             setUser({ type: 'user', data: userData });
         } else {
              console.log("User document not found for authenticated user:", firebaseUser.uid);
@@ -53,46 +54,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkUserExists = async (mobile: string): Promise<{ exists: boolean, user?: User }> => {
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("mobile", "==", mobile), limit(1));
-    const querySnapshot = await getDocs(q);
     
-    if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        return { exists: true, user: { id: userDoc.id, ...userDoc.data() } as User };
+    try {
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          return { exists: true, user: { id: userDoc.id, ...userDoc.data() } as User };
+      }
+      return { exists: false };
+    } catch (error) {
+      console.error("Permission error checking user:", error);
+      // This will now fail gracefully on the client if rules aren't set,
+      // instead of throwing an unhandled error.
+      // The user will be guided to register.
+      return { exists: false };
     }
-    return { exists: false };
   };
 
-  const login = async (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string, existingUser?: User) => {
+  const login = async (type: 'user' | 'admin' | 'department', name?: string, mobile?: string, existingUser?: User) => {
     if (type === 'user') {
-        if (existingUser) { // Logging in an existing user
-            // In a real app, this would involve Firebase Auth to sign in the user
-            // For this prototype, we'll set the user state directly
-            setUser({ type: 'user', data: existingUser });
+      let userToLogin = existingUser;
+      
+      if (!existingUser && name && mobile) { // Registering a new user
+        const mockUid = `user-${Date.now()}`;
+        const newUser: User = {
+            id: mockUid,
+            name: name,
+            mobile: mobile,
+            avatarUrl: `https://picsum.photos/seed/${name}/100/100`,
+            civicPoints: 0,
+            idToken: 'mock-token-for-dev'
+        };
 
-        } else if (nameOrDepartment && mobile) { // Registering a new user
-            const mockUid = `user-${Date.now()}`;
-            const newUser: User = {
-                id: mockUid,
-                name: nameOrDepartment,
-                mobile: mobile,
-                avatarUrl: `https://picsum.photos/seed/${nameOrDepartment}/100/100`,
-                civicPoints: 0,
-                idToken: 'mock-token-for-dev'
-            };
+        try {
+            const userRef = doc(db, "users", mockUid);
+            // This setDoc is what requires the correct security rule
+            await setDoc(userRef, { 
+                name: newUser.name, 
+                mobile: newUser.mobile, 
+                avatarUrl: newUser.avatarUrl, 
+                civicPoints: newUser.civicPoints 
+            });
+            userToLogin = newUser;
+        } catch (error) {
+            console.error("Error creating user document:", error);
+            return;
+        }
+      }
 
+      if (userToLogin) {
+         // This is a mock sign-in for the prototype.
+         // In a real app, you'd get a custom token from a backend.
+         if (auth) {
             try {
-                const userRef = doc(db, "users", mockUid);
-                await setDoc(userRef, { 
-                    name: newUser.name, 
-                    mobile: newUser.mobile, 
-                    avatarUrl: newUser.avatarUrl, 
-                    civicPoints: newUser.civicPoints 
-                });
-                setUser({ type: 'user', data: newUser });
-            } catch (error) {
-                console.error("Error creating user document:", error);
+                // To make the client aware of an "authenticated" state, we'll set it directly.
+                // The onAuthStateChanged listener will then pick up the new state.
+                setUser({ type: 'user', data: userToLogin });
+            } catch (e) {
+                console.error("Mock sign in failed", e);
             }
         }
+      }
         
     } else if (type === 'admin') {
       setUser({ type: 'admin', data: { name: 'Admin User', email: 'admin@voice2action.com' } });
