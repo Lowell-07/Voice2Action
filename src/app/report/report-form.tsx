@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Camera, FileUp, CheckCircle, Loader2, MapPin, Mic, Sparkles, X, Grid2x2 } from 'lucide-react';
+import { Camera, FileUp, CheckCircle, Loader2, MapPin, Mic, Sparkles, X, Edit } from 'lucide-react';
 import { getLocationSuggestion, getDepartmentSuggestion, getAddressCompletions } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -67,12 +68,13 @@ const generateReportId = () => {
 export default function ReportForm() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { addProblem } = useProblems();
+  const { addProblem, updateProblem } = useProblems();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggestingLocation, setIsSuggestingLocation] = useState(false);
   const [isSuggestingDepartment, setIsSuggestingDepartment] = useState(false);
   
   const [submittedProblem, setSubmittedProblem] = useState<Problem | null>(null);
+  const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
   
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
@@ -312,6 +314,32 @@ export default function ReportForm() {
     if (user.type !== 'user') return;
 
     setIsSubmitting(true);
+    
+    if (editingProblem) {
+        // We are editing an existing problem
+        const updatedProblemData: Problem = {
+            ...editingProblem,
+            title: data.title,
+            description: data.description,
+            department: data.department,
+            issueType: data.issueType,
+            media: {
+                ...editingProblem.media,
+                images: mediaFile.preview ? [mediaFile.preview] : editingProblem.media.images,
+            },
+        };
+
+        setTimeout(() => {
+            updateProblem(editingProblem.id, updatedProblemData);
+            setSubmittedProblem(updatedProblemData);
+            setEditingProblem(null);
+            setIsSubmitting(false);
+            form.reset();
+            clearMedia();
+        }, 1000);
+        return;
+    }
+
 
     const randomState = indianStates[Math.floor(Math.random() * indianStates.length)];
 
@@ -333,6 +361,7 @@ export default function ReportForm() {
         videos: [],
       },
       likes: 0,
+      dislikes: 0,
       reportedBy: {
         id: user.data.id,
         name: user.data.name,
@@ -349,6 +378,22 @@ export default function ReportForm() {
         clearMedia();
     }, 1000);
   }
+  
+  const handleEditIssue = () => {
+    if (!submittedProblem) return;
+    setEditingProblem(submittedProblem);
+    form.reset({
+      title: submittedProblem.title,
+      location: submittedProblem.location.address,
+      description: submittedProblem.description,
+      department: submittedProblem.department,
+      issueType: submittedProblem.issueType,
+    });
+    if (submittedProblem.media.images.length > 0) {
+        setMediaFile({ file: null, preview: submittedProblem.media.images[0] });
+    }
+    setSubmittedProblem(null);
+  };
   
   if (submittedProblem) {
     return (
@@ -415,10 +460,8 @@ export default function ReportForm() {
                  <Button onClick={() => setSubmittedProblem(null)}>
                     <Sparkles className="w-4 h-4 mr-2" /> Report Another Issue
                 </Button>
-                <Button variant="outline" asChild>
-                    <Link href="/dashboard">
-                        <Grid2x2 className="w-4 h-4 mr-2" /> Go to Dashboard
-                    </Link>
+                <Button variant="outline" onClick={handleEditIssue}>
+                    <Edit className="w-4 h-4 mr-2" /> Edit Issue
                 </Button>
             </div>
         </div>
@@ -451,7 +494,7 @@ export default function ReportForm() {
             <FormItem>
               <FormLabel className="text-lg">Location*</FormLabel>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button type="button" variant="outline" onClick={handleLocationSuggest} disabled={isSuggestingLocation} className='sm:w-auto w-full'>
+                <Button type="button" variant="outline" onClick={handleLocationSuggest} disabled={isSuggestingLocation || !!editingProblem} className='sm:w-auto w-full'>
                   {isSuggestingLocation ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <MapPin className="h-4 w-4 mr-2" />} Use GPS
                 </Button>
                 <div className="flex items-center gap-4 w-full">
@@ -466,9 +509,11 @@ export default function ReportForm() {
                         }}
                         isLoading={isFetchingSuggestions}
                         placeholder="Enter address..."
+                        disabled={!!editingProblem}
                     />
                 </div>
               </div>
+               {editingProblem && <FormDescription>Location cannot be edited after submission.</FormDescription>}
               <FormMessage />
             </FormItem>
           )}
@@ -522,17 +567,15 @@ export default function ReportForm() {
                         </div>
                     </div>
                 </FormControl>
-                {mediaFile.file && (
+                {mediaFile.preview && (
                     <div className="mt-4 border rounded-lg p-4 flex items-center justify-between">
                        <div className="flex items-center gap-4">
-                           {mediaFile.preview ? (
+                           {mediaFile.preview && (
                                 <Image src={mediaFile.preview} alt="preview" width={60} height={45} className="rounded-md object-cover" />
-                           ) : (
-                               <ImageIcon className="w-10 h-10 text-muted-foreground" />
                            )}
                            <div>
-                                <p className="text-sm font-medium">{mediaFile.file.name}</p>
-                                <p className="text-xs text-muted-foreground">{(mediaFile.file.size / 1024).toFixed(2)} KB</p>
+                                <p className="text-sm font-medium">{mediaFile.file ? mediaFile.file.name : 'Image Preview'}</p>
+                               {mediaFile.file && <p className="text-xs text-muted-foreground">{(mediaFile.file.size / 1024).toFixed(2)} KB</p>}
                            </div>
                        </div>
                        <Button variant="ghost" size="icon" onClick={clearMedia}>
@@ -633,10 +676,15 @@ export default function ReportForm() {
         </div>
 
 
-        <div className='flex justify-end'>
+        <div className='flex justify-end gap-4'>
+            {editingProblem && (
+                <Button type="button" variant="outline" onClick={() => setEditingProblem(null)}>
+                    Cancel
+                </Button>
+            )}
             <Button type="submit" size="lg" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Submit Report
+              {editingProblem ? 'Update Report' : 'Submit Report'}
             </Button>
         </div>
       </form>
