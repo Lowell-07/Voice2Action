@@ -3,9 +3,9 @@
 
 import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
-import { onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase-client'; // Using the client auth instance
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase-client';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 type AuthUser =
   | { type: 'guest' }
@@ -38,9 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userDoc.exists()) {
             setUser({ type: 'user', data: { ...(userDoc.data() as User), id: firebaseUser.uid, idToken: token } });
         } else {
-             // This can happen during registration before the doc is created.
-             // The login function will handle setting the doc.
-             console.log("User document not found for authenticated user, may be new registration:", firebaseUser.uid);
+             console.log("User document not found for authenticated user:", firebaseUser.uid);
         }
       } else {
         setUser({ type: 'guest' });
@@ -51,62 +49,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const login = async (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string) => {
-    if (type === 'user') {
-       if (nameOrDepartment && mobile) {
-        // New registration flow
-        // In a real app, this would be a secure backend call that returns a custom token
+    if (type === 'user' && nameOrDepartment && mobile) {
+        // New user registration
+        // In a real app, a backend function would create this user and a custom token.
+        // For this app, we generate a mock UID and set the document, then set local state.
         const mockUid = `user-${Date.now()}`;
+        const newUser: User = {
+            id: mockUid,
+            name: nameOrDepartment,
+            mobile: mobile,
+            avatarUrl: `https://picsum.photos/seed/${nameOrDepartment}/100/100`,
+            civicPoints: 0,
+            idToken: 'mock-token-for-dev' // Add a mock token
+        };
+
         try {
-            // NOTE: In a real production app, you would NEVER generate a token on the client.
-            // This would be a call to a secure Cloud Function:
-            // const response = await fetch('/api/create-user-and-get-token', { method: 'POST', body: JSON.stringify({ uid: mockUid }) });
-            // const { token } = await response.json();
-            // await signInWithCustomToken(auth, token);
-            
-            // For this project, we simulate the flow. We can't actually create a real custom token
-            // on the client, so we will set the user document first and then rely on onAuthStateChanged
-            // after a mock/manual sign-in process.
-            
-            // The security rules need to allow this initial write.
-            const newUser: User = {
-                id: mockUid,
-                name: nameOrDepartment,
-                mobile: mobile,
-                avatarUrl: `https://picsum.photos/seed/${nameOrDepartment}/100/100`,
-                civicPoints: 0,
-            };
-
+            // The security rule "allow create: if true;" for /users/{userId} will permit this write.
             const userRef = doc(db, "users", mockUid);
-            // This will now succeed because of the updated security rules
-            await setDoc(userRef, { name: newUser.name, mobile: newUser.mobile, avatarUrl: newUser.avatarUrl, civicPoints: newUser.civicPoints });
+            await setDoc(userRef, { 
+                name: newUser.name, 
+                mobile: newUser.mobile, 
+                avatarUrl: newUser.avatarUrl, 
+                civicPoints: newUser.civicPoints 
+            });
 
-            // This part is still a mock. A real login flow (e.g. with phone OTP)
-            // would properly sign the user in. After that, onAuthStateChanged would fire
-            // and load the document we just created.
-             setUser({ type: 'user', data: {...newUser, idToken: 'mock-token' }});
-
+            // Set the user state locally after successful DB write.
+            // In a real app, onAuthStateChanged would handle this after sign-in.
+            setUser({ type: 'user', data: newUser });
 
         } catch (error) {
-            console.error("Error during registration process:", error);
+            console.error("Error creating user document:", error);
         }
-
-      } else {
-        // This is a login for an existing user (mocked with a custom token).
-        // This part would involve a backend call to generate a custom token for a given user (e.g., via mobile OTP).
-        // For simplicity, we are skipping the actual sign-in with a custom token.
-        // The onAuthStateChanged listener handles setting user state for already logged-in users.
-      }
+        
     } else if (type === 'admin') {
       setUser({ type: 'admin', data: { name: 'Admin User', email: 'admin@voice2action.com' } });
-    } else {
+    } else if (type === 'department') {
        setUser({ type: 'department', data: { name: 'Dept Head', department: nameOrDepartment || 'Roads & Transport' } });
     }
   };
 
   const logout = () => {
-    // We don't have a real Firebase user session from custom tokens,
-    // so we just clear the state. If using real Firebase Auth (like phone),
-    // you would call auth.signOut().
     setUser({ type: 'guest' });
   };
   
