@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -69,6 +70,7 @@ export default function ReportForm() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -375,7 +377,7 @@ export default function ReportForm() {
                     <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg">
                         {capturedImage ? (
                             <div className="relative">
-                                <Image src={capturedImage} alt="Captured report" width={200} height={150} className="rounded-md"/>
+                                <Image src={capturedImage} alt="Captured report" width={200} height={150} className="rounded-md object-contain"/>
                                 <Button
                                   variant="destructive"
                                   size="icon"
@@ -383,6 +385,10 @@ export default function ReportForm() {
                                   onClick={() => {
                                       setCapturedImage(null);
                                       form.setValue('media', null);
+                                      if (fileInputRef.current) {
+                                        fileInputRef.current.value = '';
+                                      }
+                                      setFileCount(0);
                                   }}
                                 >
                                     <X className="h-4 w-4"/>
@@ -390,23 +396,8 @@ export default function ReportForm() {
                             </div>
                         ) : (
                           <>
-                            <div className="flex flex-col items-center justify-center space-y-2">
-                                <div className="flex gap-4 text-muted-foreground">
-                                    <UploadCloud className="w-8 h-8" />
-                                    <FileVideo className="w-8 h-8" />
-                                </div>
-                                <p className="text-sm text-muted-foreground">Click or drag & drop to upload (Up to 5 files)</p>
-                                <div className="flex gap-4">
-                                  <Button type="button" variant="secondary" size="sm">
-                                      <UploadCloud className="w-4 h-4 mr-2"/> Choose Files
-                                  </Button>
-                                  <span className="text-muted-foreground">or</span>
-                                   <Button type="button" variant="secondary" size="sm" onClick={handleCameraOpen}>
-                                      <Camera className="w-4 h-4 mr-2"/> Use Camera
-                                  </Button>
-                                </div>
-                            </div>
-                            <Input 
+                           <Input 
+                              ref={fileInputRef}
                               type="file" 
                               multiple 
                               accept="image/*,video/*"
@@ -416,9 +407,27 @@ export default function ReportForm() {
                                 setFileCount(e.target.files?.length || 0); 
                                 if (e.target.files && e.target.files.length > 0) {
                                   setCapturedImage(URL.createObjectURL(e.target.files[0]));
+                                } else {
+                                  setCapturedImage(null);
                                 }
                               }}
                             />
+                            <div className="flex flex-col items-center justify-center space-y-2 text-center">
+                                <div className="flex gap-4 text-muted-foreground">
+                                    <UploadCloud className="w-8 h-8" />
+                                    <FileVideo className="w-8 h-8" />
+                                </div>
+                                <p className="text-sm text-muted-foreground">Click or drag & drop to upload (Up to 5 files)</p>
+                                <div className="flex gap-4 items-center">
+                                  <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                      <UploadCloud className="w-4 h-4 mr-2"/> Choose Files
+                                  </Button>
+                                  <span className="text-muted-foreground">or</span>
+                                   <Button type="button" variant="secondary" size="sm" onClick={handleCameraOpen}>
+                                      <Camera className="w-4 h-4 mr-2"/> Use Camera
+                                  </Button>
+                                </div>
+                            </div>
                           </>
                         )}
                     </div>
@@ -529,5 +538,7 @@ export default function ReportForm() {
     </>
   );
 }
+
+    
 
     
