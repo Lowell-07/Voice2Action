@@ -12,8 +12,9 @@ export type Problem = {
   description: string;
   department: string;
   issueType: string;
-  status: 'Pending' | 'Resolved' | 'In Progress';
+  status: 'Pending' | 'Awaiting Approval' | 'In Progress' | 'Resolved' | 'Rejected';
   location: {
+    address: string;
     state: string;
     city: string;
     coordinates: {
@@ -35,3 +36,5 @@ export type IndianState = {
   code: string;
   name: string;
 };
+
+    

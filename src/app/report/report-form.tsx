@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Camera, FileUp, FileVideo, Image as ImageIcon, Loader2, MapPin, Mic, Sparkles, UploadCloud, Video, X } from 'lucide-react';
+import { Camera, FileUp, CheckCircle, Loader2, MapPin, Mic, Sparkles, X, Grid2x2 } from 'lucide-react';
 import { getLocationSuggestion, getDepartmentSuggestion, getAddressCompletions } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
@@ -38,6 +38,8 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
 
 
 const reportFormSchema = z.object({
@@ -45,11 +47,21 @@ const reportFormSchema = z.object({
   location: z.string().min(1, 'Location is required.'),
   description: z.string().min(1, "Please provide a description.").max(500, 'Description must be 500 characters or less.'),
   department: z.string().min(1, 'Please select a department.'),
+  issueType: z.string().min(1, 'Please select an issue type.'),
   media: z.any().optional(),
   voicemail: z.any().optional(),
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
+
+const generateReportId = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = 'V2A-';
+    for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
 
 
 export default function ReportForm() {
@@ -60,7 +72,7 @@ export default function ReportForm() {
   const [isSuggestingLocation, setIsSuggestingLocation] = useState(false);
   const [isSuggestingDepartment, setIsSuggestingDepartment] = useState(false);
   
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedProblem, setSubmittedProblem] = useState<Problem | null>(null);
   
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
@@ -80,6 +92,7 @@ export default function ReportForm() {
       location: '',
       description: '',
       department: '',
+      issueType: '',
     },
   });
 
@@ -303,13 +316,14 @@ export default function ReportForm() {
     const randomState = indianStates[Math.floor(Math.random() * indianStates.length)];
 
     const newProblem: Problem = {
-      id: `prob-${Date.now()}`,
+      id: generateReportId(),
       title: data.title,
       description: data.description,
       department: data.department,
-      issueType: 'General',
+      issueType: data.issueType,
       status: 'Awaiting Approval',
       location: {
+        address: data.location,
         state: randomState.name,
         city: 'Unknown',
         coordinates: { lat: latitude, lng: longitude },
@@ -329,29 +343,85 @@ export default function ReportForm() {
 
     setTimeout(() => {
         addProblem(newProblem);
+        setSubmittedProblem(newProblem);
         setIsSubmitting(false);
-        setSubmitted(true);
         form.reset();
         clearMedia();
     }, 1000);
   }
   
-  if (submitted) {
+  if (submittedProblem) {
     return (
-        <Alert className="bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg text-center py-10">
-            <AlertTitle className="text-2xl font-headline text-primary">Report Submitted Successfully!</AlertTitle>
-            <AlertDescription className="mt-2 text-lg">
-                Thank you for helping improve your community. Your report is under review.
-            </AlertDescription>
-            <div className='mt-6 flex justify-center gap-4'>
-                 <Button asChild>
-                    <Link href="/profile">View My Reports</Link>
+       <div className="text-center py-10 max-w-4xl mx-auto">
+            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+            <h1 className="text-3xl font-headline font-bold text-primary mb-2">Report Submitted Successfully!</h1>
+            <p className="text-muted-foreground mb-8">
+                Your civic issue has been recorded and will be reviewed by the appropriate department.
+            </p>
+
+            <Card className="bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg text-left">
+                <CardContent className="p-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                        <div>
+                            <p className="text-sm text-muted-foreground">Report ID</p>
+                            <p className="font-semibold text-primary">{submittedProblem.id}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Status</p>
+                            <p className="font-semibold">Submitted</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Date & Time</p>
+                            <p className="font-semibold">{format(new Date(submittedProblem.createdAt), 'PPpp')}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Progress Status</p>
+                            <p className="font-semibold flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-yellow-400"></span>
+                                {submittedProblem.status}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                       <div>
+                            <p className="text-sm text-muted-foreground">Category</p>
+                            <p className="font-semibold">{submittedProblem.department}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Issue Type</p>
+                            <p className="font-semibold">{submittedProblem.issueType}</p>
+                        </div>
+                         <div className="col-span-full">
+                            <p className="text-sm text-muted-foreground">Description</p>
+                            <p className="font-semibold">{submittedProblem.description}</p>
+                        </div>
+                        <div className="col-span-full">
+                            <p className="text-sm text-muted-foreground">Location</p>
+                            <p className="font-semibold">{submittedProblem.location.address}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Attachments</p>
+                            <p className="font-semibold">{submittedProblem.media.images.length > 0 ? `${submittedProblem.media.images.length} file(s) uploaded` : 'None'}</p>
+                        </div>
+                         <div>
+                            <p className="text-sm text-muted-foreground">Voice Note</p>
+                            <p className="font-semibold">{submittedProblem.media.voicemail ? 'Provided' : 'Not provided'}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div className='mt-8 flex justify-center gap-4'>
+                 <Button onClick={() => setSubmittedProblem(null)}>
+                    <Sparkles className="w-4 h-4 mr-2" /> Report Another Issue
                 </Button>
-                <Button variant="outline" onClick={() => setSubmitted(false)}>
-                    Report Another Issue
+                <Button variant="outline" asChild>
+                    <Link href="/dashboard">
+                        <Grid2x2 className="w-4 h-4 mr-2" /> Go to Dashboard
+                    </Link>
                 </Button>
             </div>
-        </Alert>
+        </div>
     )
   }
 
@@ -505,36 +575,63 @@ export default function ReportForm() {
             </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="department"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-lg">Department Category*</FormLabel>
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <Button type="button" variant="outline" className='sm:w-auto w-full' onClick={handleDepartmentSuggest} disabled={isSuggestingDepartment}>
-                         {isSuggestingDepartment ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />} Suggest Department
-                    </Button>
-                    <div className="flex items-center gap-4 w-full">
-                        <span className="text-muted-foreground">Or</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel className="text-lg">Department Category*</FormLabel>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Button type="button" variant="outline" className='sm:w-auto w-full' onClick={handleDepartmentSuggest} disabled={isSuggestingDepartment}>
+                            {isSuggestingDepartment ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Sparkles className="h-4 w-4 mr-2" />} Suggest
+                        </Button>
+                        <div className="flex items-center gap-4 w-full">
+                            <span className="text-muted-foreground">Or</span>
+                            <Select onValueChange={field.onChange} value={field.value} defaultValue="">
+                                <FormControl>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder="Select a department" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {departments.map(dept => (
+                                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                </div>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+                control={form.control}
+                name="issueType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="text-lg">Issue Type*</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                             <FormControl>
                                 <SelectTrigger>
-                                <SelectValue placeholder="Select a department" />
+                                <SelectValue placeholder="Select an issue type" />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {departments.map(dept => (
-                                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                                ))}
+                                <SelectItem value="Frequent Power Cuts">Frequent Power Cuts</SelectItem>
+                                <SelectItem value="Broken Streetlight">Broken Streetlight</SelectItem>
+                                <SelectItem value="Damaged Transformer">Damaged Transformer</SelectItem>
+                                <SelectItem value="Billing Issue">Billing Issue</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                    <FormMessage />
+                    </FormItem>
+                )}
+             />
+        </div>
+
 
         <div className='flex justify-end'>
             <Button type="submit" size="lg" disabled={isSubmitting}>
@@ -573,6 +670,8 @@ export default function ReportForm() {
     </>
   );
 }
+
+    
 
     
 
