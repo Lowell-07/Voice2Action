@@ -21,6 +21,7 @@ L.Icon.Default.mergeOptions({
 interface MapViewProps {
   problems: Problem[];
   mapRef: MutableRefObject<L.Map | null>;
+  onProblemSelect: (problem: Problem) => void;
 }
 
 const getDotColor = (likeCount: number) => {
@@ -30,7 +31,7 @@ const getDotColor = (likeCount: number) => {
     return '#A9A9A9';
 };
 
-export default function MapView({ problems, mapRef }: MapViewProps) {
+export default function MapView({ problems, mapRef, onProblemSelect }: MapViewProps) {
   const { voteOnProblem } = useProblems();
 
   const mapContainerRef = (node: HTMLDivElement | null) => {
@@ -54,7 +55,7 @@ export default function MapView({ problems, mapRef }: MapViewProps) {
         
         const popupContainer = document.createElement('div');
         const root = createRoot(popupContainer);
-        root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} />);
+        root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
         
         marker.bindPopup(popupContainer);
 

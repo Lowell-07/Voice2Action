@@ -5,15 +5,15 @@ import type { Problem } from "@/lib/definitions";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
-import Link from "next/link";
 import { Badge } from "./ui/badge";
 
 type ProblemPopupProps = {
     problem: Problem;
     voteOnProblem: (id: string, voteType: 'like' | 'dislike') => void;
+    onViewDetails: () => void;
 };
 
-export function ProblemPopup({ problem, voteOnProblem }: ProblemPopupProps) {
+export function ProblemPopup({ problem, voteOnProblem, onViewDetails }: ProblemPopupProps) {
     return (
         <div className="w-64 font-body">
             <div className="relative w-full h-32 mb-2 rounded-t-lg overflow-hidden">
@@ -33,20 +33,18 @@ export function ProblemPopup({ problem, voteOnProblem }: ProblemPopupProps) {
                 <p className="text-sm text-muted-foreground mb-3 line-clamp-2 h-10">{problem.description}</p>
                 <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => voteOnProblem(problem.id, 'like')}>
+                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); voteOnProblem(problem.id, 'like'); }}>
                             <ThumbsUp className="w-4 h-4 mr-2" />
                             {problem.likes}
                         </Button>
-                         <Button variant="outline" size="sm" onClick={() => voteOnProblem(problem.id, 'dislike')}>
+                         <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); voteOnProblem(problem.id, 'dislike'); }}>
                             <ThumbsDown className="w-4 h-4 mr-2" />
                             {problem.dislikes}
                         </Button>
                     </div>
                 </div>
-                <Button asChild className="w-full" size="sm">
-                    <Link href={`/explore/issues/${problem.id}`}>
-                        View Details
-                    </Link>
+                <Button onClick={onViewDetails} className="w-full" size="sm">
+                    View Details
                 </Button>
             </div>
         </div>

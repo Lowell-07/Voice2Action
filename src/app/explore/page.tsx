@@ -3,13 +3,23 @@
 
 import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MapPin, Info, Circle, ThumbsUp } from 'lucide-react';
+import { MapPin, Info, Circle, ThumbsUp, Calendar, ThumbsDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type L from 'leaflet';
 import { useProblems } from '@/context/problem-context';
+import type { Problem } from '@/lib/definitions';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 const MapView = dynamic(() => import('@/components/map-view'), {
   ssr: false,
@@ -20,7 +30,8 @@ export default function ExplorePage() {
     const { toast } = useToast();
     const mapRef = useRef<L.Map | null>(null);
     const userLocationMarkerRef = useRef<L.Marker | null>(null);
-    const { problems } = useProblems();
+    const { problems, voteOnProblem } = useProblems();
+    const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
     const handleGPSClick = () => {
       if (navigator.geolocation) {
@@ -68,6 +79,7 @@ export default function ExplorePage() {
     };
     
   return (
+    <>
     <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1">
         <div className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
@@ -89,7 +101,7 @@ export default function ExplorePage() {
               </div>
               
               <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden z-0">
-                <MapView problems={problems} mapRef={mapRef} />
+                <MapView problems={problems} mapRef={mapRef} onProblemSelect={setSelectedProblem} />
               </div>
                <div className="p-4 text-center text-muted-foreground text-sm">
                 Interactive map powered by Leaflet. The markers represent issues, with colors indicating popularity.
@@ -148,5 +160,64 @@ export default function ExplorePage() {
         }
       `}</style>
     </div>
+    <Dialog open={!!selectedProblem} onOpenChange={(isOpen) => !isOpen && setSelectedProblem(null)}>
+        <DialogContent className="sm:max-w-2xl">
+            {selectedProblem && (
+                <>
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-headline">{selectedProblem.title}</DialogTitle>
+                         <div className="flex items-center gap-3 pt-2">
+                            <Badge variant={selectedProblem.status === 'Resolved' ? 'default' : selectedProblem.status === 'In Progress' ? 'secondary' : 'outline'}>
+                                {selectedProblem.status}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">{selectedProblem.department}</span>
+                        </div>
+                    </DialogHeader>
+                    <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden">
+                           <Image 
+                                src={`https://picsum.photos/seed/${selectedProblem.media.images[0]}/1200/675`}
+                                alt={selectedProblem.title}
+                                fill
+                                className="object-cover"
+                                data-ai-hint="issue photo"
+                            />
+                        </div>
+                        <p className="text-muted-foreground">{selectedProblem.description}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-start gap-3">
+                                <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
+                                <div>
+                                    <p className="font-semibold">Location</p>
+                                    <p className="text-muted-foreground">{selectedProblem.location.address}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <Calendar className="w-4 h-4 text-muted-foreground mt-1" />
+                                <div>
+                                    <p className="font-semibold">Reported On</p>
+                                    <p className="text-muted-foreground">{format(new Date(selectedProblem.createdAt), 'PP')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-muted/50 rounded-lg flex justify-between items-center">
+                           <div className="flex items-center gap-4">
+                               <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'like')}>
+                                   <ThumbsUp className="w-4 h-4 mr-2" />
+                                   {selectedProblem.likes}
+                               </Button>
+                               <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'dislike')}>
+                                   <ThumbsDown className="w-4 h-4 mr-2" />
+                                   {selectedProblem.dislikes}
+                               </Button>
+                           </div>
+                           <p className="text-muted-foreground text-sm">{selectedProblem.likes + selectedProblem.dislikes} total votes</p>
+                        </div>
+                    </div>
+                </>
+            )}
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
