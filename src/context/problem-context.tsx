@@ -4,7 +4,7 @@
 import { createContext, useState, ReactNode, useMemo, useContext, useCallback, useEffect } from 'react';
 import type { Problem } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, doc, addDoc, updateDoc, increment, onSnapshot, query } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, increment, onSnapshot, query, Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 
 type ProblemContextType = {
@@ -25,19 +25,35 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    const q = query(collection(db, "problems"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const problemsData: Problem[] = [];
-      querySnapshot.forEach((doc) => {
-        problemsData.push({ id: doc.id, ...doc.data() } as Problem);
-      });
-      // Sort by creation date descending
-      problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setProblems(problemsData);
-    });
+    let unsubscribe: Unsubscribe | null = null;
+    
+    // Only set up the listener if the user is authenticated.
+    // The security rules can then be more restrictive.
+    if (user.type !== 'guest') {
+        const q = query(collection(db, "problems"));
+        unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const problemsData: Problem[] = [];
+            querySnapshot.forEach((doc) => {
+                problemsData.push({ id: doc.id, ...doc.data() } as Problem);
+            });
+            // Sort by creation date descending
+            problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setProblems(problemsData);
+        }, (error) => {
+            console.error("Firestore snapshot error:", error);
+            // Handle permission errors or other issues
+        });
+    } else {
+        // Clear problems when user logs out
+        setProblems([]);
+    }
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+        if (unsubscribe) {
+            unsubscribe();
+        }
+    };
+  }, [user]); // Rerun effect when user auth state changes
 
 
   const addProblem = useCallback(async (problemData: Omit<Problem, 'id' | 'createdAt' | 'reportedById' | 'reportedBy'>): Promise<Problem | null> => {
