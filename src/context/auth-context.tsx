@@ -15,6 +15,7 @@ type AuthContextType = {
   user: AuthUser;
   login: (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string) => void;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -49,8 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser({ type: 'guest' });
   };
+  
+  const updateUser = (updates: Partial<User>) => {
+    if (user.type === 'user') {
+        setUser({
+            ...user,
+            data: { ...user.data, ...updates }
+        });
+    }
+  }
 
-  const value = useMemo(() => ({ user, login, logout }), [user]);
+  const value = useMemo(() => ({ user, login, logout, updateUser }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -45,8 +45,11 @@ export default function ProfilePage() {
         <div className="container max-w-2xl mx-auto px-4">
             
             <div className='mb-8'>
-                <Button variant="ghost" size="sm" onClick={() => router.back()}>
-                    <ArrowLeft className="h-4 w-4" />
+                <Button variant="ghost" size="sm" asChild>
+                    <Link href="/">
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Dashboard
+                    </Link>
                 </Button>
             </div>
             
@@ -114,8 +117,10 @@ export default function ProfilePage() {
                     <CardTitle className="text-lg">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                    <Button variant="ghost" className="w-full justify-start">
-                        <Edit className="mr-3 h-4 w-4" /> Edit Profile
+                    <Button variant="ghost" className="w-full justify-start" asChild>
+                        <Link href="/profile/edit">
+                            <Edit className="mr-3 h-4 w-4" /> Edit Profile
+                        </Link>
                     </Button>
                      <Button variant="ghost" className="w-full justify-start">
                         <Settings className="mr-3 h-4 w-4" /> Settings & Preferences
