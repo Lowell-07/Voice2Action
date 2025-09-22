@@ -38,7 +38,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "You must be logged in to delete an issue." };
     }
 
-    const originalProblems = problems;
+    const originalProblems = [...problems];
+    const problemToDelete = problems.find(p => p.id === problemId);
     
     // Optimistically update the UI
     setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
