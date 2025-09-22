@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     'Report civic issues, track progress, and build a better community.',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ export default function ExplorePage() {
     const { problems, voteOnProblem } = useProblems();
     const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
-    const handleGPSClick = () => {
+    const handleGPSClick = useCallback(() => {
       if (navigator.geolocation) {
         toast({ title: "Locating...", description: "Zooming into your current location." });
         navigator.geolocation.getCurrentPosition(
@@ -76,7 +76,7 @@ export default function ExplorePage() {
           variant: 'destructive',
         });
       }
-    };
+    }, [toast]);
     
   return (
     <>

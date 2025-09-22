@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { memo } from "react";
 
 type ProblemPopupProps = {
     problem: Problem;
@@ -13,7 +14,7 @@ type ProblemPopupProps = {
     onViewDetails: () => void;
 };
 
-export function ProblemPopup({ problem, voteOnProblem, onViewDetails }: ProblemPopupProps) {
+export const ProblemPopup = memo(function ProblemPopup({ problem, voteOnProblem, onViewDetails }: ProblemPopupProps) {
     return (
         <div className="w-64 font-body">
             <div className="relative w-full h-32 mb-2 rounded-t-lg overflow-hidden">
@@ -49,4 +50,4 @@ export function ProblemPopup({ problem, voteOnProblem, onViewDetails }: ProblemP
             </div>
         </div>
     );
-}
+});

@@ -4,7 +4,7 @@
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Problem } from '@/lib/definitions';
-import { useEffect } from 'react';
+import { useEffect, memo } from 'react';
 import type { MutableRefObject } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ProblemPopup } from '@/components/problem-popup';
@@ -31,7 +31,7 @@ const getDotColor = (likeCount: number) => {
     return '#A9A9A9';
 };
 
-export default function MapView({ problems, mapRef, onProblemSelect }: MapViewProps) {
+const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: MapViewProps) {
   const { voteOnProblem } = useProblems();
 
   const mapContainerRef = (node: HTMLDivElement | null) => {
@@ -85,4 +85,6 @@ export default function MapView({ problems, mapRef, onProblemSelect }: MapViewPr
   return (
     <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
   );
-}
+});
+
+export default MapView;

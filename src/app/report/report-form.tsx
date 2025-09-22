@@ -22,7 +22,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Camera, FileUp, CheckCircle, Loader2, MapPin, Mic, Sparkles, X, Edit } from 'lucide-react';
 import { getLocationSuggestion, getDepartmentSuggestion, getAddressCompletions } from './actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { departments, indianStates } from '@/lib/data';
 import { Combobox } from '@/components/ui/combobox';
@@ -99,12 +98,14 @@ export default function ReportForm() {
   });
 
   const locationValue = form.watch('location');
+  const descriptionValue = form.watch('description');
   
   useEffect(() => {
+    let stream: MediaStream | null = null;
     if (showCamera) {
       const getCameraPermission = async () => {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
           setHasCameraPermission(true);
 
           if (videoRef.current) {
@@ -125,15 +126,14 @@ export default function ReportForm() {
       getCameraPermission();
 
       return () => {
-          if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
+          if (stream) {
             stream.getTracks().forEach(track => track.stop());
           }
       };
     }
   }, [showCamera, toast]);
   
-  const handleCameraOpen = () => {
+  const handleCameraOpen = useCallback(() => {
     if (!locationValue) {
       toast({
         variant: 'destructive',
@@ -144,7 +144,7 @@ export default function ReportForm() {
     }
     setMediaFile({ file: null, preview: null});
     setShowCamera(true);
-  };
+  }, [locationValue, toast]);
 
   const dataUrlToFile = (dataUrl: string, filename: string): File | null => {
       const arr = dataUrl.split(',');
@@ -161,7 +161,7 @@ export default function ReportForm() {
       return new File([u8arr], filename, {type:mime});
   }
   
-  const handleCapture = () => {
+  const handleCapture = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -192,19 +192,19 @@ export default function ReportForm() {
         setShowCamera(false);
       }
     }
-  };
+  }, [form]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
         const previewUrl = URL.createObjectURL(file);
         setMediaFile({ file, preview: previewUrl });
         form.setValue('media', file);
     }
-  };
+  }, [form]);
 
-  const clearMedia = () => {
-      if (mediaFile.preview) {
+  const clearMedia = useCallback(() => {
+      if (mediaFile.preview && mediaFile.preview.startsWith('blob:')) {
           URL.revokeObjectURL(mediaFile.preview);
       }
       setMediaFile({ file: null, preview: null });
@@ -212,7 +212,7 @@ export default function ReportForm() {
       if (fileInputRef.current) {
           fileInputRef.current.value = '';
       }
-  }
+  }, [mediaFile.preview, form]);
 
   const fetchAddressCompletions = useCallback(async (query: string) => {
     if (query.length < 3) {
@@ -227,7 +227,7 @@ export default function ReportForm() {
     setIsFetchingSuggestions(false);
   }, []);
 
-  const debouncedFetch = useDebounce(fetchAddressCompletions, 500);
+  const debouncedFetch = useDebounce(fetchAddressCompletions, 300);
 
   const handleLocationInputChange = (value: string) => {
     form.setValue('location', value);
@@ -237,7 +237,7 @@ export default function ReportForm() {
   let latitude = 0;
   let longitude = 0;
 
-  const handleLocationSuggest = () => {
+  const handleLocationSuggest = useCallback(() => {
     setIsSuggestingLocation(true);
     if (!navigator.geolocation) {
       toast({
@@ -279,11 +279,10 @@ export default function ReportForm() {
         setIsSuggestingLocation(false);
       }
     );
-  };
+  }, [form, toast]);
   
-  const handleDepartmentSuggest = async () => {
-      const description = form.getValues('description');
-      if (!description.trim()) {
+  const handleDepartmentSuggest = useCallback(async () => {
+      if (!descriptionValue.trim()) {
           toast({
               title: 'Description Needed',
               description: 'Please enter a problem description before suggesting a department.',
@@ -293,7 +292,7 @@ export default function ReportForm() {
       }
       
       setIsSuggestingDepartment(true);
-      const result = await getDepartmentSuggestion(description);
+      const result = await getDepartmentSuggestion(descriptionValue);
       if (result.success && result.suggestedDepartment) {
           form.setValue('department', result.suggestedDepartment);
           toast({
@@ -308,7 +307,7 @@ export default function ReportForm() {
           });
       }
       setIsSuggestingDepartment(false);
-  }
+  }, [descriptionValue, form, toast]);
 
   function onSubmit(data: ReportFormValues) {
     if (user.type !== 'user') return;
@@ -718,9 +717,3 @@ export default function ReportForm() {
     </>
   );
 }
-
-    
-
-    
-
-    
