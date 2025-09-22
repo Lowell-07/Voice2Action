@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               ...prevUser,
               data: {
                   ...currentData,
-                  civicPoints: (currentData.civicPoints || 0) + points
+                  civicPoints: (currentData. civicPoints || 0) + points
               }
           }});
       }
