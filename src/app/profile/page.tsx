@@ -4,11 +4,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2, Mail, Phone, Edit, UserCircle, ArrowLeft, Settings, LogOut } from 'lucide-react';
+import { Loader2, Mail, Phone, Edit, Settings, ArrowLeft, MapPin, Star, FileText, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useProblems } from '@/context/problem-context';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -35,93 +37,92 @@ export default function ProfilePage() {
   }
   
   const userProblems = problems.filter(p => p.reportedBy.id === user.data.id);
+  const resolvedProblems = userProblems.filter(p => p.status === 'Resolved').length;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-transparent">
       <main className="flex-1 py-8 md:py-12">
-        <div className="container max-w-4xl mx-auto px-4">
-            <div className='text-center mb-12'>
-              <h1 className="text-4xl md:text-5xl font-headline text-primary">Your Profile</h1>
-              <p className="text-muted-foreground mt-2">View your reported issues and manage your account.</p>
+        <div className="container max-w-2xl mx-auto px-4">
+            
+            <div className='mb-8'>
+                <Button variant="ghost" size="sm" onClick={() => router.back()}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+            </div>
+            
+            <div className='text-center mb-8'>
+                <h1 className="text-2xl font-bold mb-4">Profile</h1>
+                 <Avatar className="h-24 w-24 mx-auto mb-4 border-4 border-primary">
+                    {user.data.avatarUrl && <AvatarImage src={user.data.avatarUrl} alt={user.data.name} />}
+                    <AvatarFallback className="text-4xl">{user.data.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <h2 className="text-3xl font-bold font-headline">{user.data.name}</h2>
+                <p className="text-muted-foreground">Civic Contributor</p>
             </div>
 
-            <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20 mb-8">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div className='flex items-center gap-4'>
-                        <UserCircle className="h-16 w-16 text-primary" />
+            <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20 mb-6">
+                <CardHeader>
+                    <CardTitle className="text-lg">Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="flex items-center gap-4">
+                        <Mail className="h-5 w-5 text-muted-foreground" />
                         <div>
-                            <CardTitle className="text-2xl">{user.data.name}</CardTitle>
-                            <CardDescription>Civic Reporter</CardDescription>
+                            <p className="text-sm text-muted-foreground">Email</p>
+                            <p>{user.data.email || 'No email provided'}</p>
                         </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                        <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                    </Button>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="flex items-center gap-3">
-                        <Mail className="h-5 w-5 text-muted-foreground" />
-                        <span>{user.data.email || 'No email provided'}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
+                     <div className="flex items-center gap-4">
                         <Phone className="h-5 w-5 text-muted-foreground" />
-                        <span>{user.data.mobile}</span>
+                         <div>
+                            <p className="text-sm text-muted-foreground">Phone</p>
+                            <p>{user.data.mobile}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <MapPin className="h-5 w-5 text-muted-foreground" />
+                         <div>
+                            <p className="text-sm text-muted-foreground">Location</p>
+                            <p>New York, NY</p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
 
-             <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20 mb-8">
+             <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20 mb-6">
                 <CardHeader>
-                    <CardTitle>Your Reported Issues ({userProblems.length})</CardTitle>
+                    <CardTitle className="text-lg">Activity Stats</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    {userProblems.length > 0 ? (
-                        <ul className="space-y-4">
-                            {userProblems.map(p => (
-                                <li key={p.id} className="flex justify-between items-center p-4 bg-background/50 rounded-lg">
-                                    <div>
-                                        <p className="font-semibold">{p.title}</p>
-                                        <p className="text-sm text-muted-foreground">{p.department} - Status: {p.status}</p>
-                                    </div>
-                                    <Button variant="secondary" size="sm" asChild>
-                                        <Link href={`/explore/issues/${p.id}`}>View</Link>
-                                    </Button>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-muted-foreground text-center py-8">You have not reported any issues yet.</p>
-                    )}
+                <CardContent className="grid grid-cols-3 divide-x divide-border/50 text-center">
+                    <div className="p-4">
+                        <p className="text-3xl font-bold text-primary">{userProblems.length}</p>
+                        <p className="text-sm text-muted-foreground">Reports</p>
+                    </div>
+                    <div className="p-4">
+                        <p className="text-3xl font-bold text-primary">{resolvedProblems}</p>
+                        <p className="text-sm text-muted-foreground">Resolved</p>
+                    </div>
+                     <div className="p-4">
+                        <p className="text-3xl font-bold text-primary">4.8</p>
+                        <p className="text-sm text-muted-foreground">Rating</p>
+                    </div>
                 </CardContent>
             </Card>
             
-            <div className="flex justify-between items-start gap-8">
-                <div className="w-full">
-                    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20">
-                        <CardHeader>
-                            <CardTitle>Settings</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="outline" className="w-full justify-start">
-                                <Settings className="mr-2 h-4 w-4" /> Preferences
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-                <div className="w-full">
-                     <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20">
-                        <CardHeader>
-                            <CardTitle>Account</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Button variant="destructive" className="w-full justify-start" onClick={logout}>
-                                <LogOut className="mr-2 h-4 w-4" /> Logout
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-            
+            <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20">
+                <CardHeader>
+                    <CardTitle className="text-lg">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    <Button variant="ghost" className="w-full justify-start">
+                        <Edit className="mr-3 h-4 w-4" /> Edit Profile
+                    </Button>
+                     <Button variant="ghost" className="w-full justify-start">
+                        <Settings className="mr-3 h-4 w-4" /> Settings & Preferences
+                    </Button>
+                </CardContent>
+            </Card>
+
         </div>
       </main>
     </div>
