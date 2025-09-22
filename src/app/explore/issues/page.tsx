@@ -10,12 +10,22 @@ import { ArrowLeft, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { useProblems } from '@/context/problem-context';
+import { useMemo } from 'react';
 
 export default function IssuesPage() {
   const searchParams = useSearchParams();
   const { problems } = useProblems();
   const state = searchParams.get('state');
   const department = searchParams.get('department');
+
+  const filteredProblems = useMemo(() => {
+    if (!state || !department) {
+      return [];
+    }
+    return problems.filter(
+      (p) => p.location.state === state && p.department === department
+    );
+  }, [problems, state, department]);
 
   if (!state || !department) {
     return (
@@ -40,10 +50,6 @@ export default function IssuesPage() {
         </div>
     );
   }
-
-  const filteredProblems = problems.filter(
-    (p) => p.location.state === state && p.department === department
-  );
 
   return (
     <main className="flex-1">
