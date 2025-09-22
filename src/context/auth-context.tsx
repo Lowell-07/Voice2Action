@@ -1,9 +1,11 @@
 
 "use client";
 
-import { createContext, useState, ReactNode, useMemo } from 'react';
+import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
 import { mockUsers } from '@/lib/data';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase-client'; // Using the client auth instance
 
 type AuthUser =
   | { type: 'guest' }
@@ -27,11 +29,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'guest' });
   // Note: In a real app, users would be fetched from a database.
   const [allUsers, setAllUsers] = useState<User[]>(mockUsers);
+  
+  // This effect will run on the client and attach an auth state listener.
+  // It also gets the ID token when the user logs in.
+   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const token = await firebaseUser.getIdToken();
+        // In a real app, you'd fetch the user profile from your database using the UID
+        const existingUser = allUsers.find(u => u.id === firebaseUser.uid);
+        if (existingUser) {
+            setUser({ type: 'user', data: {...existingUser, idToken: token} });
+        }
+      } else {
+        setUser({ type: 'guest' });
+      }
+    });
+    return () => unsubscribe();
+  }, [allUsers]);
 
 
-  const login = (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string) => {
+  const login = async (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string) => {
+    // This is a simplified mock login flow. In a real app, you would have a backend
+    // that creates a custom token for a given user ID, and you would sign in with that.
+    // For now, we'll just mock the user object creation.
     if (type === 'user') {
-      if (nameOrDepartment && mobile) {
+       if (nameOrDepartment && mobile) {
         // This is a new registration
         const newUser: User = {
           id: `user-${Date.now()}`,
@@ -39,12 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           mobile: mobile,
           avatarUrl: `https://picsum.photos/seed/${nameOrDepartment}/100/100`,
           civicPoints: 0,
+          idToken: 'mock-token-for-new-user' // Mock token
         };
         setUser({ type: 'user', data: newUser });
         setAllUsers(prev => [...prev, newUser]);
       } else {
         // This is a login for an existing user (mocked)
-        setUser({ type: 'user', data: allUsers[0] });
+        const mockLoggedInUser = { ...allUsers[0], idToken: 'mock-token-for-existing-user'};
+        setUser({ type: 'user', data: mockLoggedInUser });
       }
     } else if (type === 'admin') {
       setUser({ type: 'admin', data: { name: 'Admin User', email: 'admin@voice2action.com' } });
@@ -54,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    auth.signOut();
     setUser({ type: 'guest' });
   };
   
@@ -73,17 +99,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           u.id === userId ? { ...u, civicPoints: (u.civicPoints || 0) + points } : u
       ));
       if (user.type === 'user' && user.data.id === userId) {
-          setUser(prevUser => ({
+          setUser(prevUser => {
+              const currentData = (prevUser as {type: 'user', data: User}).data;
+              return {
               ...prevUser,
               data: {
-                  ...(prevUser as { type: 'user', data: User }).data,
-                  civicPoints: ((prevUser as { type: 'user', data: User }).data.civicPoints || 0) + points
+                  ...currentData,
+                  civicPoints: (currentData.civicPoints || 0) + points
               }
-          }));
+          }});
       }
   };
 
-  const value = useMemo(() => ({ user, login, logout, updateUser, incrementCivicPoints }), [user, allUsers]);
+  const value = useMemo(() => ({ user, login, logout, updateUser, incrementCivicPoints }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

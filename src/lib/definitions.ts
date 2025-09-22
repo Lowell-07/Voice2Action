@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -5,6 +6,7 @@ export type User = {
   email?: string;
   avatarUrl?: string;
   civicPoints?: number;
+  idToken?: string; // To be used for authenticated API calls
 };
 
 export type Problem = {
@@ -38,5 +40,3 @@ export type IndianState = {
   code: string;
   name: string;
 };
-
-    
