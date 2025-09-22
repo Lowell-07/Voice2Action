@@ -1,22 +1,32 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { useProblems } from '@/context/problem-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, MapPin, Calendar, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import type { Problem } from '@/lib/definitions';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 
 export default function MyReportsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const { problems } = useProblems();
+  const { problems, voteOnProblem } = useProblems();
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
   useEffect(() => {
     if (user.type !== 'user') {
@@ -51,6 +61,7 @@ export default function MyReportsPage() {
   };
 
   return (
+    <>
     <div className="flex flex-col min-h-screen bg-transparent">
       <main className="flex-1 py-8 md:py-12">
         <div className="container max-w-4xl mx-auto px-4">
@@ -80,7 +91,7 @@ export default function MyReportsPage() {
                 </TableHeader>
                 <TableBody>
                   {userProblems.length > 0 ? userProblems.map((problem) => (
-                    <TableRow key={problem.id} onClick={() => router.push(`/explore/issues/${problem.id}`)} className="cursor-pointer">
+                    <TableRow key={problem.id} onClick={() => setSelectedProblem(problem)} className="cursor-pointer">
                       <TableCell>{format(new Date(problem.createdAt), 'dd MMM, yyyy')}</TableCell>
                       <TableCell className="font-medium">{problem.title}</TableCell>
                       <TableCell>{problem.department}</TableCell>
@@ -102,5 +113,64 @@ export default function MyReportsPage() {
         </div>
       </main>
     </div>
+    <Dialog open={!!selectedProblem} onOpenChange={(isOpen) => !isOpen && setSelectedProblem(null)}>
+        <DialogContent className="sm:max-w-2xl">
+            {selectedProblem && (
+                <>
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-headline">{selectedProblem.title}</DialogTitle>
+                         <div className="flex items-center gap-3 pt-2">
+                            <Badge variant={selectedProblem.status === 'Resolved' ? 'default' : selectedProblem.status === 'In Progress' ? 'secondary' : 'outline'}>
+                                {selectedProblem.status}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">{selectedProblem.department}</span>
+                        </div>
+                    </DialogHeader>
+                    <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden">
+                           <Image 
+                                src={`https://picsum.photos/seed/${selectedProblem.media.images[0]}/1200/675`}
+                                alt={selectedProblem.title}
+                                fill
+                                className="object-cover"
+                                data-ai-hint="issue photo"
+                            />
+                        </div>
+                        <p className="text-muted-foreground">{selectedProblem.description}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-start gap-3">
+                                <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
+                                <div>
+                                    <p className="font-semibold">Location</p>
+                                    <p className="text-muted-foreground">{selectedProblem.location.address}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <Calendar className="w-4 h-4 text-muted-foreground mt-1" />
+                                <div>
+                                    <p className="font-semibold">Reported On</p>
+                                    <p className="text-muted-foreground">{format(new Date(selectedProblem.createdAt), 'PP')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-muted/50 rounded-lg flex justify-between items-center">
+                           <div className="flex items-center gap-4">
+                               <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'like')}>
+                                   <ThumbsUp className="w-4 h-4 mr-2" />
+                                   {selectedProblem.likes}
+                               </Button>
+                               <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'dislike')}>
+                                   <ThumbsDown className="w-4 h-4 mr-2" />
+                                   {selectedProblem.dislikes}
+                               </Button>
+                           </div>
+                           <p className="text-muted-foreground text-sm">{selectedProblem.likes + selectedProblem.dislikes} total votes</p>
+                        </div>
+                    </div>
+                </>
+            )}
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
