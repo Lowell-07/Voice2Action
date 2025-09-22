@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -73,7 +72,6 @@ export default function LoginPage() {
               description: "No account exists with this mobile number. Please register.",
               variant: "destructive",
           });
-          router.push('/register');
           setIsLoading(false);
           return;
       }
