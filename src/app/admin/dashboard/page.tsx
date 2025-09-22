@@ -27,20 +27,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { format } from 'date-fns';
 import { useProblems } from '@/context/problem-context';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { departments } from '@/lib/data';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { problems, updateProblem } = useProblems();
-  const [departmentFilter, setDepartmentFilter] = useState('All');
 
-  const pendingReports = problems.filter(p => 
-    (p.status === 'Pending' || p.status === 'Awaiting Approval') &&
-    (departmentFilter === 'All' || p.department === departmentFilter)
-  );
+  const pendingReports = problems.filter(p => p.status === 'Pending' || p.status === 'Awaiting Approval');
 
   useEffect(() => {
     if (user.type !== 'admin') {
@@ -85,19 +79,6 @@ export default function AdminDashboardPage() {
                     <div>
                         <CardTitle>All Reported Issues</CardTitle>
                         <CardDescription>Here are all the issues that have been reported by users. Click a row to see details.</CardDescription>
-                    </div>
-                    <div className="w-[200px]">
-                        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Filter by department" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Departments</SelectItem>
-                                {departments.map(dept => (
-                                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
                     </div>
                 </div>
             </CardHeader>
@@ -146,7 +127,7 @@ export default function AdminDashboardPage() {
                     )) : (
                         <TableRow>
                             <TableCell colSpan={5} className="text-center h-24">
-                                All Caught Up! No pending reports for {departmentFilter !== 'All' ? `the ${departmentFilter}` : 'any department'}.
+                                All Caught Up! No pending reports.
                             </TableCell>
                         </TableRow>
                     )}
