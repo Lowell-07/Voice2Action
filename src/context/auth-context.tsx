@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             };
 
             const userRef = doc(db, "users", mockUid);
-            await setDoc(userRef, { ...newUser, id: undefined }); // Don't store id inside the document itself
+            await setDoc(userRef, { name: newUser.name, mobile: newUser.mobile, avatarUrl: newUser.avatarUrl, civicPoints: newUser.civicPoints });
 
             setUser({ type: 'user', data: {...newUser, idToken: mockToken }});
 
