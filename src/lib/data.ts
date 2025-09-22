@@ -46,12 +46,14 @@ export const mockUsers: User[] = [
     mobile: '9876543210',
     email: 'anjali.s@example.com',
     avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
+    civicPoints: 2450,
   },
   {
     id: 'user-2',
     name: 'Rohan Verma',
     mobile: '8765432109',
     avatarUrl: 'https://picsum.photos/seed/avatar2/100/100',
+    civicPoints: 1500,
   },
 ];
 
@@ -158,7 +160,7 @@ export const mockProblems: Problem[] = [
     description: 'The main swing set at the community park is broken and has sharp edges, making it dangerous for children.',
     department: 'Municipal Department',
     issueType: 'Public Spaces',
-    status: 'Pending',
+    status: 'Registered',
     location: {
       state: 'Maharashtra',
       city: 'Pune',
@@ -202,7 +204,7 @@ export const mockProblems: Problem[] = [
     description: 'We are experiencing daily power cuts from 7 PM to 8 PM. It is highly disruptive for everyone in the neighborhood.',
     department: 'Electric Department',
     issueType: 'Streetlights',
-    status: 'Pending',
+    status: 'Registered',
     location: {
       state: 'Maharashtra',
       city: 'Mumbai',
@@ -224,7 +226,7 @@ export const mockProblems: Problem[] = [
     description: 'A large tree has fallen across Oak Avenue, completely blocking traffic. Needs to be cleared urgently.',
     department: 'Roads & Transport',
     issueType: 'Roads & Streets',
-    status: 'Pending',
+    status: 'Awaiting Approval',
     location: {
       state: 'Delhi',
       city: 'New Delhi',

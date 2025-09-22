@@ -4,6 +4,7 @@ export type User = {
   mobile: string;
   email?: string;
   avatarUrl?: string;
+  civicPoints?: number;
 };
 
 export type Problem = {

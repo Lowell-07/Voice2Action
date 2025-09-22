@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useProblems } from '@/context/problem-context';
 
 export default function DepartmentDashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, incrementCivicPoints } = useAuth();
   const router = useRouter();
   const { problems, updateProblem } = useProblems();
   
@@ -47,6 +47,10 @@ export default function DepartmentDashboardPage() {
   const departmentReports = problems.filter(p => p.department === user.data.department && (p.status === 'Registered' || p.status === 'In Progress' || p.status === 'Resolved'));
 
   const handleStatusChange = (reportId: string, newStatus: string) => {
+    const problem = problems.find(p => p.id === reportId);
+    if (problem && problem.status !== 'Resolved' && newStatus === 'Resolved') {
+        incrementCivicPoints(problem.reportedBy.id, 1);
+    }
     updateProblem(reportId, { status: newStatus as any });
   };
 
