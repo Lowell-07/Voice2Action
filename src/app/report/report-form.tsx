@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -149,8 +150,38 @@ export default function ReportForm() {
       }
       return new File([u8arr], filename, {type:mime});
   }
+
+  const compressImage = (imageFile: File, quality = 0.7): Promise<{ file: File, preview: string }> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      reader.onload = (event) => {
+        const img = document.createElement('img');
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const compressedFile = dataUrlToFile(dataUrl, `compressed-${imageFile.name}`);
+
+          if (compressedFile) {
+            resolve({ file: compressedFile, preview: dataUrl });
+          } else {
+            reject(new Error("Failed to compress image."));
+          }
+        };
+        img.onerror = (error) => reject(error);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
   
-  const handleCapture = useCallback(() => {
+  const handleCapture = useCallback(async () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -174,25 +205,44 @@ export default function ReportForm() {
         const text = `${location} | ${timestamp}`;
         context.fillText(text, 10, videoHeight - 15);
 
-        const dataUrl = canvas.toDataURL('image/jpeg');
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // Compress here
         const file = dataUrlToFile(dataUrl, `capture-${Date.now()}.jpg`);
-        setMediaFile({ file: file, preview: dataUrl });
-        form.setValue('media', file);
-        setShowCamera(false);
+
+        if (file) {
+          setMediaFile({ file: file, preview: dataUrl });
+          form.setValue('media', file);
+          setShowCamera(false);
+        }
       }
     }
   }, [form]);
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-        // In a real app, you'd upload this file to a service like Firebase Storage
-        // and save the URL. For this demo, we'll use a local object URL for preview.
-        const previewUrl = URL.createObjectURL(file);
-        setMediaFile({ file, preview: previewUrl });
-        form.setValue('media', file);
+        if (file.type.startsWith('image/')) {
+          try {
+            toast({ title: 'Compressing image...', description: 'Please wait.' });
+            const { file: compressedFile, preview } = await compressImage(file, 0.8);
+            setMediaFile({ file: compressedFile, preview });
+            form.setValue('media', compressedFile);
+            toast({ title: 'Image compressed successfully!', description: `Original: ${(file.size / 1024).toFixed(1)} KB, Compressed: ${(compressedFile.size / 1024).toFixed(1)} KB` });
+          } catch (error) {
+            console.error("Image compression failed:", error);
+            toast({ title: 'Compression Failed', description: 'Could not compress image, using original.', variant: 'destructive' });
+            // Fallback to original file
+            const previewUrl = URL.createObjectURL(file);
+            setMediaFile({ file, preview: previewUrl });
+            form.setValue('media', file);
+          }
+        } else {
+          // For non-image files like videos, just use the original file
+          const previewUrl = URL.createObjectURL(file);
+          setMediaFile({ file, preview: previewUrl });
+          form.setValue('media', file);
+        }
     }
-  }, [form]);
+  }, [form, toast]);
 
   const clearMedia = useCallback(() => {
       if (mediaFile.preview && mediaFile.preview.startsWith('blob:')) {
@@ -705,3 +755,5 @@ export default function ReportForm() {
     </>
   );
 }
+
+    
