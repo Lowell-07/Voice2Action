@@ -20,9 +20,6 @@ export default function RootLayout({
   children: React.ReactNode;
   params: {locale: string};
 }>) {
-  // Validate that the incoming `locale` parameter is valid
-  if (!['en', 'hi', 'bn', 'te', 'ta', 'mr', 'gu', 'kn', 'ml', 'pa', 'ur'].includes(locale)) notFound();
-
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
