@@ -36,37 +36,27 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteProblem = useCallback(async (problemId: string) => {
-    // In a real app, the client SDK doesn't have delete permissions.
-    // We need to call our secure backend API endpoint.
     if (user.type !== 'user' || !user.data.idToken) {
-        toast({ title: "Authentication Error", description: "You must be logged in to delete issues.", variant: "destructive" });
-        return;
+      throw new Error("You must be logged in to delete an issue.");
     }
     
-    try {
-        const response = await fetch('/api/delete-issue', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user.data.idToken}`
-            },
-            body: JSON.stringify({ problemId })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete the issue.');
-        }
-
-        // On successful API call, remove the problem from the local state.
-        setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
-        toast({ title: "Issue Deleted", description: "Your reported issue has been successfully deleted." });
-
-    } catch (error) {
-        console.error("Failed to delete problem:", error);
-        toast({ title: "Error", description: (error as Error).message, variant: "destructive"});
+    const response = await fetch('/api/delete-issue', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.data.idToken}`
+        },
+        body: JSON.stringify({ problemId })
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete the issue.');
     }
-  }, [user, toast]);
+
+    setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
+
+  }, [user]);
   
   const voteOnProblem = useCallback((problemId: string, voteType: 'like' | 'dislike') => {
     setProblems(prevProblems => {

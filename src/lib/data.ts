@@ -84,7 +84,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 15,
     dislikes: 2,
-    reportedBy: mockUsers[0],
+    reportedById: mockUsers[0].id,
+    reportedBy: {
+        id: mockUsers[0].id,
+        name: mockUsers[0].name,
+        avatarUrl: mockUsers[0].avatarUrl
+    },
     createdAt: '2024-05-10T10:00:00Z',
   },
   {
@@ -107,7 +112,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 2,
     dislikes: 0,
-    reportedBy: mockUsers[1],
+    reportedById: mockUsers[1].id,
+    reportedBy: {
+        id: mockUsers[1].id,
+        name: mockUsers[1].name,
+        avatarUrl: mockUsers[1].avatarUrl
+    },
     createdAt: '2024-05-28T14:30:00Z',
   },
   {
@@ -129,7 +139,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 8,
     dislikes: 1,
-    reportedBy: mockUsers[0],
+    reportedById: mockUsers[0].id,
+    reportedBy: {
+        id: mockUsers[0].id,
+        name: mockUsers[0].name,
+        avatarUrl: mockUsers[0].avatarUrl
+    },
     createdAt: '2024-05-25T21:00:00Z',
   },
   {
@@ -151,7 +166,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 8,
     dislikes: 3,
-    reportedBy: mockUsers[1],
+    reportedById: mockUsers[1].id,
+    reportedBy: {
+        id: mockUsers[1].id,
+        name: mockUsers[1].name,
+        avatarUrl: mockUsers[1].avatarUrl
+    },
     createdAt: '2024-05-29T08:00:00Z',
   },
     {
@@ -173,7 +193,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 3,
     dislikes: 0,
-    reportedBy: mockUsers[0],
+    reportedById: mockUsers[0].id,
+    reportedBy: {
+        id: mockUsers[0].id,
+        name: mockUsers[0].name,
+        avatarUrl: mockUsers[0].avatarUrl
+    },
     createdAt: '2024-05-27T18:00:00Z',
   },
    {
@@ -195,7 +220,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 5,
     dislikes: 5,
-    reportedBy: mockUsers[0],
+    reportedById: mockUsers[0].id,
+    reportedBy: {
+        id: mockUsers[0].id,
+        name: mockUsers[0].name,
+        avatarUrl: mockUsers[0].avatarUrl
+    },
     createdAt: '2024-06-01T11:00:00Z',
   },
   {
@@ -217,7 +247,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 12,
     dislikes: 1,
-    reportedBy: mockUsers[1],
+    reportedById: mockUsers[1].id,
+    reportedBy: {
+        id: mockUsers[1].id,
+        name: mockUsers[1].name,
+        avatarUrl: mockUsers[1].avatarUrl
+    },
     createdAt: '2024-06-02T09:00:00Z',
   },
   {
@@ -239,7 +274,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 0,
     dislikes: 0,
-    reportedBy: mockUsers[0],
+    reportedById: mockUsers[0].id,
+    reportedBy: {
+        id: mockUsers[0].id,
+        name: mockUsers[0].name,
+        avatarUrl: mockUsers[0].avatarUrl
+    },
     createdAt: '2024-06-03T12:00:00Z',
   }
 ];

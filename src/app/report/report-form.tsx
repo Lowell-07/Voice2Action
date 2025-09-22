@@ -361,6 +361,7 @@ export default function ReportForm() {
       },
       likes: 0,
       dislikes: 0,
+      reportedById: user.data.id,
       reportedBy: {
         id: user.data.id,
         name: user.data.name,

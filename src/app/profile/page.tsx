@@ -24,12 +24,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { problems, deleteProblem } = useProblems();
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user.type === 'guest') {
@@ -50,7 +53,7 @@ export default function ProfilePage() {
     );
   }
   
-  const userProblems = problems.filter(p => p.reportedBy.id === user.data.id);
+  const userProblems = problems.filter(p => p.reportedById === user.data.id);
   const resolvedProblems = userProblems.filter(p => p.status === 'Resolved').length;
   const recentProblems = userProblems.slice(0, 3);
 
@@ -65,10 +68,24 @@ export default function ProfilePage() {
     }
   };
 
-  const handleDelete = () => {
-    if(problemToDelete) {
-        deleteProblem(problemToDelete);
+  const handleDelete = async () => {
+    if(!problemToDelete) return;
+    setIsDeleting(true);
+    try {
+        await deleteProblem(problemToDelete);
+        toast({
+            title: "Success",
+            description: "The issue has been deleted."
+        })
+    } catch (error) {
+        toast({
+            title: "Error Deleting Issue",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+            variant: "destructive"
+        })
+    } finally {
         setProblemToDelete(null);
+        setIsDeleting(false);
     }
   }
 
@@ -154,7 +171,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant={getStatusVariant(problem.status)}>{problem.status}</Badge>
-                                  {problem.status === 'Awaiting Approval' && (
+                                  {(problem.status === 'Awaiting Approval' || problem.status === 'Pending') && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setProblemToDelete(problem.id)}>
@@ -166,12 +183,15 @@ export default function ProfilePage() {
                                           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                           <AlertDialogDescription>
                                             This action cannot be undone. This will permanently delete your
-                                            reported issue and remove it from our servers.
+                                            reported issue from our servers.
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                           <AlertDialogCancel onClick={() => setProblemToDelete(null)}>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+                                          <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                                            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                            Continue
+                                          </AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
                                     </AlertDialog>

@@ -32,6 +32,7 @@ export type Problem = {
   };
   likes: number;
   dislikes: number;
+  reportedById: string; // For improved querying and security rules
   reportedBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
   createdAt: string;
 };
