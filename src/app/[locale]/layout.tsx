@@ -5,9 +5,8 @@ import { Providers } from '@/components/providers';
 import { cn } from '@/lib/utils';
 import 'leaflet/dist/leaflet.css';
 import { Header } from '@/components/layout/header';
-import Image from 'next/image';
-import {notFound} from 'next/navigation';
 import { getMessages } from 'next-intl/server';
+import {notFound} from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Voice2Action',
@@ -22,12 +21,7 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: {locale: string};
 }>) {
-  let messages;
-  try {
-    messages = await getMessages({locale});
-  } catch (error) {
-    notFound();
-  }
+  const messages = await getMessages({locale});
 
   return (
     <html lang={locale} suppressHydrationWarning>
