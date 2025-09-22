@@ -1,0 +1,21 @@
+{
+  "Settings": {
+    "title": "Settings",
+    "backToProfile": "Back to Profile",
+    "preferencesTitle": "Preferences",
+    "preferencesDescription": "Customize your Voice2Action experience.",
+    "theme": "Theme",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "language": "Language",
+    "languageDescription": "Choose your preferred language",
+    "emailNotifications": "Email Notifications",
+    "emailNotificationsDescription": "Receive updates on your reports",
+    "smsAlerts": "SMS Alerts",
+    "smsAlertsDescription": "Get SMS updates on issue resolution",
+    "publicProfile": "Public Profile",
+    "publicProfileDescription": "Make your contributions visible to others",
+    "accountTitle": "Account",
+    "logout": "Logout"
+  }
+}

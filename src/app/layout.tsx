@@ -14,11 +14,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params: {locale}
 }: Readonly<{
   children: React.ReactNode;
+  params: {locale: string};
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -32,7 +34,7 @@ export default function RootLayout({
           'min-h-screen bg-background font-body antialiased'
         )}
       >
-        <Providers>
+        <Providers locale={locale}>
             <Header />
             <div className="pb-16 md:pb-0">
                 {children}

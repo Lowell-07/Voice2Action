@@ -1,0 +1,21 @@
+{
+  "Settings": {
+    "title": "सेटिंग्स",
+    "backToProfile": "प्रोफ़ाइल पर वापस जाएं",
+    "preferencesTitle": "वरीयताएँ",
+    "preferencesDescription": "अपने Voice2Action अनुभव को अनुकूलित करें।",
+    "theme": "थीम",
+    "lightMode": "लाइट मोड",
+    "darkMode": "डार्क मोड",
+    "language": "भाषा",
+    "languageDescription": "अपनी पसंदीदा भाषा चुनें",
+    "emailNotifications": "ईमेल सूचनाएं",
+    "emailNotificationsDescription": "अपनी रिपोर्ट पर अपडेट प्राप्त करें",
+    "smsAlerts": "एसएमएस अलर्ट",
+    "smsAlertsDescription": "समस्या समाधान पर एसएमएस अपडेट प्राप्त करें",
+    "publicProfile": "सार्वजनिक प्रोफ़ाइल",
+    "publicProfileDescription": "अपने योगदान को दूसरों के लिए दृश्यमान बनाएं",
+    "accountTitle": "खाता",
+    "logout": "लॉग आउट"
+  }
+}
