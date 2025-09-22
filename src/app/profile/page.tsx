@@ -122,8 +122,10 @@ export default function ProfilePage() {
                             <Edit className="mr-3 h-4 w-4" /> Edit Profile
                         </Link>
                     </Button>
-                     <Button variant="ghost" className="w-full justify-start">
-                        <Settings className="mr-3 h-4 w-4" /> Settings & Preferences
+                     <Button variant="ghost" className="w-full justify-start" asChild>
+                        <Link href="/profile/settings">
+                            <Settings className="mr-3 h-4 w-4" /> Settings & Preferences
+                        </Link>
                     </Button>
                 </CardContent>
             </Card>
