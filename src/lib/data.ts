@@ -73,6 +73,7 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Maharashtra',
       city: 'Mumbai',
+      address: 'Main Street, Mumbai',
       coordinates: { lat: 19.076, lng: 72.8777 },
     },
     media: {
@@ -80,6 +81,7 @@ export const mockProblems: Problem[] = [
       videos: [],
     },
     likes: 15,
+    dislikes: 2,
     reportedBy: mockUsers[0],
     createdAt: '2024-05-10T10:00:00Z',
   },
@@ -93,6 +95,7 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Delhi',
       city: 'New Delhi',
+      address: 'Connaught Place, New Delhi',
       coordinates: { lat: 28.6139, lng: 77.2090 },
     },
     media: {
@@ -101,6 +104,7 @@ export const mockProblems: Problem[] = [
       voicemail: 'voicemail-1.mp3',
     },
     likes: 2,
+    dislikes: 0,
     reportedBy: mockUsers[1],
     createdAt: '2024-05-28T14:30:00Z',
   },
@@ -114,13 +118,15 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Karnataka',
       city: 'Bengaluru',
+      address: '5th and Elm, Bengaluru',
       coordinates: { lat: 12.9716, lng: 77.5946 },
     },
     media: {
       images: ['streetlight-1'],
       videos: [],
     },
-    likes: 1,
+    likes: 8,
+    dislikes: 1,
     reportedBy: mockUsers[0],
     createdAt: '2024-05-25T21:00:00Z',
   },
@@ -134,6 +140,7 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Delhi',
       city: 'New Delhi',
+      address: 'Janpath, New Delhi',
       coordinates: { lat: 28.633, lng: 77.2167 },
     },
     media: {
@@ -141,6 +148,7 @@ export const mockProblems: Problem[] = [
       videos: [],
     },
     likes: 8,
+    dislikes: 3,
     reportedBy: mockUsers[1],
     createdAt: '2024-05-29T08:00:00Z',
   },
@@ -154,6 +162,7 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Maharashtra',
       city: 'Pune',
+      address: 'Community Park, Pune',
       coordinates: { lat: 18.5204, lng: 73.8567 },
     },
     media: {
@@ -161,6 +170,7 @@ export const mockProblems: Problem[] = [
       videos: [],
     },
     likes: 3,
+    dislikes: 0,
     reportedBy: mockUsers[0],
     createdAt: '2024-05-27T18:00:00Z',
   },
@@ -174,6 +184,7 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Delhi',
       city: 'New Delhi',
+      address: 'Near Nehru Place, New Delhi',
       coordinates: { lat: 28.65, lng: 77.23 },
     },
     media: {
@@ -181,6 +192,7 @@ export const mockProblems: Problem[] = [
       videos: [],
     },
     likes: 5,
+    dislikes: 5,
     reportedBy: mockUsers[0],
     createdAt: '2024-06-01T11:00:00Z',
   },
@@ -194,6 +206,7 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Maharashtra',
       city: 'Mumbai',
+      address: 'Andheri West, Mumbai',
       coordinates: { lat: 19.1, lng: 72.9 },
     },
     media: {
@@ -201,6 +214,7 @@ export const mockProblems: Problem[] = [
       videos: [],
     },
     likes: 12,
+    dislikes: 1,
     reportedBy: mockUsers[1],
     createdAt: '2024-06-02T09:00:00Z',
   },
@@ -214,6 +228,7 @@ export const mockProblems: Problem[] = [
     location: {
       state: 'Delhi',
       city: 'New Delhi',
+      address: 'Oak Avenue, New Delhi',
       coordinates: { lat: 28.6139, lng: 77.2080 },
     },
     media: {
@@ -221,8 +236,8 @@ export const mockProblems: Problem[] = [
       videos: [],
     },
     likes: 0,
+    dislikes: 0,
     reportedBy: mockUsers[0],
     createdAt: new Date().toISOString(),
   }
 ];
-

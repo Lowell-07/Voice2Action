@@ -10,30 +10,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { indianStates, departments } from '@/lib/data';
+import { indianStates } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle, Clock, FileText, Globe, MapPin, AlertTriangle, Building, Recycle, Lightbulb, Waves, Trees, HardHat, TramFront } from 'lucide-react';
+import { TrendingUp, Globe, MapPin, Calendar, ThumbsUp, ThumbsDown, Building } from 'lucide-react';
 import { useProblems } from '@/context/problem-context';
-
-const departmentIcons: { [key: string]: React.ReactNode } = {
-    'Electric Department': <Lightbulb className="w-8 h-8 text-primary" />,
-    'Municipal Department': <Building className="w-8 h-8 text-primary" />,
-    'Water & Sewerage': <Waves className="w-8 h-8 text-primary" />,
-    'Roads & Transport': <TramFront className="w-8 h-8 text-primary" />,
-  };
+import { format } from 'date-fns';
 
 export default function DashboardClient() {
   const [selectedState, setSelectedState] = useState<string | null>(null);
-  const { problems } = useProblems();
+  const { problems, voteOnProblem } = useProblems();
 
-  const problemsInState = selectedState
-    ? problems.filter((p) => p.location.state === selectedState)
-    : [];
-
-  const solvedProblems = problemsInState.filter(p => p.status === 'Resolved').length;
-  const reportedProblems = problemsInState.length;
+  const problemsInState = useMemo(() => {
+    if (!selectedState) return [];
+    return problems
+      .filter((p) => p.location.state === selectedState)
+      .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes));
+  }, [selectedState, problems]);
   
   const stateProblemCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
@@ -89,72 +83,78 @@ export default function DashboardClient() {
           </Card>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
-                <CardHeader className="flex-row justify-between items-center">
-                    <CardTitle>Problems Reported</CardTitle>
-                    <AlertTriangle className="w-6 h-6 text-destructive" />
-                </CardHeader>
-                <CardContent>
-                    <p className="text-4xl font-bold">{selectedState ? reportedProblems : '--'}</p>
-                </CardContent>
-            </Card>
-            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
-                <CardHeader className="flex-row justify-between items-center">
-                    <CardTitle>Problems Solved</CardTitle>
-                    <CheckCircle className="w-6 h-6 text-green-500" />
-                </CardHeader>
-                <CardContent>
-                    <p className="text-4xl font-bold">{selectedState ? solvedProblems : '--'}</p>
-                </CardContent>
-            </Card>
-        </div>
-
-
-        <div>
-            <div className="text-center mb-8">
-                <h2 className="text-3xl font-headline font-bold">Civic Issue Categories</h2>
-                <p className="text-muted-foreground">Explore different categories of civic issues reported by citizens.</p>
-            </div>
-            {selectedState ? (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {departments.map((department) => {
-                        const problems = problemsInState.filter(p => p.department === department);
-                        const categoryCard = (
-                             <CardContent className="p-6 flex flex-col items-center text-center">
-                                {departmentIcons[department] || <FileText className="w-8 h-8 text-primary" />}
-                                <h3 className="text-lg font-semibold mt-4">{department.replace(' Department', '')}</h3>
-                                <p className="text-3xl font-bold my-2">{problems.length}</p>
-                                <p className="text-sm text-muted-foreground">Reports</p>
-                            </CardContent>
-                        );
-
-                        if (problems.length > 0) {
-                            return (
-                                <Link key={department} href={`/explore/issues?state=${encodeURIComponent(selectedState)}&department=${encodeURIComponent(department)}`}>
-                                    <Card className="bg-card/80 backdrop-blur-sm border-border/20 h-full transition-all hover:border-primary/50 hover:shadow-lg">
-                                        {categoryCard}
-                                    </Card>
-                                </Link>
-                            )
-                        }
-
-                        return (
-                             <Card key={department} className="bg-card/70 backdrop-blur-sm border-border/20 h-full opacity-60">
-                                {categoryCard}
-                            </Card>
-                        )
-                    })}
+        {selectedState && (
+             <div>
+                <div className="flex items-center gap-3 mb-8">
+                    <TrendingUp className="w-8 h-8 text-primary" />
+                    <h2 className="text-3xl font-headline font-bold">Trending Issues in {selectedState}</h2>
                 </div>
-            ) : (
+                {problemsInState.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {problemsInState.map((problem) => (
+                        <Card key={problem.id} className="bg-card/80 backdrop-blur-sm border-border/20 flex flex-col overflow-hidden shadow-lg transition-all hover:shadow-xl hover:-translate-y-1">
+                            <div className="relative aspect-video w-full">
+                                <Image 
+                                    src={`https://picsum.photos/seed/${problem.media.images[0]}/600/400`}
+                                    alt={problem.title}
+                                    fill
+                                    className="object-cover"
+                                    data-ai-hint="issue image"
+                                />
+                                <Badge className="absolute top-2 right-2" variant={problem.status === 'Resolved' ? 'default' : problem.status === 'In Progress' ? 'secondary' : 'destructive'}>
+                                    {problem.status === 'Pending' || problem.status === 'Awaiting Approval' ? 'New' : problem.status}
+                                </Badge>
+                            </div>
+                            <CardHeader>
+                                <CardTitle className="text-xl leading-tight">{problem.title}</CardTitle>
+                                <div className="flex items-center text-xs text-muted-foreground gap-4 pt-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <MapPin className="w-3 h-3" />
+                                        <span>{problem.location.address}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Calendar className="w-3 h-3" />
+                                        <span>{format(new Date(problem.createdAt), 'dd/MM/yyyy')}</span>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <p className="text-sm text-muted-foreground line-clamp-2">{problem.description}</p>
+                                <div className="flex items-center text-xs text-muted-foreground gap-2 pt-3">
+                                    <Building className="w-3 h-3" />
+                                    <span>{problem.department}</span>
+                                    <span>#{problem.id.split('-')[1]}</span>
+                                </div>
+                            </CardContent>
+                            <div className="p-6 pt-0 flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => voteOnProblem(problem.id, 'like')}>
+                                        <ThumbsUp className="w-4 h-4 mr-2" />
+                                        {problem.likes}
+                                    </Button>
+                                     <Button variant="outline" size="sm" onClick={() => voteOnProblem(problem.id, 'dislike')}>
+                                        <ThumbsDown className="w-4 h-4 mr-2" />
+                                        {problem.dislikes}
+                                    </Button>
+                                </div>
+                                <Button variant="secondary" asChild>
+                                    <Link href={`/explore/issues/${problem.id}`}>View Details</Link>
+                                </Button>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+                 ) : (
                 <Card className="bg-card/80 backdrop-blur-sm border-border/20 text-center py-16">
                     <CardHeader>
-                        <CardTitle>Select a State</CardTitle>
-                        <CardDescription>Please select a state to view issue categories.</CardDescription>
+                        <CardTitle>No Issues Found</CardTitle>
+                        <CardDescription>There are no reported issues for {selectedState} yet.</CardDescription>
                     </CardHeader>
                 </Card>
             )}
-        </div>
+            </div>
+        )}
+
       </div>
     </main>
   );

@@ -28,6 +28,7 @@ export type Problem = {
     voicemail?: string;
   };
   likes: number;
+  dislikes: number;
   reportedBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
   createdAt: string;
 };

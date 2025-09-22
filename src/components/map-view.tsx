@@ -46,6 +46,7 @@ export default function MapView({ problems, mapRef }: MapViewProps) {
 
       problems.forEach(problem => {
         const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng]).addTo(map);
+        const totalLikes = problem.likes - problem.dislikes;
         
         const popupContent = `
             <div class="w-64">
@@ -55,7 +56,7 @@ export default function MapView({ problems, mapRef }: MapViewProps) {
               <h3 class="font-bold text-lg mb-1">${problem.title}</h3>
               <p class="text-sm text-muted-foreground mb-2 line-clamp-2">${problem.description}</p>
               <div class="flex justify-between items-center">
-                <span class="text-sm font-semibold">${problem.likes} Likes</span>
+                <span class="text-sm font-semibold">${totalLikes} Likes</span>
               </div>
             </div>
         `;
@@ -64,8 +65,8 @@ export default function MapView({ problems, mapRef }: MapViewProps) {
 
         L.circle([problem.location.coordinates.lat, problem.location.coordinates.lng], {
           radius: 20000,
-          color: getDotColor(problem.likes),
-          fillColor: getDotColor(problem.likes),
+          color: getDotColor(totalLikes),
+          fillColor: getDotColor(totalLikes),
           fillOpacity: 0.5,
         }).addTo(map);
       });
