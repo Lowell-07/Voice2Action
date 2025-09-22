@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import 'leaflet/dist/leaflet.css';
 import { Header } from '@/components/layout/header';
 import { getMessages } from 'next-intl/server';
-import {notFound} from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Voice2Action',
