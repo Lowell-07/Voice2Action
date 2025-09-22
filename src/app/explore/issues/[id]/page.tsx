@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,11 @@ export default function IssueDetailsPage() {
   const params = useParams();
   const { id } = params;
   const { problems, voteOnProblem } = useProblems();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   const problem = problems.find(p => p.id === id);
 
@@ -142,11 +148,11 @@ export default function IssueDetailsPage() {
                         </div>
                         <div className="flex justify-between text-sm">
                             <p className="text-muted-foreground">Reported</p>
-                            <p>{format(new Date(problem.createdAt), 'PP')}</p>
+                            <p>{isClient ? format(new Date(problem.createdAt), 'PP') : '...'}</p>
                         </div>
                          <div className="flex justify-between text-sm">
                             <p className="text-muted-foreground">Last Updated</p>
-                            <p>{format(new Date(problem.createdAt), 'PP')}</p>
+                            <p>{isClient ? format(new Date(problem.createdAt), 'PP') : '...'}</p>
                         </div>
                     </CardContent>
                     </Card>
@@ -164,7 +170,7 @@ export default function IssueDetailsPage() {
                             </div>
                             <div>
                               <p className="font-semibold">Issue Reported</p>
-                              <p className="text-sm text-muted-foreground">{format(new Date(problem.createdAt), 'dd MMMM, yyyy')}</p>
+                              <p className="text-sm text-muted-foreground">{isClient ? format(new Date(problem.createdAt), 'dd MMMM, yyyy') : '...'}</p>
                             </div>
                           </li>
                            <li className="flex gap-4">

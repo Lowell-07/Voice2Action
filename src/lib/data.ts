@@ -240,6 +240,6 @@ export const mockProblems: Problem[] = [
     likes: 0,
     dislikes: 0,
     reportedBy: mockUsers[0],
-    createdAt: new Date().toISOString(),
+    createdAt: '2024-06-03T12:00:00Z',
   }
 ];
