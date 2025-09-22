@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import '../globals.css';
 import { Providers } from '@/components/providers';
@@ -5,6 +6,8 @@ import { cn } from '@/lib/utils';
 import 'leaflet/dist/leaflet.css';
 import { Header } from '@/components/layout/header';
 import Image from 'next/image';
+import {notFound} from 'next/navigation';
+import { getMessages } from 'next-intl/server';
 
 export const metadata: Metadata = {
   title: 'Voice2Action',
@@ -12,13 +15,19 @@ export const metadata: Metadata = {
     'Report civic issues, track progress, and build a better community.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
   params: {locale}
 }: Readonly<{
   children: React.ReactNode;
   params: {locale: string};
 }>) {
+  let messages;
+  try {
+    messages = await getMessages({locale});
+  } catch (error) {
+    notFound();
+  }
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -35,7 +44,7 @@ export default function RootLayout({
           'min-h-screen bg-background font-body antialiased'
         )}
       >
-        <Providers locale={locale}>
+        <Providers locale={locale} messages={messages}>
             <Header />
             <div className="pb-16 md:pb-0">
                 {children}

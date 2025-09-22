@@ -31,9 +31,7 @@ export default function SettingsPage() {
     }, [user, router]);
 
     const handleLanguageChange = (locale: string) => {
-        // This will redirect to the same page with the new locale
-        // E.g., from /en/profile/settings to /hi/profile/settings
-        const newPath = `/${locale}${pathname}`;
+        const newPath = `/${locale}/${pathname.split('/').slice(2).join('/')}`;
         router.replace(newPath);
     };
     
