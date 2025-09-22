@@ -14,6 +14,7 @@ async function getMockMessages(locale: string) {
     return (await import(`@/messages/${locale}.json`)).default;
   } catch (error) {
     // Fallback to English if the locale is not found
+    console.error(`Could not load messages for locale: ${locale}`, error);
     return (await import(`@/messages/en.json`)).default;
   }
 }
@@ -21,13 +22,25 @@ async function getMockMessages(locale: string) {
 export function Providers({ children, locale }: { children: React.ReactNode, locale: string }) {
   // In a real app, you would use `use(getMessages())` here and make this an async component
   const [messages, setMessages] = React.useState({});
+  
   React.useEffect(() => {
-    getMockMessages(locale).then(setMessages);
+    if (locale) {
+      getMockMessages(locale).then(setMessages);
+    }
   }, [locale]);
 
 
-  if (!locale) {
-    return null;
+  if (!locale || Object.keys(messages).length === 0) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <AuthProvider>
+              <ProblemProvider>
+                  {children}
+                  <Toaster />
+              </ProblemProvider>
+          </AuthProvider>
+      </ThemeProvider>
+    );
   }
 
   return (

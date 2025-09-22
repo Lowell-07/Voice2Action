@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import 'leaflet/dist/leaflet.css';
 import { Header } from '@/components/layout/header';
 import Image from 'next/image';
+import { notFound } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Voice2Action',
@@ -19,6 +20,9 @@ export default function RootLayout({
   children: React.ReactNode;
   params: {locale: string};
 }>) {
+  // Validate that the incoming `locale` parameter is valid
+  if (!['en', 'hi', 'bn', 'te', 'ta', 'mr', 'gu', 'kn', 'ml', 'pa', 'ur'].includes(locale)) notFound();
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
