@@ -44,7 +44,7 @@ export default function DepartmentDashboardPage() {
     );
   }
 
-  const departmentReports = problems.filter(p => p.department === user.data.department && (p.status === 'In Progress' || p.status === 'Resolved'));
+  const departmentReports = problems.filter(p => p.department === user.data.department && (p.status === 'Registered' || p.status === 'In Progress' || p.status === 'Resolved'));
 
   const handleStatusChange = (reportId: string, newStatus: string) => {
     updateProblem(reportId, { status: newStatus as any });
@@ -99,6 +99,7 @@ export default function DepartmentDashboardPage() {
                                   <SelectValue placeholder="Update Status" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  <SelectItem value="Registered">Registered</SelectItem>
                                   <SelectItem value="In Progress">In Progress</SelectItem>
                                   <SelectItem value="Resolved">Resolved</SelectItem>
                                 </SelectContent>

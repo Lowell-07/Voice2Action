@@ -42,7 +42,7 @@ export default function AdminDashboardPage() {
   }, [user, router]);
   
   const handleApproval = (id: string, approved: boolean) => {
-    const newStatus = approved ? 'In Progress' : 'Rejected';
+    const newStatus = approved ? 'Registered' : 'Rejected';
     updateProblem(id, { status: newStatus as any });
     toast({
         title: `Report ${approved ? 'Approved' : 'Rejected'}`,

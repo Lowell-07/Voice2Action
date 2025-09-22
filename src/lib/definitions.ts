@@ -12,7 +12,7 @@ export type Problem = {
   description: string;
   department: string;
   issueType: string;
-  status: 'Pending' | 'Awaiting Approval' | 'In Progress' | 'Resolved' | 'Rejected';
+  status: 'Pending' | 'Awaiting Approval' | 'Registered' | 'In Progress' | 'Resolved' | 'Rejected';
   location: {
     address: string;
     state: string;
