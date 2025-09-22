@@ -22,12 +22,6 @@ export default function DepartmentLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('');
 
-  useEffect(() => {
-    if (user.type === 'department') {
-      router.push('/department/dashboard');
-    }
-  }, [user, router]);
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDepartment) {
