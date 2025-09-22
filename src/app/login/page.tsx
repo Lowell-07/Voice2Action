@@ -68,7 +68,6 @@ export default function LoginPage() {
       }
       setIsLoading(true);
 
-      // The login function now handles both login and registration
       const result = await login('user', name, mobile);
 
       if (result.success) {
@@ -76,15 +75,15 @@ export default function LoginPage() {
               title: result.isNewUser ? "Registration Successful!" : "Login Successful!",
               description: "Welcome!",
           });
-          router.push('/profile');
+          // The useEffect will handle the redirect to /profile
       } else {
            toast({
               title: "An Error Occurred",
               description: result.error,
               variant: "destructive",
           });
+          setIsLoading(false);
       }
-      setIsLoading(false);
   };
 
   const toggleForm = () => {
