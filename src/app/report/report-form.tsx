@@ -70,7 +70,6 @@ export default function ReportForm() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -385,10 +384,6 @@ export default function ReportForm() {
                                   onClick={() => {
                                       setCapturedImage(null);
                                       form.setValue('media', null);
-                                      if (fileInputRef.current) {
-                                        fileInputRef.current.value = '';
-                                      }
-                                      setFileCount(0);
                                   }}
                                 >
                                     <X className="h-4 w-4"/>
@@ -397,20 +392,11 @@ export default function ReportForm() {
                         ) : (
                           <>
                            <Input 
-                              ref={fileInputRef}
                               type="file" 
                               multiple 
                               accept="image/*,video/*"
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              onChange={(e) => { 
-                                field.onChange(e.target.files); 
-                                setFileCount(e.target.files?.length || 0); 
-                                if (e.target.files && e.target.files.length > 0) {
-                                  setCapturedImage(URL.createObjectURL(e.target.files[0]));
-                                } else {
-                                  setCapturedImage(null);
-                                }
-                              }}
+                              onChange={(e) => { field.onChange(e.target.files); setFileCount(e.target.files?.length || 0) }}
                             />
                             <div className="flex flex-col items-center justify-center space-y-2 text-center">
                                 <div className="flex gap-4 text-muted-foreground">
@@ -418,15 +404,9 @@ export default function ReportForm() {
                                     <FileVideo className="w-8 h-8" />
                                 </div>
                                 <p className="text-sm text-muted-foreground">Click or drag & drop to upload (Up to 5 files)</p>
-                                <div className="flex gap-4 items-center">
-                                  <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                      <UploadCloud className="w-4 h-4 mr-2"/> Choose Files
-                                  </Button>
-                                  <span className="text-muted-foreground">or</span>
-                                   <Button type="button" variant="secondary" size="sm" onClick={handleCameraOpen}>
-                                      <Camera className="w-4 h-4 mr-2"/> Use Camera
-                                  </Button>
-                                </div>
+                                <Button type="button" variant="secondary" size="sm" onClick={handleCameraOpen}>
+                                    <Camera className="w-4 h-4 mr-2"/> Use Camera
+                                </Button>
                             </div>
                           </>
                         )}
@@ -538,7 +518,3 @@ export default function ReportForm() {
     </>
   );
 }
-
-    
-
-    
