@@ -15,7 +15,7 @@ import Link from 'next/link';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, checkUserExists } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -23,7 +23,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState('');
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
         toast({ title: "Name is required", variant: "destructive" });
@@ -38,6 +38,20 @@ export default function RegisterPage() {
         return;
     }
     setIsLoading(true);
+
+    const { exists } = await checkUserExists(mobile);
+    if (exists) {
+        toast({
+            title: "Account Already Exists",
+            description: "An account with this mobile number already exists. Please log in.",
+            variant: "destructive",
+        });
+        router.push('/login');
+        setIsLoading(false);
+        return;
+    }
+    
+    // Simulate OTP
     setTimeout(() => {
         setOtpSent(true);
         setIsLoading(false);

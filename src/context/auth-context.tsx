@@ -6,7 +6,7 @@ import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase-client';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 type AuthUser =
   | { type: 'guest' }
@@ -20,6 +20,7 @@ type AuthContextType = {
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
   incrementCivicPoints: (userId: string, points: number) => void;
+  checkUserExists: (mobile: string) => Promise<{ exists: boolean, user?: User }>;
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -32,16 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const token = await firebaseUser.getIdToken();
         const userRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-            setUser({ type: 'user', data: { ...(userDoc.data() as User), id: firebaseUser.uid, idToken: token } });
+            const userData = { ...(userDoc.data() as User), id: firebaseUser.uid, idToken: await firebaseUser.getIdToken() };
+            setUser({ type: 'user', data: userData });
         } else {
              console.log("User document not found for authenticated user:", firebaseUser.uid);
-             // This can happen if the user is authenticated with Firebase but their doc doesn't exist yet.
-             // We can log them out or handle it as a partial login state.
              setUser({ type: 'guest' });
         }
       } else {
@@ -51,51 +50,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  const checkUserExists = async (mobile: string): Promise<{ exists: boolean, user?: User }> => {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("mobile", "==", mobile), limit(1));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        return { exists: true, user: { id: userDoc.id, ...userDoc.data() } as User };
+    }
+    return { exists: false };
+  };
 
-  const login = async (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string) => {
+  const login = async (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string, existingUser?: User) => {
     if (type === 'user') {
-      if (nameOrDepartment && mobile) {
-        // New user registration
-        // For a prototype, we create a mock user ID. In a real app, this comes from Firebase Auth.
-        const mockUid = `user-${Date.now()}`;
-        const newUser: User = {
-            id: mockUid,
-            name: nameOrDepartment,
-            mobile: mobile,
-            avatarUrl: `https://picsum.photos/seed/${nameOrDepartment}/100/100`,
-            civicPoints: 0,
-            idToken: 'mock-token-for-dev'
-        };
+        if (existingUser) { // Logging in an existing user
+            // In a real app, this would involve Firebase Auth to sign in the user
+            // For this prototype, we'll set the user state directly
+            setUser({ type: 'user', data: existingUser });
 
-        try {
-            // This write will succeed because the security rule is `allow create: if true;`
-            const userRef = doc(db, "users", mockUid);
-            await setDoc(userRef, { 
-                name: newUser.name, 
-                mobile: newUser.mobile, 
-                avatarUrl: newUser.avatarUrl, 
-                civicPoints: newUser.civicPoints 
-            });
+        } else if (nameOrDepartment && mobile) { // Registering a new user
+            const mockUid = `user-${Date.now()}`;
+            const newUser: User = {
+                id: mockUid,
+                name: nameOrDepartment,
+                mobile: mobile,
+                avatarUrl: `https://picsum.photos/seed/${nameOrDepartment}/100/100`,
+                civicPoints: 0,
+                idToken: 'mock-token-for-dev'
+            };
 
-            // Set the user state locally. onAuthStateChanged will handle it from now on.
-            setUser({ type: 'user', data: newUser });
-
-        } catch (error) {
-            console.error("Error creating user document:", error);
+            try {
+                const userRef = doc(db, "users", mockUid);
+                await setDoc(userRef, { 
+                    name: newUser.name, 
+                    mobile: newUser.mobile, 
+                    avatarUrl: newUser.avatarUrl, 
+                    civicPoints: newUser.civicPoints 
+                });
+                setUser({ type: 'user', data: newUser });
+            } catch (error) {
+                console.error("Error creating user document:", error);
+            }
         }
-      } else {
-          // Existing user login
-          // We can't actually log in via phone/OTP on the client without a full backend.
-          // So we'll set a mock user. In a real app, you'd get the user from Firebase Auth.
-          setUser({ type: 'user', data: {
-              id: 'user-mock-login',
-              name: "Logged-in User",
-              mobile: "9876543210",
-              civicPoints: 100,
-              avatarUrl: 'https://picsum.photos/seed/mock-user/100/100',
-              idToken: 'mock-token-for-dev'
-          }});
-      }
         
     } else if (type === 'admin') {
       setUser({ type: 'admin', data: { name: 'Admin User', email: 'admin@voice2action.com' } });
@@ -137,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
   };
 
-  const value = useMemo(() => ({ user, login, logout, updateUser, incrementCivicPoints }), [user]);
+  const value = useMemo(() => ({ user, login, logout, updateUser, incrementCivicPoints, checkUserExists }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

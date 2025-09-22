@@ -15,12 +15,13 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login } = useAuth();
+  const { user, login, checkUserExists } = useAuth();
   const { toast } = useToast();
   const [mobile, setMobile] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState('');
+  const [existingUser, setExistingUser] = useState<any>(null);
 
   useEffect(() => {
     if (user.type === 'user') {
@@ -28,7 +29,7 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mobile.length !== 10 || !/^\d{10}$/.test(mobile)) {
         toast({
@@ -39,6 +40,23 @@ export default function LoginPage() {
         return;
     }
     setIsLoading(true);
+
+    const { exists, user: foundUser } = await checkUserExists(mobile);
+
+    if (!exists) {
+        toast({
+            title: "Account Not Found",
+            description: "No account exists with this mobile number. Please register.",
+            variant: "destructive",
+        });
+        router.push('/register');
+        setIsLoading(false);
+        return;
+    }
+
+    setExistingUser(foundUser);
+    
+    // Simulate OTP sending
     setTimeout(() => {
         setOtpSent(true);
         setIsLoading(false);
@@ -61,7 +79,7 @@ export default function LoginPage() {
       }
       setIsLoading(true);
       setTimeout(() => {
-          login('user');
+          login('user', undefined, undefined, existingUser);
           setIsLoading(false);
           toast({
               title: "Login Successful!",
@@ -122,7 +140,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex-col gap-4">
            {otpSent && (
-                <Button variant="link" size="sm" onClick={() => {setOtpSent(false); setOtp('');}}>
+                <Button variant="link" size="sm" onClick={() => {setOtpSent(false); setOtp(''); setExistingUser(null);}}>
                     Change mobile number
                 </Button>
             )}
