@@ -180,7 +180,9 @@ export default function ProfilePage() {
                             </div>
                         ))}
                          <div className="text-center pt-4">
-                            <Button variant="ghost">View All Reports</Button>
+                            <Button variant="ghost" asChild>
+                                <Link href="/profile/reports">View All Reports</Link>
+                            </Button>
                         </div>
                         </div>
                     ) : (
