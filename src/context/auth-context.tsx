@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
@@ -39,6 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ type: 'user', data: { ...(userDoc.data() as User), id: firebaseUser.uid, idToken: token } });
         } else {
              console.log("User document not found for authenticated user:", firebaseUser.uid);
+             // This can happen if the user is authenticated with Firebase but their doc doesn't exist yet.
+             // We can log them out or handle it as a partial login state.
+             setUser({ type: 'guest' });
         }
       } else {
         setUser({ type: 'guest' });
@@ -49,10 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const login = async (type: 'user' | 'admin' | 'department', nameOrDepartment?: string, mobile?: string) => {
-    if (type === 'user' && nameOrDepartment && mobile) {
+    if (type === 'user') {
+      if (nameOrDepartment && mobile) {
         // New user registration
-        // In a real app, a backend function would create this user and a custom token.
-        // For this app, we generate a mock UID and set the document, then set local state.
+        // For a prototype, we create a mock user ID. In a real app, this comes from Firebase Auth.
         const mockUid = `user-${Date.now()}`;
         const newUser: User = {
             id: mockUid,
@@ -60,11 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             mobile: mobile,
             avatarUrl: `https://picsum.photos/seed/${nameOrDepartment}/100/100`,
             civicPoints: 0,
-            idToken: 'mock-token-for-dev' // Add a mock token
+            idToken: 'mock-token-for-dev'
         };
 
         try {
-            // The security rule "allow create: if true;" for /users/{userId} will permit this write.
+            // This write will succeed because the security rule is `allow create: if true;`
             const userRef = doc(db, "users", mockUid);
             await setDoc(userRef, { 
                 name: newUser.name, 
@@ -73,13 +77,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 civicPoints: newUser.civicPoints 
             });
 
-            // Set the user state locally after successful DB write.
-            // In a real app, onAuthStateChanged would handle this after sign-in.
+            // Set the user state locally. onAuthStateChanged will handle it from now on.
             setUser({ type: 'user', data: newUser });
 
         } catch (error) {
             console.error("Error creating user document:", error);
         }
+      } else {
+          // Existing user login
+          // We can't actually log in via phone/OTP on the client without a full backend.
+          // So we'll set a mock user. In a real app, you'd get the user from Firebase Auth.
+          setUser({ type: 'user', data: {
+              id: 'user-mock-login',
+              name: "Logged-in User",
+              mobile: "9876543210",
+              civicPoints: 100,
+              avatarUrl: 'https://picsum.photos/seed/mock-user/100/100',
+              idToken: 'mock-token-for-dev'
+          }});
+      }
         
     } else if (type === 'admin') {
       setUser({ type: 'admin', data: { name: 'Admin User', email: 'admin@voice2action.com' } });
