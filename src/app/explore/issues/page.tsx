@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -14,9 +15,9 @@ import { useMemo } from 'react';
 
 export default function IssuesPage() {
   const searchParams = useSearchParams();
-  const { problems } = useProblems();
   const state = searchParams.get('state');
   const department = searchParams.get('department');
+  const { problems } = useProblems();
 
   const filteredProblems = useMemo(() => {
     if (!state || !department) {
