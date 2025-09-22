@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -13,14 +14,21 @@ import { Button } from '@/components/ui/button';
 import { indianStates } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Globe, MapPin, Calendar, ThumbsUp, ThumbsDown, Building } from 'lucide-react';
+import { TrendingUp, Globe, MapPin, Calendar, ThumbsUp, ThumbsDown, Building, Flag, Share } from 'lucide-react';
 import { useProblems } from '@/context/problem-context';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import type { Problem } from '@/lib/definitions';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function DashboardClient() {
   const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
   const { problems, voteOnProblem } = useProblems();
 
   const problemsInState = useMemo(() => {
@@ -44,6 +52,7 @@ export default function DashboardClient() {
   }, [problems]);
 
   return (
+    <>
     <main className="flex-1">
       <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="text-center mb-12">
@@ -138,10 +147,8 @@ export default function DashboardClient() {
                                         {problem.dislikes}
                                     </Button>
                                 </div>
-                                <Button asChild variant="secondary">
-                                    <Link href={`/explore/issues/${problem.id}`}>
-                                        View Details
-                                    </Link>
+                                <Button variant="secondary" onClick={() => setSelectedProblem(problem)}>
+                                    View Details
                                 </Button>
                             </div>
                         </Card>
@@ -160,5 +167,65 @@ export default function DashboardClient() {
 
       </div>
     </main>
+
+    <Dialog open={!!selectedProblem} onOpenChange={(isOpen) => !isOpen && setSelectedProblem(null)}>
+        <DialogContent className="sm:max-w-2xl">
+            {selectedProblem && (
+                <>
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-headline">{selectedProblem.title}</DialogTitle>
+                         <div className="flex items-center gap-3 pt-2">
+                            <Badge variant={selectedProblem.status === 'Resolved' ? 'default' : selectedProblem.status === 'In Progress' ? 'secondary' : 'outline'}>
+                                {selectedProblem.status}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">{selectedProblem.department}</span>
+                        </div>
+                    </DialogHeader>
+                    <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden">
+                           <Image 
+                                src={`https://picsum.photos/seed/${selectedProblem.media.images[0]}/1200/675`}
+                                alt={selectedProblem.title}
+                                fill
+                                className="object-cover"
+                                data-ai-hint="issue photo"
+                            />
+                        </div>
+                        <p className="text-muted-foreground">{selectedProblem.description}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-start gap-3">
+                                <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
+                                <div>
+                                    <p className="font-semibold">Location</p>
+                                    <p className="text-muted-foreground">{selectedProblem.location.address}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <Calendar className="w-4 h-4 text-muted-foreground mt-1" />
+                                <div>
+                                    <p className="font-semibold">Reported On</p>
+                                    <p className="text-muted-foreground">{format(new Date(selectedProblem.createdAt), 'PP')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-muted/50 rounded-lg flex justify-between items-center">
+                           <div className="flex items-center gap-4">
+                               <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'like')}>
+                                   <ThumbsUp className="w-4 h-4 mr-2" />
+                                   {selectedProblem.likes}
+                               </Button>
+                               <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'dislike')}>
+                                   <ThumbsDown className="w-4 h-4 mr-2" />
+                                   {selectedProblem.dislikes}
+                               </Button>
+                           </div>
+                           <p className="text-muted-foreground text-sm">{selectedProblem.likes + selectedProblem.dislikes} total votes</p>
+                        </div>
+                    </div>
+                </>
+            )}
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
