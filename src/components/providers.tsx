@@ -26,6 +26,10 @@ export function Providers({ children, locale }: { children: React.ReactNode, loc
   }, [locale]);
 
 
+  if (!locale) {
+    return null;
+  }
+
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
