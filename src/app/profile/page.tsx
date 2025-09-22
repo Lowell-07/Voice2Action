@@ -94,7 +94,7 @@ export default function ProfilePage() {
 
              <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20 mb-6">
                 <CardHeader>
-                    <CardTitle className="text-lg">Activity Stats</CardTitle>
+                    <CardTitle className="text-lg">Activity Status</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-3 divide-x divide-border/50 text-center">
                     <div className="p-4">
