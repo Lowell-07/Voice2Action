@@ -11,15 +11,16 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login, checkUserExists } = useAuth();
+  const { user, login } = useAuth();
   const { toast } = useToast();
+  const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [otp, setOtp] = useState('');
   
   useEffect(() => {
@@ -30,6 +31,10 @@ export default function LoginPage() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRegistering && !name.trim()) {
+        toast({ title: "Name is required", variant: "destructive" });
+        return;
+    }
     if (mobile.length !== 10 || !/^\d{10}$/.test(mobile)) {
         toast({
             title: "Invalid Mobile Number",
@@ -40,8 +45,7 @@ export default function LoginPage() {
     }
     setIsLoading(true);
 
-    // Simulate OTP sending without checking for user first.
-    // The check will happen upon OTP verification.
+    // Simulate OTP sending
     setTimeout(() => {
         setIsLoading(false);
         setOtpSent(true);
@@ -52,7 +56,7 @@ export default function LoginPage() {
     }, 1000);
   };
   
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
       e.preventDefault();
       if (otp !== '123456') {
           toast({
@@ -64,30 +68,36 @@ export default function LoginPage() {
       }
       setIsLoading(true);
 
-      const { exists, user: foundUser } = await checkUserExists(mobile);
+      // The login function now handles both login and registration
+      const result = await login('user', name, mobile);
 
-      if (!exists) {
+      if (result.success) {
           toast({
-              title: "Account Not Found",
-              description: "No account exists with this mobile number. Please register.",
-              variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-      }
-      
-      // Directly call login with the user found earlier
-      login('user', undefined, undefined, foundUser);
-
-      setTimeout(() => {
-          setIsLoading(false);
-          toast({
-              title: "Login Successful!",
-              description: "Welcome back!",
+              title: result.isNewUser ? "Registration Successful!" : "Login Successful!",
+              description: "Welcome!",
           });
           router.push('/profile');
-      }, 500); // Short delay to allow state to propagate
+      } else {
+           toast({
+              title: "An Error Occurred",
+              description: result.error,
+              variant: "destructive",
+          });
+      }
+      setIsLoading(false);
   };
+
+  const toggleForm = () => {
+    setIsRegistering(!isRegistering);
+    setOtpSent(false);
+    setOtp('');
+  }
+
+  const cardTitle = otpSent ? "Verify OTP" : (isRegistering ? "Create Account" : "User Login");
+  const cardDescription = otpSent 
+    ? `Enter the OTP sent to +91 ${mobile}` 
+    : (isRegistering ? "Join Voice2Action to make a difference." : "Access your profile and report issues.");
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
@@ -97,27 +107,42 @@ export default function LoginPage() {
             <Logo />
           </div>
           <CardTitle className="text-3xl font-headline">
-            {otpSent ? "Verify OTP" : "User Login"}
+            {cardTitle}
           </CardTitle>
           <CardDescription>
-            {otpSent ? `Enter the OTP sent to +91 ${mobile}` : "Access your profile and report issues."}
+            {cardDescription}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={otpSent ? handleLogin : handleSendOtp} className="space-y-6">
+          <form onSubmit={otpSent ? handleVerify : handleSendOtp} className="space-y-6">
             {!otpSent ? (
-              <div className="space-y-2">
-                <Label htmlFor="mobile">10-digit Mobile Number</Label>
-                <Input 
-                  id="mobile" 
-                  type="tel" 
-                  placeholder="9876543210"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                  maxLength={10}
-                  required 
-                />
-              </div>
+              <>
+                {isRegistering && (
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input 
+                            id="name" 
+                            type="text" 
+                            placeholder="Your Name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required 
+                        />
+                    </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="mobile">10-digit Mobile Number</Label>
+                  <Input 
+                    id="mobile" 
+                    type="tel" 
+                    placeholder="9876543210"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    maxLength={10}
+                    required 
+                  />
+                </div>
+              </>
             ) : (
                 <div className="space-y-2">
                     <Label htmlFor="otp">One-Time Password (OTP)</Label>
@@ -134,19 +159,23 @@ export default function LoginPage() {
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {otpSent ? "Verify & Login" : "Send OTP"}
+              {otpSent ? "Verify & Continue" : "Send OTP"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-4">
-           {otpSent && (
+           {otpSent ? (
                 <Button variant="link" size="sm" onClick={() => {setOtpSent(false); setOtp('');}}>
                     Change mobile number
                 </Button>
+            ) : (
+                 <p className="text-xs text-muted-foreground text-center w-full">
+                    {isRegistering ? "Already have an account?" : "New User?"}
+                    <Button variant="link" size="sm" onClick={toggleForm}>
+                       {isRegistering ? "Login" : "Register"}
+                    </Button>
+                </p>
             )}
-          <p className="text-xs text-muted-foreground text-center w-full">
-            New User? <Link href="/register" className="underline">Register</Link>
-          </p>
         </CardFooter>
       </Card>
     </div>
