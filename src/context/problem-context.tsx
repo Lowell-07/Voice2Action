@@ -1,14 +1,15 @@
 
 "use client";
 
-import { createContext, useState, ReactNode, useMemo, useContext, useCallback } from 'react';
+import { createContext, useState, ReactNode, useMemo, useContext, useCallback, useEffect } from 'react';
 import type { Problem } from '@/lib/definitions';
-import { mockProblems } from '@/lib/data';
 import { useAuth } from '@/hooks/use-auth';
+import { collection, doc, addDoc, updateDoc, increment, onSnapshot, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
 
 type ProblemContextType = {
   problems: Problem[];
-  addProblem: (problem: Problem) => void;
+  addProblem: (problem: Omit<Problem, 'id' | 'createdAt' | 'reportedById' | 'reportedBy'>) => Promise<Problem | null>;
   updateProblem: (problemId: string, updates: Partial<Problem>) => void;
   deleteProblem: (problemId: string) => Promise<{ success: boolean; error?: string }>;
   voteOnProblem: (problemId: string, voteType: 'like' | 'dislike') => void;
@@ -19,18 +20,72 @@ export const ProblemContext = createContext<ProblemContextType | undefined>(
 );
 
 export function ProblemProvider({ children }: { children: ReactNode }) {
-  const [problems, setProblems] = useState<Problem[]>(mockProblems);
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [userVotes, setUserVotes] = useState<{[key: string]: 'like' | 'dislike' | null}>({});
   const { user } = useAuth();
 
-  const addProblem = useCallback((problem: Problem) => {
-    setProblems(prevProblems => [problem, ...prevProblems]);
+  useEffect(() => {
+    const q = query(collection(db, "problems"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const problemsData: Problem[] = [];
+      querySnapshot.forEach((doc) => {
+        problemsData.push({ id: doc.id, ...doc.data() } as Problem);
+      });
+      // Sort by creation date descending
+      problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setProblems(problemsData);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+
+  const addProblem = useCallback(async (problemData: Omit<Problem, 'id' | 'createdAt' | 'reportedById' | 'reportedBy'>): Promise<Problem | null> => {
+    if (user.type !== 'user') {
+        console.error("User is not authenticated");
+        return null;
+    }
+
+    try {
+        const docRef = await addDoc(collection(db, "problems"), {
+            ...problemData,
+            createdAt: new Date().toISOString(),
+            reportedById: user.data.id,
+            reportedBy: {
+                id: user.data.id,
+                name: user.data.name,
+                avatarUrl: user.data.avatarUrl,
+            },
+        });
+        // The onSnapshot listener will automatically update the local state.
+        // We can return the new problem object if needed by the UI immediately.
+        const newProblem: Problem = {
+            id: docRef.id,
+            ...problemData,
+            createdAt: new Date().toISOString(),
+            reportedById: user.data.id,
+            reportedBy: {
+                id: user.data.id,
+                name: user.data.name,
+                avatarUrl: user.data.avatarUrl,
+            },
+        }
+        return newProblem;
+
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        return null;
+    }
+  }, [user]);
   
-  const updateProblem = useCallback((problemId: string, updates: Partial<Problem>) => {
-    setProblems(prevProblems => 
-        prevProblems.map(p => p.id === problemId ? { ...p, ...updates } : p)
-    );
+  const updateProblem = useCallback(async (problemId: string, updates: Partial<Problem>) => {
+    const problemRef = doc(db, "problems", problemId);
+    try {
+        await updateDoc(problemRef, updates);
+        // onSnapshot will handle the UI update.
+    } catch(error) {
+        console.error("Error updating problem:", error);
+    }
   }, []);
 
   const deleteProblem = useCallback(async (problemId: string): Promise<{ success: boolean; error?: string }> => {
@@ -40,6 +95,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
     const originalProblems = [...problems];
     const problemToDelete = problems.find(p => p.id === problemId);
+    if (!problemToDelete) return { success: false, error: "Problem not found." };
     
     // Optimistically update the UI
     setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
@@ -70,36 +126,33 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     }
   }, [user, problems]);
   
-  const voteOnProblem = useCallback((problemId: string, voteType: 'like' | 'dislike') => {
-    // This is an optimistic update on the client side.
-    // In a real app, you'd add a server call here with a try/catch to revert on failure.
-    setProblems(prevProblems => {
-      return prevProblems.map(p => {
-        if (p.id !== problemId) {
-          return p;
-        }
+  const voteOnProblem = useCallback(async (problemId: string, voteType: 'like' | 'dislike') => {
+    const problemRef = doc(db, "problems", problemId);
+    const currentVote = userVotes[problemId];
 
-        const problem = { ...p };
-        const currentVote = userVotes[problemId];
-        
-        // Reset previous vote count
-        if (currentVote === 'like') problem.likes--;
-        if (currentVote === 'dislike') problem.dislikes--;
+    const updates: {[key: string]: any} = {};
 
-        // Apply new vote or toggle off
-        if (currentVote === voteType) {
-          // User is toggling off their vote
-          setUserVotes(prev => ({ ...prev, [problemId]: null }));
-        } else {
-          // User is casting a new or different vote
-          if (voteType === 'like') problem.likes++;
-          if (voteType === 'dislike') problem.dislikes++;
-          setUserVotes(prev => ({ ...prev, [problemId]: voteType }));
+    if (currentVote === voteType) {
+        // User is toggling off their vote
+        updates[`${voteType}s`] = increment(-1);
+        setUserVotes(prev => ({ ...prev, [problemId]: null }));
+    } else {
+        // User is casting a new or different vote
+        updates[`${voteType}s`] = increment(1);
+        if (currentVote) {
+             // they are changing their vote
+            updates[`${currentVote}s`] = increment(-1);
         }
-        
-        return problem;
-      });
-    });
+        setUserVotes(prev => ({ ...prev, [problemId]: voteType }));
+    }
+
+    try {
+        await updateDoc(problemRef, updates);
+        // Firestore's onSnapshot will take care of updating the UI state with the final counts.
+    } catch(error) {
+        console.error("Error voting on problem:", error);
+        // Here you could add logic to revert the optimistic userVotes state if needed.
+    }
   }, [userVotes]);
 
   const value = useMemo(() => ({ problems, addProblem, updateProblem, deleteProblem, voteOnProblem }), [problems, addProblem, updateProblem, deleteProblem, voteOnProblem]);

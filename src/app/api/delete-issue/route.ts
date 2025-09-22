@@ -27,34 +27,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Problem ID is required' }, { status: 400 });
     }
 
-    // In a real app, you would fetch from Firestore.
-    // const problemRef = admin.firestore().collection('problems').doc(problemId);
-    // const problemDoc = await problemRef.get();
+    const problemRef = admin.firestore().collection('problems').doc(problemId);
+    const problemDoc = await problemRef.get();
 
-    // if (!problemDoc.exists) {
-    //   return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
-    // }
+    if (!problemDoc.exists) {
+      return NextResponse.json({ error: 'Problem not found' }, { status: 404 });
+    }
     
-    // const problemData = problemDoc.data();
+    const problemData = problemDoc.data();
 
     // Security Check: Ensure the user deleting the issue is the one who reported it.
-    // An admin role could also be allowed here with additional logic.
-    // if (problemData.reportedById !== uid) {
-    //   console.warn(`User ${uid} attempted to delete problem ${problemId} owned by ${problemData.reportedById}`);
-    //   return NextResponse.json({ error: 'Forbidden: You do not have permission to delete this issue.' }, { status: 403 });
-    // }
+    if (problemData?.reportedById !== uid) {
+      console.warn(`User ${uid} attempted to delete problem ${problemId} owned by ${problemData?.reportedById}`);
+      return NextResponse.json({ error: 'Forbidden: You do not have permission to delete this issue.' }, { status: 403 });
+    }
 
-    console.log(`User ${uid} is authorized to delete problem ${problemId}. Simulating deletion.`);
+    console.log(`User ${uid} is authorized to delete problem ${problemId}. Deleting document.`);
 
-    // await problemRef.delete();
+    await problemRef.delete();
     
-    // NOTE: The data is currently mocked on the client, so this is a simulation.
-    // The client-side state will be updated optimistically.
-    return NextResponse.json({ message: `Problem ${problemId} deleted successfully (simulation).` }, { status: 200 });
+    return NextResponse.json({ message: `Problem ${problemId} deleted successfully.` }, { status: 200 });
 
   } catch (error) {
     console.error('Error in /api/delete-issue:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-    return NextResponse.json({ error: `Unauthorized or invalid request: ${errorMessage}` }, { status: 403 });
+    return NextResponse.json({ error: `Unauthorized or invalid request.` }, { status: 403 });
   }
 }

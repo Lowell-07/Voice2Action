@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -53,16 +52,6 @@ const reportFormSchema = z.object({
 });
 
 type ReportFormValues = z.infer<typeof reportFormSchema>;
-
-const generateReportId = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = 'V2A-';
-    for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-}
-
 
 export default function ReportForm() {
   const { toast } = useToast();
@@ -197,6 +186,8 @@ export default function ReportForm() {
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+        // In a real app, you'd upload this file to a service like Firebase Storage
+        // and save the URL. For this demo, we'll use a local object URL for preview.
         const previewUrl = URL.createObjectURL(file);
         setMediaFile({ file, preview: previewUrl });
         form.setValue('media', file);
@@ -309,41 +300,41 @@ export default function ReportForm() {
       setIsSuggestingDepartment(false);
   }, [descriptionValue, form, toast]);
 
-  function onSubmit(data: ReportFormValues) {
+  async function onSubmit(data: ReportFormValues) {
     if (user.type !== 'user') return;
 
     setIsSubmitting(true);
     
+    // In a real app, you would upload mediaFile.file to Firebase Storage here
+    // and get a downloadable URL. For now, we'll just use the preview.
+    const imageUrl = mediaFile.preview ? mediaFile.preview : `new-report-${Date.now()}`;
+    
     if (editingProblem) {
         // We are editing an existing problem
-        const updatedProblemData: Problem = {
-            ...editingProblem,
+        const updatedProblemData: Partial<Problem> = {
             title: data.title,
             description: data.description,
             department: data.department,
             issueType: data.issueType,
             media: {
                 ...editingProblem.media,
-                images: mediaFile.preview ? [mediaFile.preview] : editingProblem.media.images,
+                images: [imageUrl], // update image
             },
         };
 
-        setTimeout(() => {
-            updateProblem(editingProblem.id, updatedProblemData);
-            setSubmittedProblem(updatedProblemData);
-            setEditingProblem(null);
-            setIsSubmitting(false);
-            form.reset();
-            clearMedia();
-        }, 1000);
+        await updateProblem(editingProblem.id, updatedProblemData);
+        setSubmittedProblem({...editingProblem, ...updatedProblemData});
+        setEditingProblem(null);
+        setIsSubmitting(false);
+        form.reset();
+        clearMedia();
         return;
     }
 
 
     const randomState = indianStates[Math.floor(Math.random() * indianStates.length)];
 
-    const newProblem: Problem = {
-      id: generateReportId(),
+    const newProblemData = {
       title: data.title,
       description: data.description,
       department: data.department,
@@ -356,27 +347,23 @@ export default function ReportForm() {
         coordinates: { lat: latitude, lng: longitude },
       },
       media: {
-        images: mediaFile.preview ? [mediaFile.preview] : [`new-report-${Date.now()}`],
+        images: [imageUrl],
         videos: [],
       },
       likes: 0,
       dislikes: 0,
-      reportedById: user.data.id,
-      reportedBy: {
-        id: user.data.id,
-        name: user.data.name,
-        avatarUrl: user.data.avatarUrl,
-      },
-      createdAt: new Date().toISOString(),
     };
 
-    setTimeout(() => {
-        addProblem(newProblem);
+    const newProblem = await addProblem(newProblemData as any);
+    if(newProblem) {
         setSubmittedProblem(newProblem);
-        setIsSubmitting(false);
-        form.reset();
-        clearMedia();
-    }, 1000);
+    } else {
+        toast({ title: "Failed to submit report", variant: "destructive" });
+    }
+
+    setIsSubmitting(false);
+    form.reset();
+    clearMedia();
   }
   
   const handleEditIssue = () => {
