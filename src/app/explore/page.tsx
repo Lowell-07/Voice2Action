@@ -5,7 +5,7 @@ import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MapPin, Info, Circle } from 'lucide-react';
+import { MapPin, Info, Circle, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type L from 'leaflet';
@@ -102,28 +102,26 @@ export default function ExplorePage() {
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Info className="w-5 h-5 text-muted-foreground" />
-                        <CardTitle>About</CardTitle>
+                        <CardTitle>Map Legend</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-3">
                         <li className="flex items-center gap-3">
                             <Circle className="w-4 h-4 text-red-500 fill-red-500" />
-                            <span className="text-sm">High Priority (5+ Likes)</span>
+                            <span className="text-sm flex items-center gap-1.5">High Priority (<ThumbsUp className="w-3 h-3" /> 5+)</span>
                         </li>
                          <li className="flex items-center gap-3">
                             <Circle className="w-4 h-4 text-orange-500 fill-orange-500" />
-                            <span className="text-sm">Medium Priority (3-4 Likes)</span>
+                            <span className="text-sm flex items-center gap-1.5">Medium Priority (<ThumbsUp className="w-3 h-3" /> 3-4)</span>
                         </li>
                          <li className="flex items-center gap-3">
                             <Circle className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm">Low Priority (1-2 Likes)</span>
+                            <span className="text-sm flex items-center gap-1.5">Low Priority (<ThumbsUp className="w-3 h-3" /> 1-2)</span>
                         </li>
                         <li className="flex items-center gap-3">
-                            <div className="w-4 h-4 rounded-full bg-muted-foreground flex items-center justify-center">
-                                <span className="text-xs font-bold text-background">N</span>
-                            </div>
-                            <span className="text-sm">New Issue (0 Likes)</span>
+                            <Circle className="w-4 h-4 text-gray-400 fill-gray-400" />
+                            <span className="text-sm">New Issue (No votes)</span>
                         </li>
                     </ul>
                 </CardContent>
@@ -135,6 +133,18 @@ export default function ExplorePage() {
       <style jsx global>{`
         .blinking-marker .leaflet-marker-icon {
             filter: hue-rotate(120deg);
+        }
+        .leaflet-popup-content-wrapper {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border-radius: var(--radius);
+        }
+        .leaflet-popup-content {
+            margin: 0;
+            width: 256px !important;
+        }
+        .leaflet-popup-tip {
+            background: hsl(var(--card));
         }
       `}</style>
     </div>
