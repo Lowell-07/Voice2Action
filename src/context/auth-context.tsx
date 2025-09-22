@@ -56,29 +56,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (type === 'user') {
         if (!mobile) return { success: false, error: 'Mobile number is required.' };
         
-        // This is a mock server call to get a custom token for the given mobile number.
-        // In a real app, this would hit your backend, which would verify the user,
-        // create one if needed, and generate a real Firebase custom token.
-        const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
-        if (!response.ok) {
-            return { success: false, error: 'Failed to authenticate with the server.' };
-        }
-        const { token } = await response.json();
-        
         try {
-            // Sign in with the custom token
-            const userCredential = await auth.signInWithCustomToken(auth, token);
+            const q = query(collection(db, "users"), where("mobile", "==", mobile), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            let userDoc;
+            let isNewUser = true;
+
+            if (!querySnapshot.empty) {
+                userDoc = querySnapshot.docs[0];
+                isNewUser = false;
+            }
+
+            // In a real app, you would have a backend generate a custom token.
+            // For this prototype, we'll simulate it by creating a "mock" token.
+            // The key is to sign in to establish a UID.
+            // We use the mobile number as the UID for simplicity in this prototype.
+            const mockToken = `mock-token-for-uid-${mobile}`;
+
+            // This is a placeholder for a real signInWithCustomToken call
+            const userCredential = { user: { uid: mobile } }; // Mock user credential
+
             const firebaseUser = userCredential.user;
             
             const userRef = doc(db, "users", firebaseUser.uid);
-            const userDoc = await getDoc(userRef);
-            
-            let isNewUser = false;
             let finalUserData: User;
 
-            if (!userDoc.exists()) {
-                // User does not exist, so this is a registration
-                isNewUser = true;
+            if (isNewUser) {
                 if (!name) return { success: false, error: 'Name is required for registration.' };
 
                 const newUser: Omit<User, 'id' | 'idToken'> = {
@@ -89,18 +93,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 };
                 await setDoc(userRef, newUser);
                 finalUserData = { ...newUser, id: firebaseUser.uid };
-
             } else {
-                // User exists, this is a login
-                finalUserData = { id: firebaseUser.uid, ...userDoc.data() } as User;
+                finalUserData = { id: firebaseUser.uid, ...userDoc!.data() } as User;
             }
             
-            // The onAuthStateChanged listener will handle setting the user state
-            // but we return success here to complete the login flow on the page.
+            // Manually set the user state since we are not using real Firebase Auth here
+            setUser({ type: 'user', data: finalUserData });
+            
             return { success: true, isNewUser };
 
         } catch(error) {
-            console.error("Firebase sign-in or data handling error:", error);
+            console.error("Firebase data handling error:", error);
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
             return { success: false, error: errorMessage };
         }
@@ -116,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    auth.signOut();
+    // Since we are mocking auth, we just clear the local state
     setUser({ type: 'guest' });
   };
   
@@ -153,4 +156,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
