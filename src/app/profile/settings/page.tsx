@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Moon, Sun, Mail, MessageSquare, Eye, LogOut, Loader2 } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Mail, MessageSquare, Eye, LogOut, Loader2, Languages } from "lucide-react";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SettingsPage() {
     const { user, logout } = useAuth();
@@ -72,6 +72,24 @@ export default function SettingsPage() {
                                 checked={theme === 'dark'}
                                 onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
                             />
+                        </div>
+                         <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <Languages className="w-5 h-5 text-muted-foreground" />
+                                <div>
+                                    <Label>Language</Label>
+                                    <p className="text-sm text-muted-foreground">Choose your preferred language</p>
+                                </div>
+                            </div>
+                            <Select defaultValue="en">
+                                <SelectTrigger className="w-[120px]">
+                                    <SelectValue placeholder="Language" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="en">English</SelectItem>
+                                    <SelectItem value="hi">हिन्दी</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
