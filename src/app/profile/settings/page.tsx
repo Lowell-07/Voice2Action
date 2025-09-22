@@ -3,7 +3,7 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,15 +12,12 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Moon, Sun, Mail, MessageSquare, Eye, LogOut, Loader2, Languages } from "lucide-react";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTranslations } from "next-intl";
 
 export default function SettingsPage() {
     const { user, logout } = useAuth();
     const router = useRouter();
-    const pathname = usePathname();
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
-    const t = useTranslations('Settings');
 
     useEffect(() => setMounted(true), []);
     
@@ -29,11 +26,6 @@ export default function SettingsPage() {
             router.push('/login');
         }
     }, [user, router]);
-
-    const handleLanguageChange = (locale: string) => {
-        const newPath = `/${locale}/${pathname.split('/').slice(2).join('/')}`;
-        router.replace(newPath);
-    };
     
     if (!mounted || user.type === 'guest') {
         return (
@@ -48,8 +40,6 @@ export default function SettingsPage() {
         );
     }
 
-    const currentLocale = pathname.split('/')[1] || 'en';
-
     return (
         <main className="flex-1 py-8 md:py-12">
             <div className="container max-w-2xl mx-auto px-4">
@@ -57,24 +47,24 @@ export default function SettingsPage() {
                      <Button asChild variant="ghost">
                         <Link href="/profile">
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            {t('backToProfile')}
+                            Back to Profile
                         </Link>
                     </Button>
-                    <h1 className="text-2xl font-bold font-headline">{t('title')}</h1>
+                    <h1 className="text-2xl font-bold font-headline">Settings</h1>
                 </div>
 
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
                     <CardHeader>
-                        <CardTitle>{t('preferencesTitle')}</CardTitle>
-                        <CardDescription>{t('preferencesDescription')}</CardDescription>
+                        <CardTitle>Preferences</CardTitle>
+                        <CardDescription>Customize your Voice2Action experience.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between">
                              <div className="flex items-center gap-4">
                                 {theme === 'light' ? <Sun className="w-5 h-5 text-muted-foreground" /> : <Moon className="w-5 h-5 text-muted-foreground" />}
                                 <div>
-                                    <Label htmlFor="theme-switch">{t('theme')}</Label>
-                                    <p className="text-sm text-muted-foreground">{theme === 'light' ? t('lightMode') : t('darkMode')}</p>
+                                    <Label htmlFor="theme-switch">Theme</Label>
+                                    <p className="text-sm text-muted-foreground">{theme === 'light' ? 'Light mode' : 'Dark mode'}</p>
                                 </div>
                             </div>
                             <Switch 
@@ -87,26 +77,17 @@ export default function SettingsPage() {
                             <div className="flex items-center gap-4">
                                 <Languages className="w-5 h-5 text-muted-foreground" />
                                 <div>
-                                    <Label>{t('language')}</Label>
-                                    <p className="text-sm text-muted-foreground">{t('languageDescription')}</p>
+                                    <Label>Language</Label>
+                                    <p className="text-sm text-muted-foreground">Choose your preferred language</p>
                                 </div>
                             </div>
-                            <Select defaultValue={currentLocale} onValueChange={handleLanguageChange}>
+                            <Select defaultValue="en">
                                 <SelectTrigger className="w-[120px]">
                                     <SelectValue placeholder="Language" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="en">English</SelectItem>
-                                    <SelectItem value="hi">हिन्दी</SelectItem>
-                                    <SelectItem value="bn">বাংলা</SelectItem>
-                                    <SelectItem value="te">తెలుగు</SelectItem>
-                                    <SelectItem value="ta">தமிழ்</SelectItem>
-                                    <SelectItem value="mr">मराठी</SelectItem>
-                                    <SelectItem value="gu">ગુજરાતી</SelectItem>
-                                    <SelectItem value="kn">ಕನ್ನಡ</SelectItem>
-                                    <SelectItem value="ml">മലയാളം</SelectItem>
-                                    <SelectItem value="pa">ਪੰਜਾਬੀ</SelectItem>
-                                    <SelectItem value="ur">اردو</SelectItem>
+                                    <SelectItem value="hi" disabled>हिन्दी</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -114,8 +95,8 @@ export default function SettingsPage() {
                             <div className="flex items-center gap-4">
                                 <Mail className="w-5 h-5 text-muted-foreground" />
                                 <div>
-                                    <Label htmlFor="email-notifications">{t('emailNotifications')}</Label>
-                                    <p className="text-sm text-muted-foreground">{t('emailNotificationsDescription')}</p>
+                                    <Label htmlFor="email-notifications">Email Notifications</Label>
+                                    <p className="text-sm text-muted-foreground">Receive updates on your reports</p>
                                 </div>
                             </div>
                             <Switch id="email-notifications" defaultChecked />
@@ -124,8 +105,8 @@ export default function SettingsPage() {
                            <div className="flex items-center gap-4">
                                 <MessageSquare className="w-5 h-5 text-muted-foreground" />
                                 <div>
-                                    <Label htmlFor="sms-alerts">{t('smsAlerts')}</Label>
-                                    <p className="text-sm text-muted-foreground">{t('smsAlertsDescription')}</p>
+                                    <Label htmlFor="sms-alerts">SMS Alerts</Label>
+                                    <p className="text-sm text-muted-foreground">Get SMS updates on issue resolution</p>
                                 </div>
                             </div>
                             <Switch id="sms-alerts" />
@@ -134,8 +115,8 @@ export default function SettingsPage() {
                            <div className="flex items-center gap-4">
                                 <Eye className="w-5 h-5 text-muted-foreground" />
                                 <div>
-                                    <Label htmlFor="public-profile">{t('publicProfile')}</Label>
-                                    <p className="text-sm text-muted-foreground">{t('publicProfileDescription')}</p>
+                                    <Label htmlFor="public-profile">Public Profile</Label>
+                                    <p className="text-sm text-muted-foreground">Make your contributions visible to others</p>
                                 </div>
                             </div>
                             <Switch id="public-profile" defaultChecked />
@@ -145,14 +126,14 @@ export default function SettingsPage() {
 
                  <Card className="mt-8 shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
                     <CardHeader>
-                        <CardTitle>{t('accountTitle')}</CardTitle>
+                        <CardTitle>Account</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <Button variant="destructive" className="w-full" onClick={() => {
                             logout();
                             router.push('/');
                         }}>
-                           <LogOut className="w-4 h-4 mr-2" /> {t('logout')}
+                           <LogOut className="w-4 h-4 mr-2" /> Logout
                         </Button>
                     </CardContent>
                 </Card>
