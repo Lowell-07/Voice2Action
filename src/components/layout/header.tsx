@@ -40,6 +40,12 @@ const mobileNavLinks = [
   { href: '/profile', label: 'Profile', icon: <User className="w-6 h-6" /> },
 ];
 
+const mobileGuestNavLinks = [
+  { href: '/', label: 'Dashboard', icon: <LayoutDashboard className="w-6 h-6" /> },
+  { href: '/explore', label: 'Explore', icon: <Compass className="w-6 h-6" /> },
+  { href: '/login', label: 'Login', icon: <LogIn className="w-6 h-6" /> },
+]
+
 export function Header() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -122,7 +128,7 @@ export function Header() {
       {/* Mobile Bottom Nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-sm">
         <nav className="container flex items-center justify-around h-16">
-          {user.type !== 'guest' ? mobileNavLinks.map((link) => (
+          {user.type === 'user' ? mobileNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -134,14 +140,19 @@ export function Header() {
               {link.icon}
               <span>{link.label}</span>
             </Link>
-          )) : (
-             <Button asChild className='w-full'>
-                <Link href="/login">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Login to continue
-                </Link>
-              </Button>
-          )}
+          )) : mobileGuestNavLinks.map((link) => (
+             <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 text-xs font-medium",
+                pathname === link.href ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {link.icon}
+              <span>{link.label}</span>
+            </Link>
+          ))}
         </nav>
       </div>
     </>
