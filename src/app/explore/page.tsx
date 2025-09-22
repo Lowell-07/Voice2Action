@@ -4,8 +4,8 @@
 import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { MapPin } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { MapPin, Info, Circle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type L from 'leaflet';
@@ -70,7 +70,7 @@ export default function ExplorePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1">
-        <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
+        <div className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-headline font-bold text-primary mb-2">
               Explore Reported Issues
@@ -80,7 +80,7 @@ export default function ExplorePage() {
             </p>
           </div>
 
-          <Card className="shadow-lg">
+          <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
             <CardContent className="p-2 md:p-4 relative">
               <div className="absolute top-4 left-4 z-[51]">
                 <Button onClick={handleGPSClick}>
@@ -96,6 +96,40 @@ export default function ExplorePage() {
               </div>
             </CardContent>
           </Card>
+
+          <div className="mt-8 max-w-sm">
+            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Info className="w-5 h-5 text-muted-foreground" />
+                        <CardTitle>About</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-3">
+                        <li className="flex items-center gap-3">
+                            <Circle className="w-4 h-4 text-red-500 fill-red-500" />
+                            <span className="text-sm">High Priority (5+ Likes)</span>
+                        </li>
+                         <li className="flex items-center gap-3">
+                            <Circle className="w-4 h-4 text-orange-500 fill-orange-500" />
+                            <span className="text-sm">Medium Priority (3-4 Likes)</span>
+                        </li>
+                         <li className="flex items-center gap-3">
+                            <Circle className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                            <span className="text-sm">Low Priority (1-2 Likes)</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full bg-muted-foreground flex items-center justify-center">
+                                <span className="text-xs font-bold text-background">N</span>
+                            </div>
+                            <span className="text-sm">New Issue (0 Likes)</span>
+                        </li>
+                    </ul>
+                </CardContent>
+            </Card>
+          </div>
+
         </div>
       </main>
       <style jsx global>{`
