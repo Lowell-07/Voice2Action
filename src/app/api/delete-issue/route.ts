@@ -18,22 +18,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid token format' }, { status: 401 });
   }
 
-  let decodedToken;
   try {
-    decodedToken = await admin.auth().verifyIdToken(token);
-  } catch (error) {
-    console.error('Error verifying token:', error);
-    return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 403 });
-  }
-  
-  const { uid } = decodedToken;
-  const { problemId } = await request.json();
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const { uid } = decodedToken;
+    const { problemId } = await request.json();
 
-  if (!problemId) {
-    return NextResponse.json({ error: 'Problem ID is required' }, { status: 400 });
-  }
+    if (!problemId) {
+      return NextResponse.json({ error: 'Problem ID is required' }, { status: 400 });
+    }
 
-  try {
     // In a real app, you would fetch from Firestore.
     // const problemRef = admin.firestore().collection('problems').doc(problemId);
     // const problemDoc = await problemRef.get();
@@ -57,10 +50,11 @@ export async function POST(request: Request) {
     
     // NOTE: The data is currently mocked on the client, so this is a simulation.
     // The client-side state will be updated optimistically.
-    return NextResponse.json({ message: `Problem ${problemId} deleted successfully.` }, { status: 200 });
+    return NextResponse.json({ message: `Problem ${problemId} deleted successfully (simulation).` }, { status: 200 });
 
   } catch (error) {
-    console.error('Error deleting issue:', error);
-    return NextResponse.json({ error: 'An internal server error occurred.' }, { status: 500 });
+    console.error('Error in /api/delete-issue:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return NextResponse.json({ error: `Unauthorized or invalid request: ${errorMessage}` }, { status: 403 });
   }
 }

@@ -71,22 +71,24 @@ export default function ProfilePage() {
   const handleDelete = async () => {
     if(!problemToDelete) return;
     setIsDeleting(true);
-    try {
-        await deleteProblem(problemToDelete);
+    
+    const result = await deleteProblem(problemToDelete);
+    
+    if (result.success) {
         toast({
             title: "Success",
             description: "The issue has been deleted."
         })
-    } catch (error) {
+    } else {
         toast({
             title: "Error Deleting Issue",
-            description: error instanceof Error ? error.message : "An unknown error occurred.",
+            description: result.error,
             variant: "destructive"
         })
-    } finally {
-        setProblemToDelete(null);
-        setIsDeleting(false);
     }
+    
+    setProblemToDelete(null);
+    setIsDeleting(false);
   }
 
   return (

@@ -5,13 +5,12 @@ import { createContext, useState, ReactNode, useMemo, useContext, useCallback } 
 import type { Problem } from '@/lib/definitions';
 import { mockProblems } from '@/lib/data';
 import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
 
 type ProblemContextType = {
   problems: Problem[];
   addProblem: (problem: Problem) => void;
   updateProblem: (problemId: string, updates: Partial<Problem>) => void;
-  deleteProblem: (problemId: string) => Promise<void>;
+  deleteProblem: (problemId: string) => Promise<{ success: boolean; error?: string }>;
   voteOnProblem: (problemId: string, voteType: 'like' | 'dislike') => void;
 };
 
@@ -23,7 +22,6 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const [problems, setProblems] = useState<Problem[]>(mockProblems);
   const [userVotes, setUserVotes] = useState<{[key: string]: 'like' | 'dislike' | null}>({});
   const { user } = useAuth();
-  const { toast } = useToast();
 
   const addProblem = useCallback((problem: Problem) => {
     setProblems(prevProblems => [problem, ...prevProblems]);
@@ -35,58 +33,73 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const deleteProblem = useCallback(async (problemId: string) => {
+  const deleteProblem = useCallback(async (problemId: string): Promise<{ success: boolean; error?: string }> => {
     if (user.type !== 'user' || !user.data.idToken) {
-      throw new Error("You must be logged in to delete an issue.");
-    }
-    
-    const response = await fetch('/api/delete-issue', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.data.idToken}`
-        },
-        body: JSON.stringify({ problemId })
-    });
-    
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete the issue.');
+      return { success: false, error: "You must be logged in to delete an issue." };
     }
 
+    const originalProblems = problems;
+    
+    // Optimistically update the UI
     setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
 
-  }, [user]);
+    try {
+        const response = await fetch('/api/delete-issue', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.data.idToken}`
+            },
+            body: JSON.stringify({ problemId })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete the issue on the server.');
+        }
+        
+        // If successful, the optimistic update is now the source of truth
+        return { success: true };
+
+    } catch (error) {
+        // If the API call fails, revert the state and return an error
+        setProblems(originalProblems);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, error: errorMessage };
+    }
+  }, [user, problems]);
   
   const voteOnProblem = useCallback((problemId: string, voteType: 'like' | 'dislike') => {
+    // This is an optimistic update on the client side.
+    // In a real app, you'd add a server call here with a try/catch to revert on failure.
     setProblems(prevProblems => {
-      const newProblems = [...prevProblems];
-      const problemIndex = newProblems.findIndex(p => p.id === problemId);
-      if (problemIndex === -1) return prevProblems;
+      return prevProblems.map(p => {
+        if (p.id !== problemId) {
+          return p;
+        }
 
-      const problem = { ...newProblems[problemIndex] };
-      const currentVote = userVotes[problemId];
+        const problem = { ...p };
+        const currentVote = userVotes[problemId];
+        
+        // Reset previous vote count
+        if (currentVote === 'like') problem.likes--;
+        if (currentVote === 'dislike') problem.dislikes--;
 
-      // Reset previous vote if any
-      if (currentVote === 'like') problem.likes--;
-      if (currentVote === 'dislike') problem.dislikes--;
-
-      // Apply new vote
-      if (currentVote === voteType) {
-        // User is toggling off their vote
-        setUserVotes(prev => ({ ...prev, [problemId]: null }));
-      } else {
-        // User is casting a new vote or changing their vote
-        if (voteType === 'like') problem.likes++;
-        if (voteType === 'dislike') problem.dislikes++;
-        setUserVotes(prev => ({ ...prev, [problemId]: voteType }));
-      }
-      
-      newProblems[problemIndex] = problem;
-      return newProblems;
+        // Apply new vote or toggle off
+        if (currentVote === voteType) {
+          // User is toggling off their vote
+          setUserVotes(prev => ({ ...prev, [problemId]: null }));
+        } else {
+          // User is casting a new or different vote
+          if (voteType === 'like') problem.likes++;
+          if (voteType === 'dislike') problem.dislikes++;
+          setUserVotes(prev => ({ ...prev, [problemId]: voteType }));
+        }
+        
+        return problem;
+      });
     });
   }, [userVotes]);
-
 
   const value = useMemo(() => ({ problems, addProblem, updateProblem, deleteProblem, voteOnProblem }), [problems, addProblem, updateProblem, deleteProblem, voteOnProblem]);
 
