@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -84,7 +85,7 @@ export default function IssueDetailsPage() {
                     <CardContent>
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-6">
                            <Image 
-                                src={`https://picsum.photos/seed/${problem.id}/1200/675`}
+                                src={problem.media.images[0] || `https://picsum.photos/seed/${problem.id}/1200/675`}
                                 alt={problem.title}
                                 fill
                                 className="object-cover"

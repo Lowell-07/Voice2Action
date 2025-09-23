@@ -71,7 +71,7 @@ export default function IssuesPage() {
                 <CardHeader>
                   <div className="relative aspect-video w-full mb-4">
                       <Image 
-                        src={`https://picsum.photos/seed/${problem.id}/600/400`}
+                        src={problem.media.images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
                         alt={problem.title}
                         fill
                         className="rounded-md object-cover"

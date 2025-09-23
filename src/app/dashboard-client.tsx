@@ -105,7 +105,7 @@ export default function DashboardClient() {
                         <Card key={problem.id} className="bg-card/80 backdrop-blur-sm border-border/20 flex flex-col overflow-hidden shadow-lg transition-all hover:shadow-xl hover:-translate-y-1">
                             <div className="relative aspect-video w-full">
                                 <Image 
-                                    src={`https://picsum.photos/seed/${problem.id}/600/400`}
+                                    src={problem.media.images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
                                     alt={problem.title}
                                     fill
                                     className="object-cover"
@@ -184,7 +184,7 @@ export default function DashboardClient() {
                     <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden">
                            <Image 
-                                src={`https://picsum.photos/seed/${selectedProblem.id}/1200/675`}
+                                src={selectedProblem.media.images[0] || `https://picsum.photos/seed/${selectedProblem.id}/1200/675`}
                                 alt={selectedProblem.title}
                                 fill
                                 className="object-cover"
