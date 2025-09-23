@@ -4,7 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/providers';
 import { cn } from '@/lib/utils';
 import 'leaflet/dist/leaflet.css';
-import { Header } from '@/components/layout/header';
+import { Header } from '@/components/layout/header-wrapper';
 
 export const metadata: Metadata = {
   title: 'Voice2Action',
