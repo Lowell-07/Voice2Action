@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import { createContext, useState, ReactNode, useMemo, useContext, useCallback, useEffect } from 'react';
 import type { Problem } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, increment, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 
 type ProblemContextType = {
@@ -19,12 +20,94 @@ export const ProblemContext = createContext<ProblemContextType | undefined>(
   undefined
 );
 
+const sampleProblems: Omit<Problem, 'id' | 'createdAt' | 'reportedById' | 'reportedBy'>[] = [
+    {
+        title: 'Broken Streetlight on Park Avenue',
+        description: 'The streetlight at the corner of Park Avenue and 12th Street has been out for a week. It is very dark at night and feels unsafe.',
+        department: 'Electric Department',
+        issueType: 'Broken Streetlight',
+        status: 'Registered',
+        location: {
+            address: 'Park Avenue & 12th St, Delhi',
+            state: 'Delhi',
+            city: 'Delhi',
+            coordinates: { lat: 28.6139, lng: 77.2090 },
+        },
+        media: { images: [`https://picsum.photos/seed/streetlight-sample/600/400`], videos: [] },
+        likes: 5,
+        dislikes: 0,
+    },
+    {
+        title: 'Garbage Overflow near Central Market',
+        description: 'The community garbage bins near Central Market are overflowing. This is attracting stray animals and causing a foul smell.',
+        department: 'Municipal Department',
+        issueType: 'Waste Management',
+        status: 'In Progress',
+        location: {
+            address: 'Central Market, Bangalore',
+            state: 'Karnataka',
+            city: 'Bangalore',
+            coordinates: { lat: 12.9716, lng: 77.5946 },
+        },
+        media: { images: [`https://picsum.photos/seed/garbage-sample/600/400`], videos: [] },
+        likes: 12,
+        dislikes: 1,
+    },
+    {
+        title: 'Leaking Water Pipe',
+        description: 'A water pipe on the main road of the Jubilee Hills area has been leaking for three days, wasting a lot of water.',
+        department: 'Water & Sewerage',
+        issueType: 'Water Leakage',
+        status: 'Awaiting Approval',
+        location: {
+            address: 'Jubilee Hills, Hyderabad',
+            state: 'Telangana',
+            city: 'Hyderabad',
+            coordinates: { lat: 17.4334, lng: 78.4063 },
+        },
+        media: { images: [`https://picsum.photos/seed/water-sample/600/400`], videos: [] },
+        likes: 2,
+        dislikes: 0,
+    }
+];
+
+async function seedDatabaseIfNeeded() {
+    const problemsCollection = collection(db, 'problems');
+    const snapshot = await getDocs(problemsCollection);
+    if (snapshot.empty) {
+        console.log("Database is empty, seeding sample problems...");
+        const batch = writeBatch(db);
+        sampleProblems.forEach(problemData => {
+            const newDocRef = doc(problemsCollection);
+            const fullProblemData = {
+                ...problemData,
+                createdAt: new Date().toISOString(),
+                reportedById: 'system-seed',
+                reportedBy: {
+                    id: 'system',
+                    name: 'System',
+                    avatarUrl: '',
+                },
+            };
+            batch.set(newDocRef, fullProblemData);
+        });
+        await batch.commit();
+        console.log("Seeding complete.");
+    } else {
+        console.log("Database not empty, skipping seed.");
+    }
+}
+
+
 export function ProblemProvider({ children }: { children: ReactNode }) {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [userVotes, setUserVotes] = useState<{[key: string]: 'like' | 'dislike' | null}>({});
   const { user } = useAuth();
 
   useEffect(() => {
+    // Seed database on initial load if empty
+    seedDatabaseIfNeeded();
+
     const problemsCollection = collection(db, 'problems');
     const unsubscribe = onSnapshot(problemsCollection, (snapshot) => {
       const problemsData = snapshot.docs.map(doc => ({
@@ -121,8 +204,6 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
         await updateDoc(problemDocRef, updates);
     } catch (error) {
         console.error("Error voting on problem:", error);
-        // Optionally, revert the local state change
-        // For this prototype, we will optimistically update
     }
 
   }, [userVotes]);
