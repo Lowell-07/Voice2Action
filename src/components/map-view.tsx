@@ -104,6 +104,8 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
           }).addTo(layersRef.current!);
           
           const popupContainer = document.createElement('div');
+          
+          // The popup is rendered via a separate React root to ensure it has its own lifecycle.
           const root = createRoot(popupContainer);
           root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
           

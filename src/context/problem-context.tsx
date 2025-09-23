@@ -4,7 +4,7 @@
 import { createContext, useState, ReactNode, useMemo, useContext, useCallback, useEffect } from 'react';
 import type { Problem } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 
 type ProblemContextType = {
@@ -102,29 +102,30 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   
   const voteOnProblem = useCallback(async (problemId: string, voteType: 'like' | 'dislike') => {
     const currentVote = userVotes[problemId];
-    const problem = problems.find(p => p.id === problemId);
-    if (!problem) return;
+    const problemDocRef = doc(db, 'problems', problemId);
+    
+    let updates: {[key: string]: any} = {};
 
-    let newLikes = problem.likes;
-    let newDislikes = problem.dislikes;
-
-    if (currentVote === voteType) { // Toggling off
-        if (voteType === 'like') newLikes--;
-        else newDislikes--;
-        setUserVotes(prev => ({...prev, [problemId]: null}));
-    } else { // New or changing vote
-        if (currentVote === 'like') newLikes--;
-        else if (currentVote === 'dislike') newDislikes--;
-
-        if (voteType === 'like') newLikes++;
-        else newDislikes++;
-
-        setUserVotes(prev => ({...prev, [problemId]: voteType}));
+    if (currentVote === voteType) { // User is toggling off their vote
+      updates[voteType === 'like' ? 'likes' : 'dislikes'] = increment(-1);
+      setUserVotes(prev => ({...prev, [problemId]: null}));
+    } else { // New vote or changing vote
+      if (currentVote) { // Changing vote from like to dislike or vice-versa
+        updates[currentVote === 'like' ? 'likes' : 'dislikes'] = increment(-1);
+      }
+      updates[voteType === 'like' ? 'likes' : 'dislikes'] = increment(1);
+      setUserVotes(prev => ({...prev, [problemId]: voteType}));
     }
     
-    updateProblem(problemId, { likes: newLikes, dislikes: newDislikes });
+    try {
+        await updateDoc(problemDocRef, updates);
+    } catch (error) {
+        console.error("Error voting on problem:", error);
+        // Optionally, revert the local state change
+        // For this prototype, we will optimistically update
+    }
 
-  }, [userVotes, problems, updateProblem]);
+  }, [userVotes]);
 
   const value = useMemo(() => ({ problems, addProblem, updateProblem, deleteProblem, voteOnProblem }), [problems, addProblem, updateProblem, deleteProblem, voteOnProblem]);
 
