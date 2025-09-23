@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -68,6 +67,7 @@ export default function ReportForm() {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
   const [problemState, setProblemState] = useState<string | null>(null);
+  const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
 
 
   // Camera and file state
@@ -282,9 +282,6 @@ export default function ReportForm() {
     }
   }
   
-  let latitude = 0;
-  let longitude = 0;
-
   const handleLocationSuggest = useCallback(() => {
     setIsSuggestingLocation(true);
     if (!navigator.geolocation) {
@@ -299,8 +296,8 @@ export default function ReportForm() {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        latitude = position.coords.latitude;
-        longitude = position.coords.longitude;
+        const { latitude, longitude } = position.coords;
+        setCoordinates({ lat: latitude, lng: longitude });
         const result = await getLocationSuggestion({ latitude, longitude });
         if (result.success && result.locationName) {
           form.setValue('location', result.locationName);
@@ -367,7 +364,7 @@ export default function ReportForm() {
     
     // In a real app, you would upload mediaFile.file to Firebase Storage here
     // and get a downloadable URL. For now, we'll just use the preview.
-    const imageUrl = mediaFile.preview ? mediaFile.preview : `new-report-${Date.now()}`;
+    const imageUrl = mediaFile.preview ? mediaFile.preview : `https://picsum.photos/seed/${data.title.replace(/\s/g, '-')}/600/400`;
     
     if (editingProblem) {
         // We are editing an existing problem
@@ -403,7 +400,7 @@ export default function ReportForm() {
         address: data.location,
         state: finalState,
         city: 'Unknown',
-        coordinates: { lat: latitude, lng: longitude },
+        coordinates: coordinates || { lat: 0, lng: 0 },
       },
       media: {
         images: [imageUrl],
@@ -424,6 +421,7 @@ export default function ReportForm() {
     form.reset();
     clearMedia();
     setProblemState(null);
+    setCoordinates(null);
   }
   
   const handleEditIssue = () => {
@@ -765,3 +763,5 @@ export default function ReportForm() {
     </>
   );
 }
+
+    
