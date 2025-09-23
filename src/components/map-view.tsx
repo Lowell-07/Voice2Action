@@ -4,7 +4,7 @@
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Problem } from '@/lib/definitions';
-import { useEffect, memo, useRef } from 'react';
+import { useEffect, memo, useRef }from 'react';
 import type { MutableRefObject } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ProblemPopup } from '@/components/problem-popup';
@@ -72,7 +72,7 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
       const map = L.map(mapContainerRef.current, {
-        zoomControl: false,
+        zoomControl: true, // Enabled for better usability
       }).setView([20.5937, 78.9629], 5);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -83,8 +83,6 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
 
       mapRef.current = map;
     }
-
-    // No cleanup function needed for the map instance itself if it's managed by the parent via ref
   }, [mapRef]);
 
   // Update markers when problems change
