@@ -49,7 +49,7 @@ export default function DepartmentDashboardPage() {
   const handleStatusChange = (reportId: string, newStatus: string) => {
     const problem = problems.find(p => p.id === reportId);
     if (problem && problem.status !== 'Resolved' && newStatus === 'Resolved' && problem.reportedById) {
-        incrementCivicPoints(problem.reportedById, 1);
+        incrementCivicPoints(problem.reportedById, 5);
     }
     updateProblem(reportId, { status: newStatus as any });
   };
