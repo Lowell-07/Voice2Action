@@ -749,7 +749,7 @@ export default function ReportForm() {
                 <AlertTitle>Camera Access Denied</AlertTitle>
                 <AlertDescription>
                   Please enable camera permissions in your browser settings to use this feature.
-                </AlerMessage>
+                </AlertDescription>
               </Alert>
             )}
           </div>
@@ -765,5 +765,3 @@ export default function ReportForm() {
     </>
   );
 }
-
-    
