@@ -22,19 +22,24 @@ export default function DepartmentLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDepartment) {
         toast({ title: "Department not selected", description: "Please select your department to log in.", variant: "destructive"});
         return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      login('department', selectedDepartment);
-      toast({ title: "Department Login Successful" });
-      router.push('/department/dashboard');
-      setIsLoading(false);
-    }, 1000);
+    
+    // Simulate login by passing the department name
+    const result = await login(selectedDepartment, selectedDepartment);
+
+    if (result.success && result.userType === 'department') {
+        toast({ title: "Department Login Successful" });
+        router.push('/department/dashboard');
+    } else {
+        toast({ title: "Login Failed", variant: "destructive" });
+    }
+    setIsLoading(false);
   };
   
   if (user.type === 'department') {

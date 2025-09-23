@@ -27,12 +27,6 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
-// Helper function to check if user exists
-async function checkUserExists(mobile: string): Promise<boolean> {
-    const userDoc = await getDoc(doc(db, "users", mobile));
-    return userDoc.exists();
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'guest' });
 
@@ -43,9 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({ type: 'admin', data: adminData });
         return { success: true, userType: 'admin' };
     }
+    
     // Department login
-    if (secret) { // This assumes department login always provides the department name as the second arg
-        setUser({ type: 'department', data: { name: identifier, department: identifier } });
+    if (secret && identifier === secret) { 
+        setUser({ type: 'department', data: { name: secret, department: secret } });
         return { success: true, userType: 'department' };
     }
     
@@ -73,8 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (name: string, mobile: string): Promise<{success: boolean, error?: string}> => {
     try {
-        const userExists = await checkUserExists(mobile);
-        if (userExists) {
+        const userDocRef = doc(db, "users", mobile);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
             return { success: false, error: 'An account with this mobile number already exists. Please log in.' };
         }
 
@@ -85,9 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           civicPoints: 0,
         };
         
-        // The document ID will be the mobile number for simplicity in this prototype
-        const userRef = doc(db, "users", mobile);
-        await setDoc(userRef, newUser);
+        await setDoc(userDocRef, newUser);
         
         const fullUser: User = { ...newUser, id: mobile };
         setUser({ type: 'user', data: fullUser });
