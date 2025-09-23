@@ -212,12 +212,26 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     }
     
     try {
+        // For guest users, we can just update the local state for a visual effect
+        // without writing to the database.
+        if (user.type === 'guest') {
+             setProblems(prevProblems => prevProblems.map(p => {
+                if (p.id === problemId) {
+                    const newLikes = p.likes + (updates.likes?._value || 0);
+                    const newDislikes = p.dislikes + (updates.dislikes?._value || 0);
+                    return { ...p, likes: newLikes, dislikes: newDislikes };
+                }
+                return p;
+            }));
+            return;
+        }
+
         await updateDoc(problemDocRef, updates);
     } catch (error) {
         console.error("Error voting on problem:", error);
     }
 
-  }, [userVotes]);
+  }, [userVotes, user.type]);
 
   const value = useMemo(() => ({ problems, addProblem, updateProblem, deleteProblem, voteOnProblem }), [problems, addProblem, updateProblem, deleteProblem, voteOnProblem]);
 
