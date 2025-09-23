@@ -227,7 +227,6 @@ export default function ProfilePage() {
                         </div>
                         <div className="text-right">
                              <p className="text-2xl font-bold text-primary">{user.data.civicPoints?.toLocaleString() || 0}</p>
-                             <p className="text-sm text-green-500">+150 this week</p>
                         </div>
                     </div>
                 </CardContent>
@@ -256,5 +255,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
