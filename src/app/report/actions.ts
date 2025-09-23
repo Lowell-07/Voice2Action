@@ -3,7 +3,6 @@
 
 import { suggestDepartment } from '@/ai/flows/suggest-department';
 import { suggestAddressCompletions } from '@/ai/flows/suggest-address-completions';
-import { generateMapIssues, type GenerateMapIssuesInput, type GenerateMapIssuesOutput } from '@/ai/flows/generate-map-issues';
 import { departments } from '@/lib/data';
 
 export async function getLocationSuggestion(coordinates: {latitude: number, longitude: number}): Promise<{success: boolean, locationName?: string, state?: string, error?: string}> {
@@ -63,15 +62,5 @@ export async function getAddressCompletions(query: string): Promise<{success: bo
     } catch (error) {
         console.error('Error getting address completions:', error);
         return { success: false, error: 'Failed to get address suggestions.' };
-    }
-}
-
-export async function generateAndAddMapIssues(input: GenerateMapIssuesInput): Promise<{success: boolean, issues?: GenerateMapIssuesOutput['issues'], error?: string}> {
-    try {
-        const result = await generateMapIssues(input);
-        return { success: true, issues: result.issues };
-    } catch (error) {
-        console.error('Error generating map issues:', error);
-        return { success: false, error: 'Failed to generate AI issues for the map.' };
     }
 }
