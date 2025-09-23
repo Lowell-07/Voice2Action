@@ -39,6 +39,16 @@ export const indianStates: IndianState[] = [
   { code: 'WB', name: 'West Bengal' },
 ];
 
+export const departments = [
+    "Electric Department",
+    "Municipal Department",
+    "Water & Sewerage",
+    "Roads & Transport",
+];
+
+// Note: mockUsers and mockProblems are no longer used for live data,
+// but are kept for reference or testing purposes.
+
 export const mockUsers: User[] = [
   {
     id: 'user-1',
@@ -57,12 +67,6 @@ export const mockUsers: User[] = [
   },
 ];
 
-export const departments = [
-    "Electric Department",
-    "Municipal Department",
-    "Water & Sewerage",
-    "Roads & Transport",
-];
 
 export const mockProblems: Problem[] = [
   {
@@ -84,202 +88,12 @@ export const mockProblems: Problem[] = [
     },
     likes: 15,
     dislikes: 2,
-    reportedById: mockUsers[0].id,
+    reportedById: 'user-1',
     reportedBy: {
-        id: mockUsers[0].id,
-        name: mockUsers[0].name,
-        avatarUrl: mockUsers[0].avatarUrl
+        id: 'user-1',
+        name: 'Anjali Sharma',
+        avatarUrl: 'https://picsum.photos/seed/avatar1/100/100'
     },
     createdAt: '2024-05-10T10:00:00Z',
   },
-  {
-    id: 'prob-2',
-    title: 'Garbage not collected for a week',
-    description: 'The garbage bins in our locality have not been cleared for over a week. It is causing a huge mess and a health hazard.',
-    department: 'Municipal Department',
-    issueType: 'Waste Management',
-    status: 'Pending',
-    location: {
-      state: 'Delhi',
-      city: 'New Delhi',
-      address: 'Connaught Place, New Delhi',
-      coordinates: { lat: 28.6139, lng: 77.2090 },
-    },
-    media: {
-      images: ['garbage-1'],
-      videos: [],
-      voicemail: 'voicemail-1.mp3',
-    },
-    likes: 2,
-    dislikes: 0,
-    reportedById: mockUsers[1].id,
-    reportedBy: {
-        id: mockUsers[1].id,
-        name: mockUsers[1].name,
-        avatarUrl: mockUsers[1].avatarUrl
-    },
-    createdAt: '2024-05-28T14:30:00Z',
-  },
-  {
-    id: 'prob-3',
-    title: 'Streetlight out',
-    description: 'The streetlight on the corner of 5th and Elm has been out for three nights in a row, making the area very dark and unsafe.',
-    department: 'Electric Department',
-    issueType: 'Streetlights',
-    status: 'In Progress',
-    location: {
-      state: 'Karnataka',
-      city: 'Bengaluru',
-      address: '5th and Elm, Bengaluru',
-      coordinates: { lat: 12.9716, lng: 77.5946 },
-    },
-    media: {
-      images: ['streetlight-1'],
-      videos: [],
-    },
-    likes: 8,
-    dislikes: 1,
-    reportedById: mockUsers[0].id,
-    reportedBy: {
-        id: mockUsers[0].id,
-        name: mockUsers[0].name,
-        avatarUrl: mockUsers[0].avatarUrl
-    },
-    createdAt: '2024-05-25T21:00:00Z',
-  },
-  {
-    id: 'prob-4',
-    title: 'Major water pipe leak',
-    description: 'There is a huge water leakage from a pipe on the main road. A lot of clean water is being wasted and it is flooding the street.',
-    department: 'Water & Sewerage',
-    issueType: 'Water & Sewage',
-    status: 'Pending',
-    location: {
-      state: 'Delhi',
-      city: 'New Delhi',
-      address: 'Janpath, New Delhi',
-      coordinates: { lat: 28.633, lng: 77.2167 },
-    },
-    media: {
-      images: ['water-leak-1'],
-      videos: [],
-    },
-    likes: 8,
-    dislikes: 3,
-    reportedById: mockUsers[1].id,
-    reportedBy: {
-        id: mockUsers[1].id,
-        name: mockUsers[1].name,
-        avatarUrl: mockUsers[1].avatarUrl
-    },
-    createdAt: '2024-05-29T08:00:00Z',
-  },
-    {
-    id: 'prob-5',
-    title: 'Broken playground equipment',
-    description: 'The main swing set at the community park is broken and has sharp edges, making it dangerous for children.',
-    department: 'Municipal Department',
-    issueType: 'Public Spaces',
-    status: 'Registered',
-    location: {
-      state: 'Maharashtra',
-      city: 'Pune',
-      address: 'Community Park, Pune',
-      coordinates: { lat: 18.5204, lng: 73.8567 },
-    },
-    media: {
-      images: ['park-1'],
-      videos: [],
-    },
-    likes: 3,
-    dislikes: 0,
-    reportedById: mockUsers[0].id,
-    reportedBy: {
-        id: mockUsers[0].id,
-        name: mockUsers[0].name,
-        avatarUrl: mockUsers[0].avatarUrl
-    },
-    createdAt: '2024-05-27T18:00:00Z',
-  },
-   {
-    id: 'prob-6',
-    title: 'Illegal dumping in vacant lot',
-    description: 'A vacant lot in our area is being used for illegal dumping of construction debris. It\'s an eyesore and environmentally harmful.',
-    department: 'Municipal Department',
-    issueType: 'Waste Management',
-    status: 'In Progress',
-    location: {
-      state: 'Delhi',
-      city: 'New Delhi',
-      address: 'Near Nehru Place, New Delhi',
-      coordinates: { lat: 28.65, lng: 77.23 },
-    },
-    media: {
-      images: ['garbage-2'],
-      videos: [],
-    },
-    likes: 5,
-    dislikes: 5,
-    reportedById: mockUsers[0].id,
-    reportedBy: {
-        id: mockUsers[0].id,
-        name: mockUsers[0].name,
-        avatarUrl: mockUsers[0].avatarUrl
-    },
-    createdAt: '2024-06-01T11:00:00Z',
-  },
-  {
-    id: 'prob-7',
-    title: 'Power outage every evening',
-    description: 'We are experiencing daily power cuts from 7 PM to 8 PM. It is highly disruptive for everyone in the neighborhood.',
-    department: 'Electric Department',
-    issueType: 'Streetlights',
-    status: 'Registered',
-    location: {
-      state: 'Maharashtra',
-      city: 'Mumbai',
-      address: 'Andheri West, Mumbai',
-      coordinates: { lat: 19.1, lng: 72.9 },
-    },
-    media: {
-      images: ['streetlight-2'],
-      videos: [],
-    },
-    likes: 12,
-    dislikes: 1,
-    reportedById: mockUsers[1].id,
-    reportedBy: {
-        id: mockUsers[1].id,
-        name: mockUsers[1].name,
-        avatarUrl: mockUsers[1].avatarUrl
-    },
-    createdAt: '2024-06-02T09:00:00Z',
-  },
-  {
-    id: 'prob-8',
-    title: 'Fallen tree blocking road',
-    description: 'A large tree has fallen across Oak Avenue, completely blocking traffic. Needs to be cleared urgently.',
-    department: 'Roads & Transport',
-    issueType: 'Roads & Streets',
-    status: 'Awaiting Approval',
-    location: {
-      state: 'Delhi',
-      city: 'New Delhi',
-      address: 'Oak Avenue, New Delhi',
-      coordinates: { lat: 28.6139, lng: 77.2080 },
-    },
-    media: {
-      images: ['tree-1'],
-      videos: [],
-    },
-    likes: 0,
-    dislikes: 0,
-    reportedById: mockUsers[0].id,
-    reportedBy: {
-        id: mockUsers[0].id,
-        name: mockUsers[0].name,
-        avatarUrl: mockUsers[0].avatarUrl
-    },
-    createdAt: '2024-06-03T12:00:00Z',
-  }
 ];

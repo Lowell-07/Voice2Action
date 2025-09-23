@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { format } from 'date-fns';
 import { useProblems } from '@/context/problem-context';
+import type { Problem } from '@/lib/definitions';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -49,7 +50,7 @@ export default function AdminDashboardPage() {
   
   const handleApproval = (id: string, approved: boolean) => {
     const newStatus = approved ? 'Registered' : 'Rejected';
-    updateProblem(id, { status: newStatus as any });
+    updateProblem(id, { status: newStatus as Problem['status'] });
     toast({
         title: `Report ${approved ? 'Approved' : 'Rejected'}`,
         description: `The report has been processed.`,

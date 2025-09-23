@@ -4,7 +4,8 @@
 import { createContext, useState, ReactNode, useMemo, useContext, useCallback, useEffect } from 'react';
 import type { Problem } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
-import { mockProblems } from '@/lib/data'; // Using mock data for now
+import { collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
 
 type ProblemContextType = {
   problems: Problem[];
@@ -19,9 +20,21 @@ export const ProblemContext = createContext<ProblemContextType | undefined>(
 );
 
 export function ProblemProvider({ children }: { children: ReactNode }) {
-  const [problems, setProblems] = useState<Problem[]>(mockProblems);
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [userVotes, setUserVotes] = useState<{[key: string]: 'like' | 'dislike' | null}>({});
   const { user } = useAuth();
+
+  useEffect(() => {
+    const problemsCollection = collection(db, 'problems');
+    const unsubscribe = onSnapshot(problemsCollection, (snapshot) => {
+      const problemsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Problem));
+      setProblems(problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    });
+    return () => unsubscribe();
+  }, []);
 
   const addProblem = useCallback(async (problemData: Omit<Problem, 'id' | 'createdAt' | 'reportedById' | 'reportedBy'>): Promise<Problem | null> => {
     if (user.type !== 'user') {
@@ -31,8 +44,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
     try {
         const userId = user.data.id;
-        const newProblem: Problem = {
-            id: `prob-${Date.now()}`,
+        const newProblemDoc = {
             ...problemData,
             createdAt: new Date().toISOString(),
             reportedById: userId,
@@ -43,7 +55,12 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
             },
         };
         
-        setProblems(prevProblems => [newProblem, ...prevProblems]);
+        const docRef = await addDoc(collection(db, "problems"), newProblemDoc);
+        
+        const newProblem: Problem = {
+            id: docRef.id,
+            ...newProblemDoc
+        };
 
         return newProblem;
 
@@ -54,9 +71,12 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   }, [user]);
   
   const updateProblem = useCallback(async (problemId: string, updates: Partial<Problem>) => {
-     setProblems(prevProblems =>
-      prevProblems.map(p => (p.id === problemId ? { ...p, ...updates } : p))
-    );
+     try {
+        const problemDocRef = doc(db, 'problems', problemId);
+        await updateDoc(problemDocRef, updates);
+     } catch (error) {
+        console.error("Error updating problem:", error);
+     }
   }, []);
 
   const deleteProblem = useCallback(async (problemId: string): Promise<{ success: boolean; error?: string }> => {
@@ -70,39 +90,41 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     if (String(problemToDelete.reportedById) !== String(user.data.id)) {
       return { success: false, error: "You do not have permission to delete this issue." };
     }
-
-    setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
-    return { success: true };
+    
+    try {
+      await deleteDoc(doc(db, 'problems', problemId));
+      return { success: true };
+    } catch(error) {
+        console.error("Error deleting problem:", error);
+        return { success: false, error: "Failed to delete from database."};
+    }
   }, [user, problems]);
   
   const voteOnProblem = useCallback(async (problemId: string, voteType: 'like' | 'dislike') => {
     const currentVote = userVotes[problemId];
+    const problem = problems.find(p => p.id === problemId);
+    if (!problem) return;
 
-    // Optimistically update UI first
-    setProblems(prevProblems => prevProblems.map(p => {
-        if (p.id === problemId) {
-            let newLikes = p.likes;
-            let newDislikes = p.dislikes;
+    let newLikes = problem.likes;
+    let newDislikes = problem.dislikes;
 
-            if (currentVote === voteType) { // Toggling off
-                if (voteType === 'like') newLikes--;
-                else newDislikes--;
-                setUserVotes(prev => ({...prev, [problemId]: null}));
+    if (currentVote === voteType) { // Toggling off
+        if (voteType === 'like') newLikes--;
+        else newDislikes--;
+        setUserVotes(prev => ({...prev, [problemId]: null}));
+    } else { // New or changing vote
+        if (currentVote === 'like') newLikes--;
+        else if (currentVote === 'dislike') newDislikes--;
 
-            } else { // New or changing vote
-                if (currentVote === 'like') newLikes--;
-                else if (currentVote === 'dislike') newDislikes--;
+        if (voteType === 'like') newLikes++;
+        else newDislikes++;
 
-                if (voteType === 'like') newLikes++;
-                else newDislikes++;
+        setUserVotes(prev => ({...prev, [problemId]: voteType}));
+    }
+    
+    updateProblem(problemId, { likes: newLikes, dislikes: newDislikes });
 
-                setUserVotes(prev => ({...prev, [problemId]: voteType}));
-            }
-            return {...p, likes: newLikes, dislikes: newDislikes };
-        }
-        return p;
-    }));
-  }, [userVotes]);
+  }, [userVotes, problems, updateProblem]);
 
   const value = useMemo(() => ({ problems, addProblem, updateProblem, deleteProblem, voteOnProblem }), [problems, addProblem, updateProblem, deleteProblem, voteOnProblem]);
 
