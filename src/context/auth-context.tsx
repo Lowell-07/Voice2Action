@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
+import { createContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import type { User } from '@/lib/definitions';
 import { onAuthStateChanged, signInWithCustomToken, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase-client';
@@ -16,7 +16,8 @@ type AuthUser =
 
 type AuthContextType = {
   user: AuthUser;
-  login: (name: string, mobile: string) => Promise<{success: boolean, isNewUser?: boolean, error?: string}>;
+  login: (mobile: string) => Promise<{success: boolean, error?: string}>;
+  register: (name: string, mobile: string) => Promise<{success: boolean, error?: string}>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
   incrementCivicPoints: (userId: string, points: number) => void;
@@ -25,6 +26,13 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
+
+// Helper function to check if user exists
+async function checkUserExists(mobile: string): Promise<boolean> {
+    const usersQuery = query(collection(db, 'users'), where('mobile', '==', mobile));
+    const querySnapshot = await getDocs(usersQuery);
+    return !querySnapshot.empty;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'loading' });
@@ -40,7 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const userData = { ...(userDoc.data() as Omit<User, 'id'>), id: firebaseUser.uid, idToken };
           setUser({ type: 'user', data: userData });
         } else {
-          // This might happen if the user's document wasn't created properly.
           await signOut(auth);
           setUser({ type: 'guest' });
         }
@@ -51,50 +58,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const login = async (name: string, mobile: string): Promise<{success: boolean, isNewUser?: boolean, error?: string}> => {
+  const login = async (mobile: string): Promise<{success: boolean, error?: string}> => {
     try {
-      // This is a simplified simulation for a prototype. In a real app,
-      // you would use a secure backend to verify the OTP and generate a custom token.
-      const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
-      if (!response.ok) {
-        throw new Error('Failed to get a mock authentication token from the server.');
-      }
-      const { token } = await response.json();
+        const userExists = await checkUserExists(mobile);
+        if (!userExists) {
+            return { success: false, error: 'Account not found. Please register.' };
+        }
+
+        const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
+        if (!response.ok) {
+            throw new Error('Failed to get a mock authentication token from the server.');
+        }
+        const { token } = await response.json();
       
-      const userCredential = await signInWithCustomToken(auth, token);
-      const firebaseUser = userCredential.user;
-      const idToken = await firebaseUser.getIdToken();
+        const userCredential = await signInWithCustomToken(auth, token);
+        // Auth state change will be handled by the onAuthStateChanged listener
+        return { success: true };
+    } catch (error) {
+      console.error("Login error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during login.";
+      return { success: false, error: errorMessage };
+    }
+  };
 
-      const userRef = doc(db, "users", firebaseUser.uid);
-      const userDoc = await getDoc(userRef);
-      let isNewUser = !userDoc.exists();
+  const register = async (name: string, mobile: string): Promise<{success: boolean, error?: string}> => {
+    try {
+        const userExists = await checkUserExists(mobile);
+        if (userExists) {
+            return { success: false, error: 'An account with this mobile number already exists. Please log in.' };
+        }
 
-      if (isNewUser) {
+        const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
+        if (!response.ok) {
+            throw new Error('Failed to get a mock authentication token from the server.');
+        }
+        const { token } = await response.json();
+      
+        const userCredential = await signInWithCustomToken(auth, token);
+        const firebaseUser = userCredential.user;
+
         const newUser: User = {
           id: firebaseUser.uid,
           name: name,
           mobile: mobile,
           avatarUrl: `https://picsum.photos/seed/${name}/100/100`,
           civicPoints: 0,
-          idToken,
         };
-        await setDoc(userRef, {
+        
+        await setDoc(doc(db, "users", firebaseUser.uid), {
             name: newUser.name,
             mobile: newUser.mobile,
             avatarUrl: newUser.avatarUrl,
             civicPoints: newUser.civicPoints,
         });
+
         setUser({ type: 'user', data: newUser });
-      } else {
-        const existingUser = { ...(userDoc.data() as Omit<User, 'id'>), id: firebaseUser.uid, idToken };
-        setUser({ type: 'user', data: existingUser });
-      }
       
-      return { success: true, isNewUser };
+        return { success: true };
     } catch (error) {
-      console.error("Authentication or Firestore error:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during login.";
-      return { success: false, error: errorMessage };
+        console.error("Registration error:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during registration.";
+        return { success: false, error: errorMessage };
     }
   };
 
@@ -132,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
   };
 
-  const value = useMemo(() => ({ user, login, logout, updateUser, incrementCivicPoints }), [user]);
+  const value = useMemo(() => ({ user, login, register, logout, updateUser, incrementCivicPoints }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

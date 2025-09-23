@@ -13,10 +13,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { user, login } = useAuth();
+  const { user, register } = useAuth();
   const { toast } = useToast();
+  const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +31,10 @@ export default function LoginPage() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) {
+        toast({ title: "Name is required", description: "Please enter your name to register.", variant: "destructive" });
+        return;
+    }
     if (mobile.length !== 10 || !/^\d{10}$/.test(mobile)) {
         toast({
             title: "Invalid Mobile Number",
@@ -63,17 +68,17 @@ export default function LoginPage() {
       }
       setIsLoading(true);
 
-      const result = await login(mobile);
+      const result = await register(name, mobile);
 
       if (result.success) {
           toast({
-              title: "Login Successful!",
-              description: "Welcome back to Voice2Action!",
+              title: "Registration Successful!",
+              description: "Welcome to Voice2Action!",
           });
           // The useEffect will handle the redirect to /profile
       } else {
            toast({
-              title: "Login Failed",
+              title: "Registration Failed",
               description: result.error,
               variant: "destructive",
           });
@@ -81,23 +86,10 @@ export default function LoginPage() {
       }
   };
 
-  const cardTitle = otpSent ? "Verify OTP" : "User Login";
+  const cardTitle = otpSent ? "Verify OTP" : "Create an Account";
   const cardDescription = otpSent 
     ? `Enter the OTP sent to +91 ${mobile}` 
-    : "Enter your mobile to get started.";
-
-  if (user.type === 'loading') {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-1 flex items-center justify-center">
-            <div className='flex items-center gap-2 text-lg text-muted-foreground'>
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span>Initializing Session...</span>
-            </div>
-        </div>
-      </div>
-    );
-  }
+    : "Enter your name and mobile to get started.";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
@@ -117,6 +109,17 @@ export default function LoginPage() {
           <form onSubmit={otpSent ? handleVerify : handleSendOtp} className="space-y-6">
             {!otpSent ? (
               <>
+                <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input 
+                        id="name" 
+                        type="text" 
+                        placeholder="Your Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required 
+                    />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="mobile">10-digit Mobile Number</Label>
                   <Input 
@@ -146,18 +149,18 @@ export default function LoginPage() {
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {otpSent ? "Verify & Login" : "Send OTP"}
+              {otpSent ? "Verify & Register" : "Send OTP"}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-4">
            {otpSent && (
                 <Button variant="link" size="sm" onClick={() => {setOtpSent(false); setOtp('');}}>
-                    Change mobile number
+                    Change mobile number or name
                 </Button>
             )}
             <Button variant="link" size="sm" asChild>
-                <Link href="/register">Don't have an account? Register</Link>
+                <Link href="/login">Already have an account? Login</Link>
             </Button>
         </CardFooter>
       </Card>
