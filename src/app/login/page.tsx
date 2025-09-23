@@ -20,7 +20,6 @@ export default function LoginPage() {
   const [mobile, setMobile] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
   const [otp, setOtp] = useState('');
   
   useEffect(() => {
@@ -31,8 +30,8 @@ export default function LoginPage() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isRegistering && !name.trim()) {
-        toast({ title: "Name is required", variant: "destructive" });
+    if (!name.trim()) {
+        toast({ title: "Name is required", description: "Please enter your name to log in or register.", variant: "destructive" });
         return;
     }
     if (mobile.length !== 10 || !/^\d{10}$/.test(mobile)) {
@@ -73,7 +72,7 @@ export default function LoginPage() {
       if (result.success) {
           toast({
               title: result.isNewUser ? "Registration Successful!" : "Login Successful!",
-              description: "Welcome!",
+              description: "Welcome to Voice2Action!",
           });
           // The useEffect will handle the redirect to /profile
       } else {
@@ -86,17 +85,23 @@ export default function LoginPage() {
       }
   };
 
-  const toggleForm = () => {
-    setIsRegistering(!isRegistering);
-    setOtpSent(false);
-    setOtp('');
-  }
-
-  const cardTitle = otpSent ? "Verify OTP" : (isRegistering ? "Create Account" : "User Login");
+  const cardTitle = otpSent ? "Verify OTP" : "Login or Register";
   const cardDescription = otpSent 
     ? `Enter the OTP sent to +91 ${mobile}` 
-    : (isRegistering ? "Join Voice2Action to make a difference." : "Access your profile and report issues.");
+    : "Enter your name and mobile to get started.";
 
+  if (user.type === 'loading') {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1 flex items-center justify-center">
+            <div className='flex items-center gap-2 text-lg text-muted-foreground'>
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span>Initializing Session...</span>
+            </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
@@ -116,19 +121,17 @@ export default function LoginPage() {
           <form onSubmit={otpSent ? handleVerify : handleSendOtp} className="space-y-6">
             {!otpSent ? (
               <>
-                {isRegistering && (
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input 
-                            id="name" 
-                            type="text" 
-                            placeholder="Your Name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required 
-                        />
-                    </div>
-                )}
+                <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input 
+                        id="name" 
+                        type="text" 
+                        placeholder="Your Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required 
+                    />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="mobile">10-digit Mobile Number</Label>
                   <Input 
@@ -163,17 +166,10 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter className="flex-col gap-4">
-           {otpSent ? (
+           {otpSent && (
                 <Button variant="link" size="sm" onClick={() => {setOtpSent(false); setOtp('');}}>
-                    Change mobile number
+                    Change mobile number or name
                 </Button>
-            ) : (
-                 <p className="text-xs text-muted-foreground text-center w-full">
-                    {isRegistering ? "Already have an account?" : "New User?"}
-                    <Button variant="link" size="sm" onClick={toggleForm}>
-                       {isRegistering ? "Login" : "Register"}
-                    </Button>
-                </p>
             )}
         </CardFooter>
       </Card>

@@ -1,22 +1,22 @@
 
-
 "use client";
 
 import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
-import { onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { onAuthStateChanged, signInWithCustomToken, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase-client';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 type AuthUser =
   | { type: 'guest' }
+  | { type: 'loading' }
   | { type: 'user'; data: User }
   | { type: 'admin'; data: { name: string; email: string } }
   | { type: 'department'; data: { name: string; department: string } };
 
 type AuthContextType = {
   user: AuthUser;
-  login: (type: 'user' | 'admin' | 'department', name?: string, mobile?: string) => Promise<{success: boolean, isNewUser?: boolean, error?: string}>;
+  login: (type: 'user', name: string, mobile: string) => Promise<{success: boolean, isNewUser?: boolean, error?: string}>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
   incrementCivicPoints: (userId: string, points: number) => void;
@@ -27,79 +27,86 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser>({ type: 'guest' });
-  
-   useEffect(() => {
-    // In a real app with real Firebase Auth, this listener is crucial.
-    // For our current prototype, its role is diminished, but we keep it for structure.
+  const [user, setUser] = useState<AuthUser>({ type: 'loading' });
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // This part is less likely to be hit with our simplified login,
-        // but it's good practice for when real auth is added.
         const userRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-            const userData = { ...(userDoc.data() as User), id: firebaseUser.uid };
-            setUser({ type: 'user', data: userData });
+          const idToken = await firebaseUser.getIdToken();
+          const userData = { ...(userDoc.data() as Omit<User, 'id'>), id: firebaseUser.uid, idToken };
+          setUser({ type: 'user', data: userData });
+        } else {
+          // This might happen if the user's document wasn't created properly.
+          // For now, we'll treat them as a guest and log out.
+          await signOut(auth);
+          setUser({ type: 'guest' });
         }
       } else {
-        // When auth.signOut() is called, this will correctly reset the user to guest.
         setUser({ type: 'guest' });
       }
     });
     return () => unsubscribe();
   }, []);
-  
-  const login = async (type: 'user' | 'admin' | 'department', name?: string, mobile?: string): Promise<{success: boolean, isNewUser?: boolean, error?: string}> => {
-    if (type === 'user') {
-        if (!mobile) return { success: false, error: 'Mobile number is required.' };
-        
-        try {
-            const userRef = doc(db, "users", mobile); // Use mobile as the document ID
-            const userDoc = await getDoc(userRef);
-            const isNewUser = !userDoc.exists();
 
-            if (isNewUser) {
-                if (!name) {
-                    return { success: false, error: 'Name is required for registration.' };
-                }
-                const newUser: Omit<User, 'id'> = {
-                    name: name,
-                    mobile: mobile,
-                    avatarUrl: `https://picsum.photos/seed/${name}/100/100`,
-                    civicPoints: 0,
-                };
-                // For a new user, create their document in Firestore.
-                await setDoc(userRef, newUser);
-                setUser({ type: 'user', data: { ...newUser, id: mobile }});
-            } else {
-                // For an existing user, just set the user state.
-                setUser({ type: 'user', data: { id: mobile, ...userDoc.data() } as User});
-            }
-            
-            return { success: true, isNewUser };
-
-        } catch(error) {
-            console.error("Firestore data handling error:", error);
-            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during login.";
-            return { success: false, error: errorMessage };
-        }
-        
-    } else if (type === 'admin') {
-      setUser({ type: 'admin', data: { name: 'Admin User', email: 'admin@voice2action.com' } });
-       return { success: true };
-    } else if (type === 'department' && name) {
-       setUser({ type: 'department', data: { name: 'Dept Head', department: name } });
-       return { success: true };
+  const login = async (type: 'user', name: string, mobile: string): Promise<{success: boolean, isNewUser?: boolean, error?: string}> => {
+    if (type !== 'user') {
+      return { success: false, error: 'Invalid login type.' };
     }
-    return { success: false, error: 'Invalid login type.' };
+
+    try {
+      // In a real app, this would hit your backend which would verify the user (e.g., via OTP),
+      // create one if needed, and generate a real Firebase custom token.
+      // For this prototype, we're simulating that by creating a mock token for the mobile number.
+      const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
+      if (!response.ok) {
+        throw new Error('Failed to get a mock authentication token from the server.');
+      }
+      const { token: mockToken } = await response.json();
+
+      // Sign in with the mock token to establish a real Firebase session.
+      const userCredential = await signInWithCustomToken(auth, mockToken);
+      const firebaseUser = userCredential.user;
+
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const userDoc = await getDoc(userRef);
+      const isNewUser = !userDoc.exists();
+      const idToken = await firebaseUser.getIdToken();
+
+      if (isNewUser) {
+        const newUser: User = {
+          id: firebaseUser.uid,
+          name: name,
+          mobile: mobile,
+          avatarUrl: `https://picsum.photos/seed/${name}/100/100`,
+          civicPoints: 0,
+          idToken: idToken,
+        };
+        await setDoc(userRef, {
+            name: newUser.name,
+            mobile: newUser.mobile,
+            avatarUrl: newUser.avatarUrl,
+            civicPoints: newUser.civicPoints,
+        });
+        setUser({ type: 'user', data: newUser });
+      } else {
+        const existingUser = { ...(userDoc.data() as Omit<User, 'id'>), id: firebaseUser.uid, idToken };
+        setUser({ type: 'user', data: existingUser });
+      }
+      
+      return { success: true, isNewUser };
+    } catch (error) {
+      console.error("Authentication or Firestore error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during login.";
+      return { success: false, error: errorMessage };
+    }
   };
 
-  const logout = () => {
-    // For our simulated auth, we just clear the local state.
-    // auth.signOut() is called to ensure consistency if we ever switch to real auth.
-    auth.signOut();
+  const logout = async () => {
+    await signOut(auth);
     setUser({ type: 'guest' });
   };
   

@@ -4,7 +4,7 @@
 import { createContext, useState, ReactNode, useMemo, useContext, useCallback, useEffect } from 'react';
 import type { Problem } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, doc, addDoc, updateDoc, increment, onSnapshot, query, where, Unsubscribe } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, increment, onSnapshot, query, Unsubscribe, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 
 type ProblemContextType = {
@@ -25,30 +25,22 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    let unsubscribe: Unsubscribe | null = null;
-    
-    if (user.type === 'user') {
-        const q = query(collection(db, "problems"), where("reportedById", "==", user.data.id));
-        unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const problemsData: Problem[] = [];
-            querySnapshot.forEach((doc) => {
-                problemsData.push({ id: doc.id, ...doc.data() } as Problem);
-            });
-            problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setProblems(problemsData);
-        }, (error) => {
-            console.error("Firestore snapshot error:", error);
+    // This listener will fetch all problems once, intended for the public dashboard views.
+    // It doesn't need to be in real-time for this app's purpose.
+    const fetchAllProblems = async () => {
+        const q = query(collection(db, "problems"));
+        const querySnapshot = await getDocs(q);
+        const problemsData: Problem[] = [];
+        querySnapshot.forEach((doc) => {
+            problemsData.push({ id: doc.id, ...doc.data() } as Problem);
         });
-    } else {
-        setProblems([]);
+        problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setProblems(problemsData);
     }
+    
+    fetchAllProblems().catch(console.error);
 
-    return () => {
-        if (unsubscribe) {
-            unsubscribe();
-        }
-    };
-  }, [user]);
+  }, []);
 
 
   const addProblem = useCallback(async (problemData: Omit<Problem, 'id' | 'createdAt' | 'reportedById' | 'reportedBy'>): Promise<Problem | null> => {
@@ -79,7 +71,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
                 name: user.data.name,
                 avatarUrl: user.data.avatarUrl,
             },
-        }
+        } as Problem;
         
         // Optimistically add the new problem to the local state
         setProblems(prevProblems => [newProblem, ...prevProblems]);
@@ -147,28 +139,27 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
     setProblems(prevProblems => prevProblems.map(p => {
         if (p.id === problemId) {
-            const newLikes = p.likes;
-            const newDislikes = p.dislikes;
+            let newLikes = p.likes;
+            let newDislikes = p.dislikes;
 
             if (currentVote === voteType) { // Toggling off
-                if (voteType === 'like') updates['likes'] = increment(-1);
-                else updates['dislikes'] = increment(-1);
+                if (voteType === 'like') { updates['likes'] = increment(-1); newLikes--; }
+                else { updates['dislikes'] = increment(-1); newDislikes--; }
                 setUserVotes(prev => ({...prev, [problemId]: null}));
-                return {...p, likes: voteType === 'like' ? newLikes - 1: newLikes, dislikes: voteType === 'dislike' ? newDislikes - 1: newDislikes};
+
             } else { // New or changing vote
                 if (voteType === 'like') updates['likes'] = increment(1);
                 else updates['dislikes'] = increment(1);
                 
-                if (currentVote) { // Changing vote
-                    if (currentVote === 'like') updates['likes'] = increment(-1);
-                    else updates['dislikes'] = increment(-1);
-                }
+                if (currentVote === 'like') { updates['likes'] = increment(-1); newLikes--; }
+                else if (currentVote === 'dislike') { updates['dislikes'] = increment(-1); newDislikes--; }
+
+                if (voteType === 'like') newLikes++;
+                else newDislikes++;
+
                 setUserVotes(prev => ({...prev, [problemId]: voteType}));
-                return {...p, 
-                    likes: voteType === 'like' ? newLikes + (currentVote === 'dislike' ? 0 : 1) : (currentVote === 'like' ? newLikes -1 : newLikes), 
-                    dislikes: voteType === 'dislike' ? newDislikes + (currentVote === 'like' ? 0 : 1) : (currentVote === 'dislike' ? newDislikes -1 : newDislikes)
-                };
             }
+            return {...p, likes: newLikes, dislikes: newDislikes };
         }
         return p;
     }));
