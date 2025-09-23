@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Check, X, MoreHorizontal } from 'lucide-react';
@@ -35,7 +35,9 @@ export default function AdminDashboardPage() {
   const { problems, updateProblem } = useProblems();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  const pendingReports = problems.filter(p => p.status === 'Awaiting Approval');
+  const pendingReports = useMemo(() => {
+    return problems.filter(p => p.status === 'Awaiting Approval');
+  }, [problems]);
 
   useEffect(() => {
     if (user.type !== 'admin') {
