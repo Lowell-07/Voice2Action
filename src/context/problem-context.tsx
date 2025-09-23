@@ -35,13 +35,13 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
             id: `prob-${Date.now()}`,
             ...problemData,
             createdAt: new Date().toISOString(),
-            reportedById: userId, // Ensure this is a string
+            reportedById: userId,
             reportedBy: {
                 id: userId,
                 name: user.data.name,
                 avatarUrl: user.data.avatarUrl,
             },
-        } as Problem;
+        };
         
         setProblems(prevProblems => [newProblem, ...prevProblems]);
 
