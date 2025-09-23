@@ -78,43 +78,12 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
-
-      // Set z-index of the tile pane
-      (map.getPane('tilePane') as HTMLElement).style.zIndex = '0';
-      (map.getPane('shadowPane') as HTMLElement).style.zIndex = '0';
-      (map.getPane('markerPane') as HTMLElement).style.zIndex = '1';
-      (map.getPane('popupPane') as HTMLElement).style.zIndex = '2';
       
       layersRef.current = L.layerGroup().addTo(map);
 
       mapRef.current = map;
     }
-  }, [mapRef]);
 
-  // Update markers when problems change
-  useEffect(() => {
-      if (layersRef.current) {
-          layersRef.current.clearLayers(); // Clear old markers
-
-          problems.forEach(problem => {
-              if (problem.location.coordinates && problem.location.coordinates.lat && problem.location.coordinates.lng) {
-                const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng], {
-                    icon: createColoredIcon(getPinColor(problem.status))
-                }).addTo(layersRef.current!);
-                
-                const popupContainer = document.createElement('div');
-                const root = createRoot(popupContainer);
-                root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
-                
-                marker.bindPopup(popupContainer);
-              }
-          });
-      }
-
-  }, [problems, onProblemSelect, voteOnProblem]);
-
-
-  useEffect(() => {
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -123,9 +92,30 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
     };
   }, [mapRef]);
 
+  // Update markers when problems change
+  useEffect(() => {
+    if (layersRef.current) {
+      layersRef.current.clearLayers(); // Clear old markers
+
+      problems.forEach(problem => {
+        if (problem.location.coordinates && problem.location.coordinates.lat && problem.location.coordinates.lng) {
+          const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng], {
+            icon: createColoredIcon(getPinColor(problem.status))
+          }).addTo(layersRef.current!);
+          
+          const popupContainer = document.createElement('div');
+          const root = createRoot(popupContainer);
+          root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
+          
+          marker.bindPopup(popupContainer);
+        }
+      });
+    }
+  }, [problems, onProblemSelect, voteOnProblem]);
+
 
   return (
-    <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
+    <div ref={mapContainerRef} style={{ height: '100%', width: '100%', zIndex: 0 }} />
   );
 });
 
