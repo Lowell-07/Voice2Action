@@ -83,18 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true, userType: 'user' };
     }
 
-    // In this simplified flow, if the user doesn't exist, we will create them.
-    // This blurs login/register, but avoids the complexity of a real user database for the prototype.
-    const newUser = {
-        id: `user-${mobile}`,
-        name: `User ${mobile}`,
-        mobile: mobile,
-        avatarUrl: `https://picsum.photos/seed/${mobile}/100/100`,
-        civicPoints: 0,
-    };
-    mockUserStore[mobile] = newUser;
-    persistUser({ type: 'user', data: newUser });
-    return { success: true, userType: 'user' };
+    // This case should ideally not be hit if a user logs in before registering.
+    // We direct them to register from the login page.
+    return { success: false, error: 'User not found. Please register.' };
   };
 
   const register = async (name: string, mobile: string): Promise<{success: boolean, error?: string}> => {
