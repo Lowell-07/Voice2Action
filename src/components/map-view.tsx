@@ -94,25 +94,27 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
 
   // Update markers when problems change
   useEffect(() => {
-    if (layersRef.current) {
-      layersRef.current.clearLayers(); // Clear old markers
+    const layerGroup = layersRef.current;
+    if (!layerGroup) return;
 
-      problems.forEach(problem => {
-        if (problem.location.coordinates && problem.location.coordinates.lat && problem.location.coordinates.lng) {
-          const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng], {
-            icon: createColoredIcon(getPinColor(problem.status))
-          }).addTo(layersRef.current!);
-          
-          const popupContainer = document.createElement('div');
-          
-          // The popup is rendered via a separate React root to ensure it has its own lifecycle.
-          const root = createRoot(popupContainer);
-          root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
-          
-          marker.bindPopup(popupContainer);
-        }
-      });
-    }
+    layerGroup.clearLayers(); // Clear old markers
+
+    problems.forEach(problem => {
+      if (problem.location.coordinates && problem.location.coordinates.lat && problem.location.coordinates.lng) {
+        const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng], {
+          icon: createColoredIcon(getPinColor(problem.status))
+        });
+        
+        const popupContainer = document.createElement('div');
+        
+        // The popup is rendered via a separate React root to ensure it has its own lifecycle.
+        const root = createRoot(popupContainer);
+        root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
+        
+        marker.bindPopup(popupContainer);
+        layerGroup.addLayer(marker);
+      }
+    });
   }, [problems, onProblemSelect, voteOnProblem]);
 
 
