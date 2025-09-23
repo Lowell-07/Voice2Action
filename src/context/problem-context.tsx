@@ -4,7 +4,7 @@
 import { createContext, useState, ReactNode, useMemo, useContext, useCallback, useEffect } from 'react';
 import type { Problem } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
-import { collection, doc, addDoc, updateDoc, increment, onSnapshot, query, Unsubscribe, getDocs } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, increment, onSnapshot, query, Unsubscribe, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
 
 type ProblemContextType = {
@@ -25,21 +25,18 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    // This listener will fetch all problems once, intended for the public dashboard views.
-    // It doesn't need to be in real-time for this app's purpose.
-    const fetchAllProblems = async () => {
-        const q = query(collection(db, "problems"));
-        const querySnapshot = await getDocs(q);
+    // Using onSnapshot to listen for real-time updates to the problems collection.
+    const q = query(collection(db, "problems"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const problemsData: Problem[] = [];
         querySnapshot.forEach((doc) => {
             problemsData.push({ id: doc.id, ...doc.data() } as Problem);
         });
         problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setProblems(problemsData);
-    }
-    
-    fetchAllProblems().catch(console.error);
+    });
 
+    return () => unsubscribe();
   }, []);
 
 
@@ -50,30 +47,24 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-        const docRef = await addDoc(collection(db, "problems"), {
+        const newProblemData = {
             ...problemData,
             createdAt: new Date().toISOString(),
-            reportedById: user.data.id,
+            reportedById: user.data.id, // Ensure this is a string
             reportedBy: {
                 id: user.data.id,
                 name: user.data.name,
                 avatarUrl: user.data.avatarUrl,
             },
-        });
+        };
+
+        const docRef = await addDoc(collection(db, "problems"), newProblemData);
         
         const newProblem: Problem = {
             id: docRef.id,
-            ...problemData,
-            createdAt: new Date().toISOString(),
-            reportedById: user.data.id,
-            reportedBy: {
-                id: user.data.id,
-                name: user.data.name,
-                avatarUrl: user.data.avatarUrl,
-            },
+            ...newProblemData,
         } as Problem;
         
-        // Optimistically add the new problem to the local state
         setProblems(prevProblems => [newProblem, ...prevProblems]);
 
         return newProblem;
@@ -88,44 +79,31 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     const problemRef = doc(db, "problems", problemId);
     try {
         await updateDoc(problemRef, updates);
-        setProblems(prevProblems => 
-            prevProblems.map(p => p.id === problemId ? { ...p, ...updates } : p)
-        );
+        // The onSnapshot listener will handle the local state update automatically.
     } catch(error) {
         console.error("Error updating problem:", error);
     }
   }, []);
 
   const deleteProblem = useCallback(async (problemId: string): Promise<{ success: boolean; error?: string }> => {
-    if (user.type !== 'user' || !user.data.idToken) {
+    // Note: The provided /api/delete-issue endpoint is complex and relies on Firebase Admin SDK
+    // which is not suitable for a purely client-side prototype.
+    // This simplified version deletes directly from the client, relying on security rules.
+    if (user.type !== 'user') {
       return { success: false, error: "You must be logged in to delete an issue." };
     }
 
-    const originalProblems = [...problems];
     const problemToDelete = problems.find(p => p.id === problemId);
     if (!problemToDelete) return { success: false, error: "Problem not found." };
-    
-    setProblems(prevProblems => prevProblems.filter(p => p.id !== problemId));
+    if (problemToDelete.reportedById !== user.data.id) {
+      return { success: false, error: "You do not have permission to delete this issue." };
+    }
 
     try {
-        const response = await fetch('/api/delete-issue', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user.data.idToken}`
-            },
-            body: JSON.stringify({ problemId })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete the issue on the server.');
-        }
-        
+        await deleteDoc(doc(db, "problems", problemId));
         return { success: true };
-
     } catch (error) {
-        setProblems(originalProblems);
+        console.error("Error deleting problem:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
         return { success: false, error: errorMessage };
     }
@@ -137,6 +115,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
     const updates: {[key: string]: any} = {};
 
+    // Optimistically update UI first
     setProblems(prevProblems => prevProblems.map(p => {
         if (p.id === problemId) {
             let newLikes = p.likes;
@@ -168,6 +147,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
         await updateDoc(problemRef, updates);
     } catch(error) {
         console.error("Error voting on problem:", error);
+        // Here you could revert the optimistic update if the DB call fails
     }
   }, [userVotes]);
 

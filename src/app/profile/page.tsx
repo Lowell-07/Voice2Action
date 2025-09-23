@@ -163,9 +163,9 @@ export default function ProfilePage() {
                     <CardTitle className="text-lg mb-0">Recent Reported Problems</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {recentProblems.length > 0 ? (
+                    {userProblems.length > 0 ? (
                         <div className="space-y-4">
-                        {recentProblems.map(problem => (
+                        {userProblems.map(problem => (
                             <div key={problem.id} className="flex items-center justify-between p-3 rounded-lg bg-background/50">
                                 <div>
                                     <p className="font-semibold">{problem.title}</p>
