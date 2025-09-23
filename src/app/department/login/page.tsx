@@ -17,7 +17,7 @@ import { departments } from '@/lib/data';
 
 export default function DepartmentLoginPage() {
   const router = useRouter();
-  const { user, login } = useAuth();
+  const { user, login, isAuthLoaded } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -42,13 +42,19 @@ export default function DepartmentLoginPage() {
     setIsLoading(false);
   };
   
-  if (user.type === 'department') {
+  useEffect(() => {
+    if (isAuthLoaded && user.type === 'department') {
+        router.push('/department/dashboard');
+    }
+  }, [user, isAuthLoaded, router]);
+
+  if (!isAuthLoaded || user.type === 'loading') {
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center">
           <div className='flex items-center gap-2 text-lg text-muted-foreground'>
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Redirecting to dashboard...</span>
+            <span>Loading...</span>
           </div>
         </div>
       </div>

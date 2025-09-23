@@ -27,7 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthLoaded } = useAuth();
   const router = useRouter();
   const { problems, deleteProblem } = useProblems();
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
@@ -35,12 +35,12 @@ export default function ProfilePage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    if (user.type === 'guest') {
+    if (isAuthLoaded && user.type !== 'user') {
       router.push('/login');
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
-  if (user.type !== 'user') {
+  if (!isAuthLoaded || user.type !== 'user') {
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center">

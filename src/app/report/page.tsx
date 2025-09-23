@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -8,16 +9,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2 } from 'lucide-react';
 
 export default function ReportProblemPage() {
-  const { user } = useAuth();
+  const { user, isAuthLoaded } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user.type === 'guest') {
+    if (isAuthLoaded && user.type !== 'user') {
       router.push('/login');
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
-  if (user.type === 'guest') {
+  if (!isAuthLoaded || user.type !== 'user') {
     return (
         <div className="flex flex-col min-h-screen">
             <div className="flex-1 flex items-center justify-center">

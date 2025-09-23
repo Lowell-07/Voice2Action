@@ -35,27 +35,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // This effect hook handles the authentication state persistence
   useEffect(() => {
     // For this prototype, we'll use localStorage to persist the session
-    const storedUser = localStorage.getItem('voice2action-user');
-    if (storedUser) {
-        try {
+    try {
+        const storedUser = localStorage.getItem('voice2action-user');
+        if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
-        } catch (e) {
+        } else {
             setUser({ type: 'guest' });
         }
-    } else {
+    } catch (e) {
         setUser({ type: 'guest' });
+    } finally {
+        setIsAuthLoaded(true);
     }
-    setIsAuthLoaded(true);
   }, []);
 
-  const persistUser = (user: AuthUser) => {
-    if (user.type === 'guest' || user.type === 'loading') {
+  const persistUser = (userToPersist: AuthUser) => {
+    if (userToPersist.type === 'guest' || userToPersist.type === 'loading') {
         localStorage.removeItem('voice2action-user');
     } else {
-        localStorage.setItem('voice2action-user', JSON.stringify(user));
+        localStorage.setItem('voice2action-user', JSON.stringify(userToPersist));
     }
-    setUser(user);
+    setUser(userToPersist);
   }
 
 
