@@ -25,17 +25,20 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setIsLoading(true);
     // Mock authentication
-    if (username === 'lowell' && password === 'lowell') {
-      login('admin');
-      toast({ title: "Admin Login Successful" });
-      router.push('/admin/dashboard');
-    } else {
-      toast({ title: "Invalid Credentials", variant: "destructive" });
-      setIsLoading(false);
-    }
+    setTimeout(() => {
+        if (username === 'lowell' && password === 'lowell') {
+          login('admin');
+          toast({ title: "Admin Login Successful" });
+          router.push('/admin/dashboard');
+        } else {
+          toast({ title: "Invalid Credentials", variant: "destructive" });
+          setIsLoading(false);
+        }
+    }, 500); // Adding a small delay to simulate network latency
   };
 
   if (user.type === 'admin') {
+    router.push('/admin/dashboard');
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center">
