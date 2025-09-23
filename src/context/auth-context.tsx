@@ -16,7 +16,7 @@ type AuthUser =
 
 type AuthContextType = {
   user: AuthUser;
-  login: (mobile: string) => Promise<{success: boolean, error?: string}>;
+  login: (mobileOrUsername: string, password?: string) => Promise<{success: boolean, error?: string}>;
   register: (name: string, mobile: string) => Promise<{success: boolean, error?: string}>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
@@ -35,44 +35,37 @@ async function checkUserExists(mobile: string): Promise<boolean> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser>({ type: 'loading' });
+  const [user, setUser] = useState<AuthUser>({ type: 'guest' });
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userRef = doc(db, "users", firebaseUser.uid);
-        const userDoc = await getDoc(userRef);
-
-        if (userDoc.exists()) {
-          const idToken = await firebaseUser.getIdToken();
-          const userData = { ...(userDoc.data() as Omit<User, 'id'>), id: firebaseUser.uid, idToken };
-          setUser({ type: 'user', data: userData });
-        } else {
-          await signOut(auth);
-          setUser({ type: 'guest' });
-        }
-      } else {
-        setUser({ type: 'guest' });
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const login = async (mobile: string): Promise<{success: boolean, error?: string}> => {
+   const login = async (identifier: string, department?: string): Promise<{success: boolean, error?: string}> => {
+    // Admin login
+    if (identifier === 'lowell' && department === 'lowell') {
+        const adminData = { name: 'Lowell', email: 'admin@voice2action.com' };
+        setUser({ type: 'admin', data: adminData });
+        return { success: true };
+    }
+    // Department login
+    if (department) {
+        setUser({ type: 'department', data: { name: department, department: department } });
+        return { success: true };
+    }
+    
+    // User login
+    const mobile = identifier;
     try {
-        const userExists = await checkUserExists(mobile);
-        if (!userExists) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where("mobile", "==", mobile));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
             return { success: false, error: 'Account not found. Please register.' };
         }
+        
+        const userDoc = querySnapshot.docs[0];
+        const userData = { id: userDoc.id, ...userDoc.data() } as User;
+        
+        setUser({ type: 'user', data: userData });
 
-        const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
-        if (!response.ok) {
-            throw new Error('Failed to get a mock authentication token from the server.');
-        }
-        const { token } = await response.json();
-      
-        const userCredential = await signInWithCustomToken(auth, token);
-        // Auth state change will be handled by the onAuthStateChanged listener
         return { success: true };
     } catch (error) {
       console.error("Login error:", error);
@@ -88,31 +81,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return { success: false, error: 'An account with this mobile number already exists. Please log in.' };
         }
 
-        const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
-        if (!response.ok) {
-            throw new Error('Failed to get a mock authentication token from the server.');
-        }
-        const { token } = await response.json();
-      
-        const userCredential = await signInWithCustomToken(auth, token);
-        const firebaseUser = userCredential.user;
-
-        const newUser: User = {
-          id: firebaseUser.uid,
+        const newUser: Omit<User, 'id'> = {
           name: name,
           mobile: mobile,
           avatarUrl: `https://picsum.photos/seed/${name}/100/100`,
           civicPoints: 0,
         };
         
-        await setDoc(doc(db, "users", firebaseUser.uid), {
-            name: newUser.name,
-            mobile: newUser.mobile,
-            avatarUrl: newUser.avatarUrl,
-            civicPoints: newUser.civicPoints,
-        });
-
-        setUser({ type: 'user', data: newUser });
+        // The document ID will be the mobile number for simplicity in this prototype
+        const userRef = doc(db, "users", mobile);
+        await setDoc(userRef, newUser);
+        
+        const fullUser: User = { ...newUser, id: mobile };
+        setUser({ type: 'user', data: fullUser });
       
         return { success: true };
     } catch (error) {
@@ -121,9 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: errorMessage };
     }
   };
-
+  
   const logout = async () => {
-    await signOut(auth);
     setUser({ type: 'guest' });
   };
   
