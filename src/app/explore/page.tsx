@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MapPin, Info, Circle, ThumbsUp, Calendar, ThumbsDown, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { MapPin, Info, Circle, ThumbsUp, Calendar, ThumbsDown, CheckCircle, Clock, AlertTriangle, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type L from 'leaflet';
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { generateAndAddMapIssues } from '../report/actions';
 
 const MapView = dynamic(() => import('@/components/map-view'), {
   ssr: false,
@@ -31,7 +32,13 @@ export default function ExplorePage() {
     const mapRef = useRef<L.Map | null>(null);
     const userLocationMarkerRef = useRef<L.Marker | null>(null);
     const { problems, voteOnProblem } = useProblems();
+    const [displayedProblems, setDisplayedProblems] = useState<Problem[]>(problems);
     const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    useEffect(() => {
+        setDisplayedProblems(problems);
+    }, [problems]);
 
     const handleGPSClick = useCallback(() => {
       if (navigator.geolocation) {
@@ -78,6 +85,40 @@ export default function ExplorePage() {
       }
     }, [toast]);
     
+    const handleGenerateIssues = async () => {
+        if (!mapRef.current) {
+            toast({ title: "Map not ready", description: "Please wait for the map to load.", variant: "destructive" });
+            return;
+        }
+        setIsGenerating(true);
+        toast({ title: "Generating AI Issues...", description: "Please wait while the AI creates sample problems on the map." });
+        
+        const bounds = mapRef.current.getBounds();
+        const input = {
+            southWest: bounds.getSouthWest(),
+            northEast: bounds.getNorthEast(),
+            count: 5,
+        };
+
+        const result = await generateAndAddMapIssues(input);
+        if (result.success && result.issues) {
+             const aiProblems = result.issues.map(issue => ({
+                ...issue,
+                media: { images: [`https://picsum.photos/seed/${issue.id}/600/400`], videos: [] },
+                likes: Math.floor(Math.random() * 50),
+                dislikes: Math.floor(Math.random() * 10),
+                reportedById: 'ai-generated',
+                reportedBy: { id: 'ai', name: 'AI Bot', avatarUrl: ''},
+                createdAt: new Date().toISOString(),
+            }));
+            setDisplayedProblems(prev => [...prev, ...aiProblems]);
+            toast({ title: "Success!", description: `${result.issues.length} new AI-generated issues have been added to the map.`});
+        } else {
+            toast({ title: "AI Generation Failed", description: result.error, variant: "destructive" });
+        }
+        setIsGenerating(false);
+    }
+    
   return (
     <>
     <div className="flex flex-col min-h-screen bg-background">
@@ -94,14 +135,18 @@ export default function ExplorePage() {
 
           <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
             <CardContent className="p-2 md:p-4 relative">
-              <div className="absolute top-4 left-4 z-[51]">
+              <div className="absolute top-4 left-4 z-[51] flex gap-2">
                 <Button onClick={handleGPSClick}>
                   <MapPin className="mr-2 h-4 w-4" /> Use My GPS Location
+                </Button>
+                 <Button onClick={handleGenerateIssues} disabled={isGenerating}>
+                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Generate AI Issues
                 </Button>
               </div>
               
               <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden z-0">
-                <MapView problems={problems} mapRef={mapRef} onProblemSelect={setSelectedProblem} />
+                <MapView problems={displayedProblems} mapRef={mapRef} onProblemSelect={setSelectedProblem} />
               </div>
                <div className="p-4 text-center text-muted-foreground text-sm">
                 Interactive map powered by Leaflet. The markers represent issue statuses.
