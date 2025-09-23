@@ -5,7 +5,7 @@ import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
 import { onAuthStateChanged, signInWithCustomToken, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase-client';
-import { doc, setDoc, getDoc, serverTimestamp, getFirestore, collection, addDoc, updateDoc, increment, query, onSnapshot, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, getFirestore, collection, addDoc, updateDoc, increment, query, onSnapshot, getDocs, deleteDoc, where } from 'firebase/firestore';
 
 type AuthUser =
   | { type: 'guest' }
@@ -26,10 +26,6 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
-
-// This is a mock in-memory store for users since we are not using a real backend for user management.
-const mockUserStore: { [mobile: string]: User } = {};
-
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'loading' });
@@ -76,32 +72,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // User login
     const mobile = identifier;
-    const existingUser = Object.values(mockUserStore).find(u => u.mobile === mobile);
-    
-    if (existingUser) {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("mobile", "==", mobile));
+
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const existingUser = { id: userDoc.id, ...userDoc.data() } as User;
         persistUser({ type: 'user', data: existingUser });
         return { success: true, userType: 'user' };
     }
 
-    // This case should ideally not be hit if a user logs in before registering.
-    // We direct them to register from the login page.
     return { success: false, error: 'User not found. Please register.' };
   };
 
   const register = async (name: string, mobile: string): Promise<{success: boolean, error?: string}> => {
-    if (mockUserStore[mobile]) {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("mobile", "==", mobile));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
         return { success: false, error: "A user with this mobile number already exists. Please login." };
     }
 
+    const newUserRef = doc(collection(db, "users"));
     const newUser: User = {
-      id: `user-${Date.now()}`, // Simple unique ID
+      id: newUserRef.id,
       name: name,
       mobile: mobile,
       avatarUrl: `https://picsum.photos/seed/${name.split(' ').join('')}/100/100`,
       civicPoints: 0,
     };
     
-    mockUserStore[mobile] = newUser;
+    await setDoc(newUserRef, newUser);
     persistUser({ type: 'user', data: newUser });
   
     return { success: true };
@@ -113,8 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const updateUser = async (updates: Partial<User>) => {
     if (user.type === 'user') {
+        const userDocRef = doc(db, 'users', user.data.id);
+        await updateDoc(userDocRef, updates);
+        
         const updatedUserData = { ...user.data, ...updates };
-        mockUserStore[user.data.mobile] = updatedUserData;
         persistUser({
             ...user,
             data: updatedUserData
@@ -123,10 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   const incrementCivicPoints = async (userId: string, points: number) => {
+      const userDocRef = doc(db, 'users', userId);
+      await updateDoc(userDocRef, {
+        civicPoints: increment(points)
+      });
       if (user.type === 'user' && user.data.id === userId) {
           const newPoints = (user.data.civicPoints || 0) + points;
           const updatedUserData = { ...user.data, civicPoints: newPoints };
-          mockUserStore[user.data.mobile] = updatedUserData;
            persistUser({ type: 'user', data: updatedUserData });
       }
   };
