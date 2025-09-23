@@ -84,12 +84,7 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
       mapRef.current = map;
     }
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
+    // No cleanup function needed for the map instance itself if it's managed by the parent via ref
   }, [mapRef]);
 
   // Update markers when problems change
