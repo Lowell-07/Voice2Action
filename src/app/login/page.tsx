@@ -67,7 +67,7 @@ export default function LoginPage() {
       }
       setIsLoading(true);
 
-      const result = await login('user', name, mobile);
+      const result = await login(name, mobile);
 
       if (result.success) {
           toast({

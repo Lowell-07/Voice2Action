@@ -5,7 +5,7 @@ import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
 import { onAuthStateChanged, signInWithCustomToken, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase-client';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, getDocs, collection, query, where } from 'firebase/firestore';
 
 type AuthUser =
   | { type: 'guest' }
@@ -16,7 +16,7 @@ type AuthUser =
 
 type AuthContextType = {
   user: AuthUser;
-  login: (type: 'user', name: string, mobile: string) => Promise<{success: boolean, isNewUser?: boolean, error?: string}>;
+  login: (name: string, mobile: string) => Promise<{success: boolean, isNewUser?: boolean, error?: string}>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
   incrementCivicPoints: (userId: string, points: number) => void;
@@ -41,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({ type: 'user', data: userData });
         } else {
           // This might happen if the user's document wasn't created properly.
-          // For now, we'll treat them as a guest and log out.
           await signOut(auth);
           setUser({ type: 'guest' });
         }
@@ -52,29 +51,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const login = async (type: 'user', name: string, mobile: string): Promise<{success: boolean, isNewUser?: boolean, error?: string}> => {
-    if (type !== 'user') {
-      return { success: false, error: 'Invalid login type.' };
-    }
-
+  const login = async (name: string, mobile: string): Promise<{success: boolean, isNewUser?: boolean, error?: string}> => {
     try {
-      // In a real app, this would hit your backend which would verify the user (e.g., via OTP),
-      // create one if needed, and generate a real Firebase custom token.
-      // For this prototype, we're simulating that by creating a mock token for the mobile number.
+      // This is a simplified simulation for a prototype. In a real app,
+      // you would use a secure backend to verify the OTP and generate a custom token.
       const response = await fetch(`https://us-central1-genkit-llm-demo.cloudfunctions.net/getCustomToken?uid=${mobile}`);
       if (!response.ok) {
         throw new Error('Failed to get a mock authentication token from the server.');
       }
-      const { token: mockToken } = await response.json();
-
-      // Sign in with the mock token to establish a real Firebase session.
-      const userCredential = await signInWithCustomToken(auth, mockToken);
+      const { token } = await response.json();
+      
+      const userCredential = await signInWithCustomToken(auth, token);
       const firebaseUser = userCredential.user;
+      const idToken = await firebaseUser.getIdToken();
 
       const userRef = doc(db, "users", firebaseUser.uid);
       const userDoc = await getDoc(userRef);
-      const isNewUser = !userDoc.exists();
-      const idToken = await firebaseUser.getIdToken();
+      let isNewUser = !userDoc.exists();
 
       if (isNewUser) {
         const newUser: User = {
@@ -83,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           mobile: mobile,
           avatarUrl: `https://picsum.photos/seed/${name}/100/100`,
           civicPoints: 0,
-          idToken: idToken,
+          idToken,
         };
         await setDoc(userRef, {
             name: newUser.name,
