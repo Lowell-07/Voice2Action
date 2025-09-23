@@ -135,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await updateDoc(userDocRef, {
         civicPoints: increment(points)
       });
+      // Also update the local state if the current user is the one getting points
       if (user.type === 'user' && user.data.id === userId) {
           const newPoints = (user.data.civicPoints || 0) + points;
           const updatedUserData = { ...user.data, civicPoints: newPoints };
