@@ -28,6 +28,9 @@ import {
 import { format } from 'date-fns';
 import { useProblems } from '@/context/problem-context';
 import type { Problem } from '@/lib/definitions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+type StatusFilter = 'Awaiting Approval' | 'Registered' | 'Rejected';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -35,10 +38,11 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
   const { problems, updateProblem } = useProblems();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('Awaiting Approval');
 
-  const pendingReports = useMemo(() => {
-    return problems.filter(p => p.status === 'Awaiting Approval');
-  }, [problems]);
+  const filteredReports = useMemo(() => {
+    return problems.filter(p => p.status === statusFilter);
+  }, [problems, statusFilter]);
 
   useEffect(() => {
     if (user.type !== 'admin') {
@@ -56,6 +60,17 @@ export default function AdminDashboardPage() {
         description: `The report has been processed.`,
     })
   }
+
+  const getBadgeVariant = (status: Problem['status']) => {
+    switch (status) {
+      case 'Registered':
+        return 'secondary';
+      case 'Rejected':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
 
   if (!isAuthorized) {
     return (
@@ -84,61 +99,72 @@ export default function AdminDashboardPage() {
                 <div className='flex justify-between items-center'>
                     <div>
                         <CardTitle>All Reported Issues</CardTitle>
-                        <CardDescription>Here are all the issues that have been reported by users. Click a row to see details.</CardDescription>
+                        <CardDescription>Review, approve, or reject issues submitted by users.</CardDescription>
                     </div>
                 </div>
             </CardHeader>
             <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingReports.length > 0 ? pendingReports.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell>{format(new Date(report.createdAt), 'dd MMM, yyyy')}</TableCell>
-                        <TableCell className="font-medium">{report.title}</TableCell>
-                        <TableCell>{report.department}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">Awaiting Approval</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleApproval(report.id, true)}>
-                                <Check className="mr-2 h-4 w-4" />
-                                Approve
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleApproval(report.id, false)} className="text-red-500">
-                                <X className="mr-2 h-4 w-4" />
-                                Reject
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+              <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="Awaiting Approval">Awaiting Approval</TabsTrigger>
+                  <TabsTrigger value="Registered">Approved</TabsTrigger>
+                  <TabsTrigger value="Rejected">Rejected</TabsTrigger>
+                </TabsList>
+                <TabsContent value={statusFilter}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    )) : (
-                        <TableRow>
-                            <TableCell colSpan={5} className="text-center h-24">
-                                All Caught Up! No pending reports.
-                            </TableCell>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredReports.length > 0 ? filteredReports.map((report) => (
+                        <TableRow key={report.id}>
+                          <TableCell>{format(new Date(report.createdAt), 'dd MMM, yyyy')}</TableCell>
+                          <TableCell className="font-medium">{report.title}</TableCell>
+                          <TableCell>{report.department}</TableCell>
+                          <TableCell>
+                            <Badge variant={getBadgeVariant(report.status)}>{report.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                             {report.status === 'Awaiting Approval' && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={() => handleApproval(report.id, true)}>
+                                      <Check className="mr-2 h-4 w-4" />
+                                      Approve
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleApproval(report.id, false)} className="text-red-500">
+                                      <X className="mr-2 h-4 w-4" />
+                                      Reject
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                             )}
+                          </TableCell>
                         </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      )) : (
+                          <TableRow>
+                              <TableCell colSpan={5} className="text-center h-24">
+                                  No reports with status "{statusFilter}".
+                              </TableCell>
+                          </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
