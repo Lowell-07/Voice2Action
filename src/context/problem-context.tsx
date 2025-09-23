@@ -30,7 +30,10 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const problemsData: Problem[] = [];
         querySnapshot.forEach((doc) => {
-            problemsData.push({ id: doc.id, ...doc.data() } as Problem);
+            const data = doc.data();
+            // Ensure createdAt is a string, defaulting if it's not present
+            const createdAt = data.createdAt || new Date().toISOString();
+            problemsData.push({ id: doc.id, ...data, createdAt } as Problem);
         });
         problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setProblems(problemsData);
@@ -47,12 +50,13 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+        const userId = user.data.id;
         const newProblemData = {
             ...problemData,
             createdAt: new Date().toISOString(),
-            reportedById: user.data.id, // Ensure this is a string
+            reportedById: userId, // Ensure this is a string
             reportedBy: {
-                id: user.data.id,
+                id: userId,
                 name: user.data.name,
                 avatarUrl: user.data.avatarUrl,
             },
@@ -65,7 +69,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
             ...newProblemData,
         } as Problem;
         
-        setProblems(prevProblems => [newProblem, ...prevProblems]);
+        // The onSnapshot listener will handle adding the problem to the local state.
+        // setProblems(prevProblems => [newProblem, ...prevProblems]);
 
         return newProblem;
 
@@ -95,7 +100,9 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
     const problemToDelete = problems.find(p => p.id === problemId);
     if (!problemToDelete) return { success: false, error: "Problem not found." };
-    if (problemToDelete.reportedById !== user.data.id) {
+    
+    // Ensure both IDs are compared as strings
+    if (String(problemToDelete.reportedById) !== String(user.data.id)) {
       return { success: false, error: "You do not have permission to delete this issue." };
     }
 

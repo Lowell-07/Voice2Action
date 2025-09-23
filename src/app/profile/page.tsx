@@ -53,7 +53,7 @@ export default function ProfilePage() {
     );
   }
   
-  const userProblems = problems.filter(p => p.reportedBy?.id?.toString() === user.data.id?.toString());
+  const userProblems = problems.filter(p => String(p.reportedBy?.id) === String(user.data.id));
   const resolvedProblems = userProblems.filter(p => p.status === 'Resolved').length;
   const recentProblems = userProblems.slice(0, 3);
 
