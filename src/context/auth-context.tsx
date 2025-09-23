@@ -16,6 +16,7 @@ type AuthUser =
 
 type AuthContextType = {
   user: AuthUser;
+  isAuthLoaded: boolean;
   login: (mobileOrUsername: string, passwordOrDepartment?: string) => Promise<{success: boolean, error?: string, userType?: 'user' | 'admin' | 'department'}>;
   register: (name: string, mobile: string) => Promise<{success: boolean, error?: string}>;
   logout: () => void;
@@ -29,6 +30,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'loading' });
+  const [isAuthLoaded, setIsAuthLoaded] = useState(false);
 
   // This effect hook handles the authentication state persistence
   useEffect(() => {
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
         setUser({ type: 'guest' });
     }
+    setIsAuthLoaded(true);
   }, []);
 
   const persistUser = (user: AuthUser) => {
@@ -139,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
   };
 
-  const value = useMemo(() => ({ user, login, register, logout, updateUser, incrementCivicPoints }), [user]);
+  const value = useMemo(() => ({ user, isAuthLoaded, login, register, logout, updateUser, incrementCivicPoints }), [user, isAuthLoaded]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

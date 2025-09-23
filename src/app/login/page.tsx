@@ -15,7 +15,7 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login } = useAuth();
+  const { user, login, isAuthLoaded } = useAuth();
   const { toast } = useToast();
   const [mobile, setMobile] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -23,10 +23,10 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   
   useEffect(() => {
-    if (user.type === 'user') {
+    if (isAuthLoaded && user.type === 'user') {
       router.push('/profile');
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +86,7 @@ export default function LoginPage() {
     ? `Enter the OTP sent to +91 ${mobile}` 
     : "Enter your mobile to get started.";
 
-  if (user.type === 'loading') {
+  if (!isAuthLoaded || user.type === 'loading') {
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center">
