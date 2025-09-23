@@ -32,14 +32,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'loading' });
   const [isAuthLoaded, setIsAuthLoaded] = useState(false);
 
-  // This effect hook handles the authentication state persistence
+  // This effect hook handles the authentication state persistence and live updates
   useEffect(() => {
-    // For this prototype, we'll use localStorage to persist the session
+    let unsubscribe: () => void = () => {};
+
     try {
-        const storedUser = localStorage.getItem('voice2action-user');
-        if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
+        const storedUserString = localStorage.getItem('voice2action-user');
+        if (storedUserString) {
+            const storedUser = JSON.parse(storedUserString);
+            
+            if (storedUser.type === 'user' && storedUser.data?.id) {
+                // Set initial user state from local storage to avoid flicker
+                setUser(storedUser); 
+                
+                // Subscribe to live updates for the user
+                const userDocRef = doc(db, 'users', storedUser.data.id);
+                unsubscribe = onSnapshot(userDocRef, (doc) => {
+                    if (doc.exists()) {
+                        const latestUserData = { id: doc.id, ...doc.data() } as User;
+                        const updatedAuthUser = { type: 'user' as const, data: latestUserData };
+                        persistUser(updatedAuthUser); // Update local storage as well
+                    } else {
+                        // User was deleted, log them out.
+                        logout();
+                    }
+                });
+            } else if (storedUser.type === 'admin' || storedUser.type === 'department') {
+                 setUser(storedUser);
+            }
+            else {
+                setUser({ type: 'guest' });
+            }
         } else {
             setUser({ type: 'guest' });
         }
@@ -48,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
         setIsAuthLoaded(true);
     }
+    
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   const persistUser = (userToPersist: AuthUser) => {
@@ -58,7 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(userToPersist);
   }
-
 
   const login = async (identifier: string, secret?: string): Promise<{success: boolean, error?: string, userType?: 'user' | 'admin' | 'department'}> => {
     // Admin login
@@ -79,12 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("mobile", "==", mobile));
 
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        const existingUser = { id: userDoc.id, ...userDoc.data() } as User;
-        persistUser({ type: 'user', data: existingUser });
-        return { success: true, userType: 'user' };
+    try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            const existingUser = { id: userDoc.id, ...userDoc.data() } as User;
+            persistUser({ type: 'user', data: existingUser });
+            // The useEffect will now automatically handle live updates.
+            return { success: true, userType: 'user' };
+        }
+    } catch(e) {
+        console.error("Login error", e);
+        return { success: false, error: 'A database error occurred.' };
     }
 
     return { success: false, error: 'User not found. Please register.' };
@@ -93,25 +124,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (name: string, mobile: string): Promise<{success: boolean, error?: string}> => {
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("mobile", "==", mobile));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-        return { success: false, error: "A user with this mobile number already exists. Please login." };
-    }
-
-    const newUserRef = doc(collection(db, "users"));
-    const newUser: User = {
-      id: newUserRef.id,
-      name: name,
-      mobile: mobile,
-      avatarUrl: `https://picsum.photos/seed/${name.split(' ').join('')}/100/100`,
-      civicPoints: 0,
-    };
     
-    await setDoc(newUserRef, newUser);
-    persistUser({ type: 'user', data: newUser });
-  
-    return { success: true };
+    try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            return { success: false, error: "A user with this mobile number already exists. Please login." };
+        }
+
+        const newUserRef = doc(collection(db, "users"));
+        const newUser: User = {
+          id: newUserRef.id,
+          name: name,
+          mobile: mobile,
+          avatarUrl: `https://picsum.photos/seed/${name.split(' ').join('')}/100/100`,
+          civicPoints: 0,
+        };
+        
+        await setDoc(newUserRef, newUser);
+        persistUser({ type: 'user', data: newUser });
+      
+        return { success: true };
+    } catch(e) {
+        console.error("Registration error", e);
+        return { success: false, error: 'A database error occurred during registration.' };
+    }
   };
   
   const logout = async () => {
@@ -122,25 +158,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user.type === 'user') {
         const userDocRef = doc(db, 'users', user.data.id);
         await updateDoc(userDocRef, updates);
-        
-        const updatedUserData = { ...user.data, ...updates };
-        persistUser({
-            ...user,
-            data: updatedUserData
-        });
+        // Live listener will handle the UI update
     }
   };
   
   const incrementCivicPoints = async (userId: string, points: number) => {
-      const userDocRef = doc(db, 'users', userId);
-      await updateDoc(userDocRef, {
-        civicPoints: increment(points)
-      });
-      // Also update the local state if the current user is the one getting points
-      if (user.type === 'user' && user.data.id === userId) {
-          const newPoints = (user.data.civicPoints || 0) + points;
-          const updatedUserData = { ...user.data, civicPoints: newPoints };
-           persistUser({ type: 'user', data: updatedUserData });
+      if (!userId) {
+          console.error("Cannot increment points: userId is missing.");
+          return;
+      }
+      try {
+        const userDocRef = doc(db, 'users', userId);
+        await updateDoc(userDocRef, {
+            civicPoints: increment(points)
+        });
+        // Live listener will handle the UI update for the current user
+      } catch (error) {
+        console.error("Error incrementing civic points for user", userId, error);
       }
   };
 
