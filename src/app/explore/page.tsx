@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MapPin, Info, Circle, ThumbsUp, Calendar, ThumbsDown } from 'lucide-react';
+import { MapPin, Info, Circle, ThumbsUp, Calendar, ThumbsDown, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type L from 'leaflet';
@@ -104,7 +104,7 @@ export default function ExplorePage() {
                 <MapView problems={problems} mapRef={mapRef} onProblemSelect={setSelectedProblem} />
               </div>
                <div className="p-4 text-center text-muted-foreground text-sm">
-                Interactive map powered by Leaflet. The markers represent issues, with colors indicating popularity.
+                Interactive map powered by Leaflet. The markers represent issue statuses.
               </div>
             </CardContent>
           </Card>
@@ -120,20 +120,24 @@ export default function ExplorePage() {
                 <CardContent>
                     <ul className="space-y-3">
                         <li className="flex items-center gap-3">
-                            <Circle className="w-4 h-4 text-red-500 fill-red-500" />
-                            <span className="text-sm flex items-center gap-1.5">High Priority (<ThumbsUp className="w-3 h-3" /> 5+)</span>
+                            <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: 'red', transform: 'rotate(45deg)', borderRadius: '50% 50% 50% 0' }} />
+                            <span className="text-sm flex items-center gap-1.5">Awaiting Approval</span>
                         </li>
                          <li className="flex items-center gap-3">
-                            <Circle className="w-4 h-4 text-orange-500 fill-orange-500" />
-                            <span className="text-sm flex items-center gap-1.5">Medium Priority (<ThumbsUp className="w-3 h-3" /> 3-4)</span>
+                            <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: 'yellow', transform: 'rotate(45deg)', borderRadius: '50% 50% 50% 0' }} />
+                            <span className="text-sm flex items-center gap-1.5">Registered</span>
                         </li>
                          <li className="flex items-center gap-3">
-                            <Circle className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm flex items-center gap-1.5">Low Priority (<ThumbsUp className="w-3 h-3" /> 1-2)</span>
+                            <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: 'blue', transform: 'rotate(45deg)', borderRadius: '50% 50% 50% 0' }} />
+                            <span className="text-sm flex items-center gap-1.5">In Progress</span>
                         </li>
                         <li className="flex items-center gap-3">
-                            <Circle className="w-4 h-4 text-gray-400 fill-gray-400" />
-                            <span className="text-sm">New Issue (No votes)</span>
+                            <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: 'green', transform: 'rotate(45deg)', borderRadius: '50% 50% 50% 0' }} />
+                            <span className="text-sm">Resolved</span>
+                        </li>
+                         <li className="flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: 'grey', transform: 'rotate(45deg)', borderRadius: '50% 50% 50% 0' }} />
+                            <span className="text-sm">Rejected</span>
                         </li>
                     </ul>
                 </CardContent>

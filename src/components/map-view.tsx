@@ -4,7 +4,7 @@
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Problem } from '@/lib/definitions';
-import { useEffect, memo } from 'react';
+import { useEffect, memo, useRef } from 'react';
 import type { MutableRefObject } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ProblemPopup } from '@/components/problem-popup';
@@ -24,24 +24,59 @@ interface MapViewProps {
   onProblemSelect: (problem: Problem) => void;
 }
 
-const getDotColor = (likeCount: number) => {
-    if (likeCount >= 5) return 'red';
-    if (likeCount >= 3) return 'orange';
-    if (likeCount >= 1) return 'yellow';
-    return '#A9A9A9';
+const getPinColor = (status: Problem['status']) => {
+    switch (status) {
+        case 'Resolved':
+            return 'green';
+        case 'In Progress':
+            return 'blue';
+        case 'Registered':
+            return 'yellow';
+        case 'Rejected':
+            return 'grey';
+        case 'Awaiting Approval':
+        default:
+            return 'red';
+    }
+}
+
+const createColoredIcon = (color: string) => {
+    const markerHtmlStyles = `
+        background-color: ${color};
+        width: 2rem;
+        height: 2rem;
+        display: block;
+        left: -1rem;
+        top: -1rem;
+        position: relative;
+        border-radius: 2rem 2rem 0;
+        transform: rotate(45deg);
+        border: 1px solid #FFFFFF;
+    `;
+
+    return L.divIcon({
+        className: "my-custom-pin",
+        iconAnchor: [0, 24],
+        popupAnchor: [0, -36],
+        html: `<span style="${markerHtmlStyles}" />`
+    });
 };
+
 
 const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: MapViewProps) {
   const { voteOnProblem } = useProblems();
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const layersRef = useRef<L.LayerGroup | null>(null);
 
-  const mapContainerRef = (node: HTMLDivElement | null) => {
-    if (node && !mapRef.current) { // Prevents re-initialization
-      const map = L.map(node, {
-          zoomControl: false // We can add custom zoom controls if needed
+  // Initialize map
+  useEffect(() => {
+    if (mapContainerRef.current && !mapRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: false,
       }).setView([20.5937, 78.9629], 5);
-      
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
 
       // Set z-index of the tile pane
@@ -49,28 +84,35 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
       (map.getPane('shadowPane') as HTMLElement).style.zIndex = '0';
       (map.getPane('markerPane') as HTMLElement).style.zIndex = '1';
       (map.getPane('popupPane') as HTMLElement).style.zIndex = '2';
-
-      problems.forEach(problem => {
-        const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng]).addTo(map);
-        
-        const popupContainer = document.createElement('div');
-        const root = createRoot(popupContainer);
-        root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
-        
-        marker.bindPopup(popupContainer);
-
-        const totalLikes = problem.likes - problem.dislikes;
-        L.circle([problem.location.coordinates.lat, problem.location.coordinates.lng], {
-          radius: 20000,
-          color: getDotColor(totalLikes),
-          fillColor: getDotColor(totalLikes),
-          fillOpacity: 0.5,
-        }).addTo(map);
-      });
+      
+      layersRef.current = L.layerGroup().addTo(map);
 
       mapRef.current = map;
     }
-  };
+  }, [mapRef]);
+
+  // Update markers when problems change
+  useEffect(() => {
+      if (layersRef.current) {
+          layersRef.current.clearLayers(); // Clear old markers
+
+          problems.forEach(problem => {
+              if (problem.location.coordinates && problem.location.coordinates.lat && problem.location.coordinates.lng) {
+                const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng], {
+                    icon: createColoredIcon(getPinColor(problem.status))
+                }).addTo(layersRef.current!);
+                
+                const popupContainer = document.createElement('div');
+                const root = createRoot(popupContainer);
+                root.render(<ProblemPopup problem={problem} voteOnProblem={voteOnProblem} onViewDetails={() => onProblemSelect(problem)} />);
+                
+                marker.bindPopup(popupContainer);
+              }
+          });
+      }
+
+  }, [problems, onProblemSelect, voteOnProblem]);
+
 
   useEffect(() => {
     return () => {
