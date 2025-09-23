@@ -21,24 +21,29 @@ export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mock authentication
-    setTimeout(() => {
-        if (username === 'lowell' && password === 'lowell') {
-          login('admin');
-          toast({ title: "Admin Login Successful" });
-          router.push('/admin/dashboard');
-        } else {
-          toast({ title: "Invalid Credentials", variant: "destructive" });
-          setIsLoading(false);
-        }
-    }, 500); // Adding a small delay to simulate network latency
+    
+    const result = await login(username, password);
+
+    if (result.success && result.userType === 'admin') {
+        toast({ title: "Admin Login Successful" });
+        router.push('/admin/dashboard');
+    } else {
+        toast({ title: "Invalid Credentials", variant: "destructive" });
+        setIsLoading(false);
+    }
   };
 
+  useEffect(() => {
+    if (user.type === 'admin') {
+        router.push('/admin/dashboard');
+    }
+  }, [user, router]);
+
+
   if (user.type === 'admin') {
-    router.push('/admin/dashboard');
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center">

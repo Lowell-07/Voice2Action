@@ -33,12 +33,15 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { problems, updateProblem } = useProblems();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   const pendingReports = problems.filter(p => p.status === 'Pending' || p.status === 'Awaiting Approval');
 
   useEffect(() => {
     if (user.type !== 'admin') {
       router.push('/admin/login');
+    } else {
+      setIsAuthorized(true);
     }
   }, [user, router]);
   
@@ -51,13 +54,13 @@ export default function AdminDashboardPage() {
     })
   }
 
-  if (user.type !== 'admin') {
+  if (!isAuthorized) {
     return (
       <div className="flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center">
           <div className='flex items-center gap-2 text-lg text-muted-foreground'>
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Redirecting to login...</span>
+            <span>Verifying authorization...</span>
           </div>
         </div>
       </div>

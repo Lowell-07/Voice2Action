@@ -16,7 +16,7 @@ type AuthUser =
 
 type AuthContextType = {
   user: AuthUser;
-  login: (mobileOrUsername: string, password?: string) => Promise<{success: boolean, error?: string}>;
+  login: (mobileOrUsername: string, passwordOrDepartment?: string) => Promise<{success: boolean, error?: string, userType?: 'user' | 'admin' | 'department'}>;
   register: (name: string, mobile: string) => Promise<{success: boolean, error?: string}>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
@@ -29,44 +29,41 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 
 // Helper function to check if user exists
 async function checkUserExists(mobile: string): Promise<boolean> {
-    const usersQuery = query(collection(db, 'users'), where('mobile', '==', mobile));
-    const querySnapshot = await getDocs(usersQuery);
-    return !querySnapshot.empty;
+    const userDoc = await getDoc(doc(db, "users", mobile));
+    return userDoc.exists();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>({ type: 'guest' });
 
-   const login = async (identifier: string, department?: string): Promise<{success: boolean, error?: string}> => {
+   const login = async (identifier: string, secret?: string): Promise<{success: boolean, error?: string, userType?: 'user' | 'admin' | 'department'}> => {
     // Admin login
-    if (identifier === 'lowell' && department === 'lowell') {
+    if (identifier === 'lowell' && secret === 'lowell') {
         const adminData = { name: 'Lowell', email: 'admin@voice2action.com' };
         setUser({ type: 'admin', data: adminData });
-        return { success: true };
+        return { success: true, userType: 'admin' };
     }
     // Department login
-    if (department) {
-        setUser({ type: 'department', data: { name: department, department: department } });
-        return { success: true };
+    if (secret) { // This assumes department login always provides the department name as the second arg
+        setUser({ type: 'department', data: { name: identifier, department: identifier } });
+        return { success: true, userType: 'department' };
     }
     
     // User login
     const mobile = identifier;
     try {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where("mobile", "==", mobile));
-        const querySnapshot = await getDocs(q);
+        const userDocRef = doc(db, "users", mobile);
+        const userDoc = await getDoc(userDocRef);
 
-        if (querySnapshot.empty) {
+        if (!userDoc.exists()) {
             return { success: false, error: 'Account not found. Please register.' };
         }
         
-        const userDoc = querySnapshot.docs[0];
         const userData = { id: userDoc.id, ...userDoc.data() } as User;
         
         setUser({ type: 'user', data: userData });
 
-        return { success: true };
+        return { success: true, userType: 'user' };
     } catch (error) {
       console.error("Login error:", error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during login.";
@@ -84,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newUser: Omit<User, 'id'> = {
           name: name,
           mobile: mobile,
-          avatarUrl: `https://picsum.photos/seed/${name}/100/100`,
+          avatarUrl: `https://picsum.photos/seed/${name.split(' ').join('')}/100/100`,
           civicPoints: 0,
         };
         
