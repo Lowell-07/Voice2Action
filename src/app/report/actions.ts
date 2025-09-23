@@ -1,10 +1,11 @@
+
 'use server';
 
 import { suggestDepartment } from '@/ai/flows/suggest-department';
 import { suggestAddressCompletions } from '@/ai/flows/suggest-address-completions';
 import { departments } from '@/lib/data';
 
-export async function getLocationSuggestion(coordinates: {latitude: number, longitude: number}): Promise<{success: boolean, locationName?: string, error?: string}> {
+export async function getLocationSuggestion(coordinates: {latitude: number, longitude: number}): Promise<{success: boolean, locationName?: string, state?: string, error?: string}> {
   try {
     const { latitude, longitude } = coordinates;
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
@@ -22,7 +23,7 @@ export async function getLocationSuggestion(coordinates: {latitude: number, long
     const data = await response.json();
 
     if (data && data.display_name) {
-       return { success: true, locationName: data.display_name };
+       return { success: true, locationName: data.display_name, state: data.address?.state };
     } else {
        return { success: false, error: 'Could not find a location name for the given coordinates.' };
     }

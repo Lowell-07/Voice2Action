@@ -67,6 +67,8 @@ export default function ReportForm() {
   
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
+  const [problemState, setProblemState] = useState<string | null>(null);
+
 
   // Camera and file state
   const [showCamera, setShowCamera] = useState(false);
@@ -273,6 +275,11 @@ export default function ReportForm() {
   const handleLocationInputChange = (value: string) => {
     form.setValue('location', value);
     debouncedFetch(value);
+    // Infer state from text
+    const matchedState = indianStates.find(s => value.toLowerCase().includes(s.name.toLowerCase()));
+    if (matchedState) {
+        setProblemState(matchedState.name);
+    }
   }
   
   let latitude = 0;
@@ -297,6 +304,9 @@ export default function ReportForm() {
         const result = await getLocationSuggestion({ latitude, longitude });
         if (result.success && result.locationName) {
           form.setValue('location', result.locationName);
+          if (result.state) {
+            setProblemState(result.state);
+          }
           setLocationSuggestions([]);
           toast({
             title: 'Location Suggested!',
@@ -381,8 +391,7 @@ export default function ReportForm() {
         return;
     }
 
-
-    const randomState = indianStates[Math.floor(Math.random() * indianStates.length)];
+    const finalState = problemState || 'Unknown';
 
     const newProblemData = {
       title: data.title,
@@ -392,7 +401,7 @@ export default function ReportForm() {
       status: 'Awaiting Approval',
       location: {
         address: data.location,
-        state: randomState.name,
+        state: finalState,
         city: 'Unknown',
         coordinates: { lat: latitude, lng: longitude },
       },
@@ -414,6 +423,7 @@ export default function ReportForm() {
     setIsSubmitting(false);
     form.reset();
     clearMedia();
+    setProblemState(null);
   }
   
   const handleEditIssue = () => {
@@ -494,7 +504,7 @@ export default function ReportForm() {
             </Card>
 
             <div className='mt-8 flex justify-center gap-4'>
-                 <Button onClick={() => setSubmittedProblem(null)}>
+                 <Button onClick={() => { setSubmittedProblem(null); setProblemState(null); }}>
                     <Sparkles className="w-4 h-4 mr-2" /> Report Another Issue
                 </Button>
                 <Button variant="outline" onClick={handleEditIssue}>
@@ -739,7 +749,7 @@ export default function ReportForm() {
                 <AlertTitle>Camera Access Denied</AlertTitle>
                 <AlertDescription>
                   Please enable camera permissions in your browser settings to use this feature.
-                </AlertDescription>
+                </AlerMessage>
               </Alert>
             )}
           </div>
