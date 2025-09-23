@@ -35,7 +35,7 @@ export default function AdminDashboardPage() {
   const { problems, updateProblem } = useProblems();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  const pendingReports = problems.filter(p => p.status === 'Pending' || p.status === 'Awaiting Approval');
+  const pendingReports = problems.filter(p => p.status === 'Awaiting Approval');
 
   useEffect(() => {
     if (user.type !== 'admin') {
