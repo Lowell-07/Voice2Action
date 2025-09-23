@@ -105,18 +105,29 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Seed database on initial load if empty
-    seedDatabaseIfNeeded();
+    async function initializeProblems() {
+      // First, ensure the database is seeded if it's empty.
+      await seedDatabaseIfNeeded();
 
-    const problemsCollection = collection(db, 'problems');
-    const unsubscribe = onSnapshot(problemsCollection, (snapshot) => {
-      const problemsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Problem));
-      setProblems(problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-    });
-    return () => unsubscribe();
+      // Then, set up the real-time listener.
+      const problemsCollection = collection(db, 'problems');
+      const unsubscribe = onSnapshot(problemsCollection, (snapshot) => {
+        const problemsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Problem));
+        setProblems(problemsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      });
+
+      return unsubscribe;
+    }
+
+    const unsubscribePromise = initializeProblems();
+
+    // Return a cleanup function that unwraps the promise.
+    return () => {
+      unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
+    };
   }, []);
 
   const addProblem = useCallback(async (problemData: Omit<Problem, 'id' | 'createdAt' | 'reportedById' | 'reportedBy'>): Promise<Problem | null> => {
