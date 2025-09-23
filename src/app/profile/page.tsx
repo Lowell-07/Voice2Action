@@ -55,6 +55,7 @@ export default function ProfilePage() {
   
   const userProblems = problems.filter(p => p.reportedBy?.id === user.data.id);
   const resolvedProblems = userProblems.filter(p => p.status === 'Resolved').length;
+  const pendingProblems = userProblems.filter(p => p.status !== 'Resolved' && p.status !== 'Rejected').length;
   const recentProblems = userProblems.slice(0, 3);
 
   const getStatusVariant = (status: string) => {
@@ -150,8 +151,8 @@ export default function ProfilePage() {
                             <p className="text-sm text-muted-foreground">Resolved</p>
                         </div>
                          <div className="p-4">
-                            <p className="text-3xl font-bold text-primary">4.8</p>
-                            <p className="text-sm text-muted-foreground">Rating</p>
+                            <p className="text-3xl font-bold text-primary">{pendingProblems}</p>
+                            <p className="text-sm text-muted-foreground">Pending</p>
                         </div>
                     </CardContent>
                 </Card>
