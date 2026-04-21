@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { getProfileImageSrc } from '@/lib/profile';
 
 export default function EditProfilePage() {
   const { user, updateUser } = useAuth();
@@ -21,7 +22,7 @@ export default function EditProfilePage() {
 
   const [name, setName] = useState(user.type === 'user' ? user.data.name : '');
   const [email, setEmail] = useState(user.type === 'user' ? user.data.email || '' : '');
-  const [avatar, setAvatar] = useState(user.type === 'user' ? user.data.avatarUrl : '');
+  const [avatar, setAvatar] = useState(user.type === 'user' ? getProfileImageSrc(user.data.avatarUrl) : '');
 
   useEffect(() => {
     if (user.type !== 'user') {
@@ -62,7 +63,7 @@ export default function EditProfilePage() {
   
   if (user.type !== 'user') {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">
             <div className='flex items-center gap-2 text-lg text-muted-foreground'>
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -74,9 +75,9 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-transparent">
+    <div className="theme-shell flex min-h-screen flex-col">
       <main className="flex-1 py-8 md:py-12">
-        <div className="container max-w-2xl mx-auto px-4">
+        <div className="container mx-auto max-w-2xl px-6 py-8">
            <div className='mb-8'>
                 <Button variant="ghost" size="sm" asChild>
                     <Link href="/profile">
@@ -86,7 +87,7 @@ export default function EditProfilePage() {
                 </Button>
             </div>
             
-          <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20">
+          <Card className="theme-panel-soft shadow-xl">
             <CardHeader>
               <CardTitle>Edit Profile</CardTitle>
               <CardDescription>Update your personal information.</CardDescription>
@@ -95,13 +96,13 @@ export default function EditProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex items-center gap-6">
                   <div className="relative">
-                    <Avatar className="h-24 w-24 border-4 border-primary">
-                      {avatar && <AvatarImage src={avatar} alt={name} />}
-                      <AvatarFallback className="text-4xl">
+                    <Avatar className="h-24 w-24 border-4 border-accent/20 shadow-md">
+                      <AvatarImage src={getProfileImageSrc(avatar)} alt={name} />
+                      <AvatarFallback className="bg-primary text-4xl text-primary-foreground">
                         {name ? name.charAt(0) : <UserIcon />}
                       </AvatarFallback>
                     </Avatar>
-                    <Label htmlFor="avatar-upload" className="absolute bottom-0 right-0 block bg-secondary text-secondary-foreground rounded-full p-2 cursor-pointer hover:bg-primary transition-colors">
+                    <Label htmlFor="avatar-upload" className="absolute bottom-0 right-0 block cursor-pointer rounded-full bg-primary p-2 text-primary-foreground shadow-sm transition-colors hover:bg-accent">
                         <Camera className="h-4 w-4" />
                         <Input id="avatar-upload" type="file" accept="image/*" className="sr-only" onChange={handleAvatarChange} />
                     </Label>

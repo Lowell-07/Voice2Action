@@ -2,12 +2,12 @@
  * @jest-environment node
  */
 import { POST } from '@/app/api/delete-issue/route';
-import admin from '@/lib/firebase-admin';
+import admin from '@/lib/firebase/server';
 import { NextRequest } from 'next/server';
 import { createMocks } from 'node-mocks-http';
 
 // Mock the firebase-admin module
-jest.mock('@/lib/firebase-admin', () => ({
+jest.mock('@/lib/firebase/server', () => ({
   auth: () => ({
     verifyIdToken: jest.fn(),
   }),

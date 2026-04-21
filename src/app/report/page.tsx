@@ -20,7 +20,7 @@ export default function ReportProblemPage() {
 
   if (!isAuthLoaded || user.type !== 'user') {
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="theme-shell flex min-h-screen flex-col">
             <div className="flex-1 flex items-center justify-center">
                 <div className='flex items-center gap-2 text-lg text-muted-foreground'>
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -32,13 +32,13 @@ export default function ReportProblemPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-1 py-8 md:py-12">
-        <div className="container max-w-4xl mx-auto px-4">
-            <Card className="shadow-xl">
+    <div className="theme-shell flex min-h-screen flex-col">
+      <main className="flex-1 py-8 md:py-12" data-testid="page-report">
+        <div className="container mx-auto max-w-4xl px-6 py-8">
+            <Card className="theme-panel-soft shadow-xl">
                 <CardHeader className="text-center">
-                    <CardTitle className="text-4xl font-headline text-primary">Report a Civic Issue</CardTitle>
-                    <CardDescription className="text-lg">
+                    <CardTitle className="text-4xl font-headline text-primary md:text-5xl">Report a Civic Issue</CardTitle>
+                    <CardDescription className="mx-auto max-w-2xl text-lg leading-relaxed">
                         Help improve your community by reporting problems. Fill out the details below.
                     </CardDescription>
                 </CardHeader>

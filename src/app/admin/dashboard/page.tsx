@@ -74,7 +74,7 @@ export default function AdminDashboardPage() {
 
   if (!isAuthorized) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">
           <div className='flex items-center gap-2 text-lg text-muted-foreground'>
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -86,15 +86,15 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-transparent">
-      <main className="flex-1 py-8 md:py-12">
-        <div className="container max-w-7xl mx-auto px-4">
-            <div className='text-center mb-12'>
-              <h1 className="text-4xl md:text-5xl font-headline text-foreground">Admin Dashboard</h1>
-              <p className="text-muted-foreground mt-2">Review and validate reported civic issues.</p>
+    <div className="theme-shell flex min-h-screen flex-col">
+      <main className="flex-1 py-8 md:py-12" data-testid="page-admin-dashboard">
+        <div className="container mx-auto max-w-7xl px-6 py-8">
+            <div className='mb-12 text-center'>
+              <h1 className="text-5xl font-headline text-primary md:text-6xl">Admin Dashboard</h1>
+              <p className="mt-3 text-lg text-muted-foreground">Review and validate reported civic issues.</p>
             </div>
 
-          <Card className="shadow-xl bg-card/50 backdrop-blur-sm border-border/20">
+          <Card className="theme-panel-soft shadow-xl">
             <CardHeader>
                 <div className='flex justify-between items-center'>
                     <div>
@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
                                       <Check className="mr-2 h-4 w-4" />
                                       Approve
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleApproval(report.id, false)} className="text-red-500">
+                                    <DropdownMenuItem onClick={() => handleApproval(report.id, false)} className="text-destructive">
                                       <X className="mr-2 h-4 w-4" />
                                       Reject
                                     </DropdownMenuItem>

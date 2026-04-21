@@ -23,18 +23,18 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=PT+Sans:wght@400;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body
         className={cn(
-          'min-h-screen bg-background font-body antialiased'
+          'min-h-screen bg-background font-body text-foreground antialiased'
         )}
       >
         <Providers>
             <Header />
-            <div className="pb-16 md:pb-0">
+            <div className="pb-16 md:pb-0 theme-shell">
                 {children}
             </div>
         </Providers>

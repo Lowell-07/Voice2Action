@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { getProfileImageSrc } from '@/lib/profile';
 
 
 const desktopNavLinks = [
@@ -52,18 +53,21 @@ export function HeaderClient({ pathname }: { pathname: string | null }) {
   return (
     <>
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-transparent backdrop-blur supports-[backdrop-filter]:bg-background/60 hidden md:block">
-        <div className="container flex h-16 max-w-7xl items-center justify-between">
-          <div className='flex items-center gap-6'>
+      <header className="sticky top-0 z-50 hidden w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/90 md:block">
+        <div className="container flex h-[88px] max-w-7xl items-center justify-between px-6">
+          <div className='flex items-center gap-10'>
             <Logo />
-            <nav className="flex items-center gap-4">
+            <nav className="flex items-center gap-8" data-testid="desktop-nav">
               {desktopNavLinks.map(link => (
                   <Link 
                       key={link.href} 
                       href={link.href}
+                      data-testid={`nav-link-${link.href === '/' ? 'dashboard' : link.href.replace('/', '').replace(/\//g, '-')}`}
                       className={cn(
-                          "text-sm font-medium transition-colors hover:text-primary",
-                          pathname === link.href ? "text-foreground" : "text-muted-foreground"
+                          "border-b-2 border-transparent pb-1 text-sm font-semibold transition-all",
+                          pathname === link.href
+                            ? "border-accent text-primary"
+                            : "text-muted-foreground hover:border-accent/40 hover:text-accent"
                       )}
                   >
                       {link.label}
@@ -74,8 +78,8 @@ export function HeaderClient({ pathname }: { pathname: string | null }) {
 
           <nav className="flex items-center gap-4">
             {user.type === 'guest' ? (
-              <Button asChild>
-                <Link href="/login">
+              <Button asChild className="px-5">
+                <Link href="/login" data-testid="nav-link-login">
                   <LogIn className="mr-2 h-4 w-4" />
                   Login
                 </Link>
@@ -83,9 +87,9 @@ export function HeaderClient({ pathname }: { pathname: string | null }) {
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                   <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-border bg-secondary/50 hover:bg-secondary" data-testid="header-profile-trigger">
                      <Avatar className='h-10 w-10'>
-                       {user.type === 'user' && user.data.avatarUrl && <AvatarImage src={user.data.avatarUrl} alt={user.data.name} />}
+                       {user.type === 'user' && <AvatarImage src={getProfileImageSrc(user.data.avatarUrl)} alt={user.data.name} data-testid="header-profile-image" />}
                        <AvatarFallback>
                          {user.type === 'user' && user.data.name.charAt(0)}
                          {user.type === 'admin' && user.data.name.charAt(0)}
@@ -125,15 +129,15 @@ export function HeaderClient({ pathname }: { pathname: string | null }) {
       </header>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-sm">
-        <nav className="container flex items-center justify-around h-16">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-sm md:hidden">
+        <nav className="container flex h-16 items-center justify-around">
           {user.type === 'user' ? mobileNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 text-xs font-medium",
-                pathname === link.href ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                pathname === link.href ? 'text-primary' : 'text-muted-foreground hover:text-accent'
               )}
             >
               {link.icon}
@@ -145,7 +149,7 @@ export function HeaderClient({ pathname }: { pathname: string | null }) {
               href={link.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 text-xs font-medium",
-                pathname === link.href ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                pathname === link.href ? 'text-primary' : 'text-muted-foreground hover:text-accent'
               )}
             >
               {link.icon}

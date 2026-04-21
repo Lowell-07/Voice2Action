@@ -1,4 +1,5 @@
 import type { IndianState, Problem, User } from '@/lib/definitions';
+import { DEFAULT_PROFILE_IMAGE } from '@/lib/profile';
 
 export const indianStates: IndianState[] = [
   { code: 'AN', name: 'Andaman and Nicobar Islands' },
@@ -55,14 +56,14 @@ export const mockUsers: User[] = [
     name: 'Anjali Sharma',
     mobile: '9876543210',
     email: 'anjali.s@example.com',
-    avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
+    avatarUrl: DEFAULT_PROFILE_IMAGE,
     civicPoints: 2450,
   },
   {
     id: 'user-2',
     name: 'Rohan Verma',
     mobile: '8765432109',
-    avatarUrl: 'https://picsum.photos/seed/avatar2/100/100',
+    avatarUrl: DEFAULT_PROFILE_IMAGE,
     civicPoints: 1500,
   },
 ];
@@ -92,7 +93,7 @@ export const mockProblems: Problem[] = [
     reportedBy: {
         id: 'user-1',
         name: 'Anjali Sharma',
-        avatarUrl: 'https://picsum.photos/seed/avatar1/100/100'
+        avatarUrl: DEFAULT_PROFILE_IMAGE
     },
     createdAt: '2024-05-10T10:00:00Z',
   },

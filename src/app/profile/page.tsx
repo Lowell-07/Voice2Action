@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { getProfileImageSrc } from '@/lib/profile';
 
 export default function ProfilePage() {
   const { user, logout, isAuthLoaded } = useAuth();
@@ -42,7 +43,7 @@ export default function ProfilePage() {
 
   if (!isAuthLoaded || user.type !== 'user') {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">
             <div className='flex items-center gap-2 text-lg text-muted-foreground'>
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -93,21 +94,21 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-transparent">
-      <main className="flex-1 py-8 md:py-12">
-        <div className="container max-w-4xl mx-auto px-4 space-y-8">
+    <div className="theme-shell flex min-h-screen flex-col">
+      <main className="flex-1 py-8 md:py-12" data-testid="page-profile">
+        <div className="container mx-auto max-w-4xl space-y-8 px-6 py-8">
             
             <div className='text-center'>
-                 <Avatar className="h-24 w-24 mx-auto mb-4 border-4 border-primary">
-                    {user.data.avatarUrl && <AvatarImage src={user.data.avatarUrl} alt={user.data.name} />}
-                    <AvatarFallback className="text-4xl">{user.data.name.charAt(0)}</AvatarFallback>
+                 <Avatar className="mx-auto mb-4 h-24 w-24 border-4 border-accent/20 shadow-md">
+                    <AvatarImage src={getProfileImageSrc(user.data.avatarUrl)} alt={user.data.name} data-testid="profile-avatar-image" />
+                    <AvatarFallback className="bg-primary text-4xl text-primary-foreground">{user.data.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <h1 className="text-3xl font-bold font-headline">{user.data.name}</h1>
+                <h1 className="text-4xl font-bold font-headline text-primary">{user.data.name}</h1>
                 <p className="text-muted-foreground">Civic Contributor</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
+                 <Card className="theme-panel-soft">
                     <CardHeader>
                         <CardTitle className="text-lg">Contact Information</CardTitle>
                     </CardHeader>
@@ -137,7 +138,7 @@ export default function ProfilePage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
+                <Card className="theme-panel-soft">
                     <CardHeader>
                         <CardTitle className="text-lg">Activity Status</CardTitle>
                     </CardHeader>
@@ -158,7 +159,7 @@ export default function ProfilePage() {
                 </Card>
             </div>
             
-            <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
+            <Card className="theme-panel-soft">
                 <CardHeader className="flex flex-row items-center gap-3">
                     <AlertTriangle className="h-5 w-5 text-primary"/>
                     <CardTitle className="text-lg mb-0">Recent Reported Problems</CardTitle>
@@ -167,7 +168,7 @@ export default function ProfilePage() {
                     {userProblems.length > 0 ? (
                         <div className="space-y-4">
                         {userProblems.map(problem => (
-                            <div key={problem.id} className="flex items-center justify-between p-3 rounded-lg bg-background/50">
+                            <div key={problem.id} className="flex items-center justify-between rounded-xl bg-secondary/55 p-3">
                                 <div>
                                     <p className="font-semibold">{problem.title}</p>
                                     <p className="text-sm text-muted-foreground">{problem.location.address} &middot; Reported {formatDistanceToNow(new Date(problem.createdAt), { addSuffix: true })}</p>
@@ -214,13 +215,13 @@ export default function ProfilePage() {
                 </CardContent>
             </Card>
 
-             <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
+             <Card className="theme-panel-soft">
                 <CardHeader className="flex flex-row items-center gap-3">
                     <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                     <CardTitle className="text-lg mb-0">Rewards & Achievements</CardTitle>
                 </CardHeader>
                 <CardContent>
-                     <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
+                     <div className="flex items-center justify-between rounded-xl bg-secondary/55 p-3">
                         <div>
                             <p className="font-semibold">Civic Points</p>
                             <p className="text-sm text-muted-foreground">Earned from contributions</p>
@@ -232,7 +233,7 @@ export default function ProfilePage() {
                 </CardContent>
             </Card>
             
-            <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
+            <Card className="theme-panel-soft">
                 <CardHeader>
                     <CardTitle className="text-lg">Quick Actions</CardTitle>
                 </CardHeader>

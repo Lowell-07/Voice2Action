@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -24,30 +23,29 @@ export default function AdminLoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const result = await login(username, password);
 
     if (result.success && result.userType === 'admin') {
-        toast({ title: "Admin Login Successful" });
-        router.push('/admin/dashboard');
+      toast({ title: 'Admin Login Successful' });
+      router.push('/admin/dashboard');
     } else {
-        toast({ title: "Invalid Credentials", variant: "destructive" });
-        setIsLoading(false);
+      toast({ title: 'Invalid Credentials', variant: 'destructive' });
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (isAuthLoaded && user.type === 'admin') {
-        router.push('/admin/dashboard');
+      router.push('/admin/dashboard');
     }
   }, [user, isAuthLoaded, router]);
 
-
   if (!isAuthLoaded || user.type === 'loading') {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">
-          <div className='flex items-center gap-2 text-lg text-muted-foreground'>
+          <div className="flex items-center gap-2 text-lg text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span>Loading...</span>
           </div>
@@ -57,26 +55,26 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-transparent px-4 py-12">
-      <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-primary/20">
+    <div className="theme-shell flex min-h-screen items-center justify-center px-6 py-16" data-testid="page-admin-login">
+      <Card className="theme-panel-soft w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-3xl font-headline">Admin Login</CardTitle>
-          <CardDescription>Access the administrator dashboard.</CardDescription>
+          <CardTitle className="text-3xl font-headline text-primary">Admin Login</CardTitle>
+          <CardDescription className="text-base">Access the administrator dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-6" data-testid="admin-login-form">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required />
+              <Input id="username" type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required data-testid="admin-username-input" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+              <Input id="password" type="password" placeholder="........" value={password} onChange={e => setPassword(e.target.value)} required data-testid="admin-password-input" />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="admin-login-button">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
               Login
             </Button>
@@ -86,7 +84,7 @@ export default function AdminLoginPage() {
           <Button variant="link" size="sm" asChild>
             <Link href="/login">Return to User Login</Link>
           </Button>
-           <Button variant="link" size="sm" asChild>
+          <Button variant="link" size="sm" asChild>
             <Link href="/department/login">Department Login</Link>
           </Button>
         </CardFooter>

@@ -1,0 +1,45 @@
+﻿{
+  "ignorePatterns": [
+    "**/.next/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/out/**"
+  ],
+  "specials": [
+    "next",
+    "jest",
+    "webpack",
+    "babel",
+    "eslint",
+    "typescript",
+    "postcss",
+    "tailwindcss"
+  ],
+  "ignoreMatches": [
+    "@radix-ui/*",
+    "@genkit-ai/*",
+    "genkit",
+    "firebase",
+    "firebase-admin",
+    "next",
+    "react",
+    "react-dom",
+    "tailwindcss",
+    "tailwindcss-animate",
+    "tailwind-merge",
+    "class-variance-authority",
+    "clsx",
+    "cmdk",
+    "date-fns",
+    "dotenv",
+    "embla-carousel-react",
+    "leaflet",
+    "lodash-es",
+    "lucide-react",
+    "next-themes",
+    "react-day-picker",
+    "react-hook-form",
+    "zod",
+    "@hookform/resolvers"
+  ]
+}

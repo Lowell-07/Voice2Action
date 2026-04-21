@@ -6,7 +6,8 @@ import { createContext, useState, ReactNode, useMemo, useContext, useCallback, u
 import type { Problem } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
 import { collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp, increment, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebase-client';
+import { db } from '@/lib/firebase/client';
+import { DEFAULT_PROFILE_IMAGE, getProfileImageSrc } from '@/lib/profile';
 
 type ProblemContextType = {
   problems: Problem[];
@@ -86,7 +87,7 @@ async function seedDatabaseIfNeeded() {
                 reportedBy: {
                     id: 'system',
                     name: 'System',
-                    avatarUrl: '',
+                    avatarUrl: DEFAULT_PROFILE_IMAGE,
                 },
             };
             batch.set(newDocRef, fullProblemData);
@@ -145,7 +146,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
             reportedBy: {
                 id: userId,
                 name: user.data.name,
-                avatarUrl: user.data.avatarUrl,
+                avatarUrl: getProfileImageSrc(user.data.avatarUrl),
             },
         };
         

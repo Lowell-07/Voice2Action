@@ -4,8 +4,9 @@
 import { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import type { User } from '@/lib/definitions';
 import { onAuthStateChanged, signInWithCustomToken, signOut, type User as FirebaseUser } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase-client';
+import { auth, db } from '@/lib/firebase/client';
 import { doc, setDoc, getDoc, serverTimestamp, getFirestore, collection, addDoc, updateDoc, increment, query, onSnapshot, getDocs, deleteDoc, where } from 'firebase/firestore';
+import { DEFAULT_PROFILE_IMAGE, getProfileImageSrc } from '@/lib/profile';
 
 type AuthUser =
   | { type: 'guest' }
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 unsubscribe = onSnapshot(userDocRef, (doc) => {
                     if (doc.exists()) {
                         const latestUserData = { id: doc.id, ...doc.data() } as User;
+                        latestUserData.avatarUrl = getProfileImageSrc(latestUserData.avatarUrl);
                         const updatedAuthUser = { type: 'user' as const, data: latestUserData };
                         persistUser(updatedAuthUser); // Update local storage as well
                     } else {
@@ -109,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
             const existingUser = { id: userDoc.id, ...userDoc.data() } as User;
+            existingUser.avatarUrl = getProfileImageSrc(existingUser.avatarUrl);
             persistUser({ type: 'user', data: existingUser });
             // The useEffect will now automatically handle live updates.
             return { success: true, userType: 'user' };
@@ -136,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: newUserRef.id,
           name: name,
           mobile: mobile,
-          avatarUrl: `https://picsum.photos/seed/${name.split(' ').join('')}/100/100`,
+          avatarUrl: DEFAULT_PROFILE_IMAGE,
           civicPoints: 0,
         };
         
@@ -157,7 +160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUser = async (updates: Partial<User>) => {
     if (user.type === 'user') {
         const userDocRef = doc(db, 'users', user.data.id);
-        await updateDoc(userDocRef, updates);
+        await updateDoc(userDocRef, {
+          ...updates,
+          avatarUrl: getProfileImageSrc(updates.avatarUrl ?? user.data.avatarUrl),
+        });
         // Live listener will handle the UI update
     }
   };

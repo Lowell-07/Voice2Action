@@ -36,7 +36,7 @@ export default function MyReportsPage() {
 
   if (user.type !== 'user') {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">
           <div className='flex items-center gap-2 text-lg text-muted-foreground'>
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -62,9 +62,9 @@ export default function MyReportsPage() {
 
   return (
     <>
-    <div className="flex flex-col min-h-screen bg-transparent">
+    <div className="theme-shell flex min-h-screen flex-col">
       <main className="flex-1 py-8 md:py-12">
-        <div className="container max-w-4xl mx-auto px-4">
+        <div className="container mx-auto max-w-4xl px-6 py-8">
           <div className="mb-8">
             <Button asChild variant="ghost" size="sm">
               <Link href="/profile">
@@ -74,7 +74,7 @@ export default function MyReportsPage() {
             </Button>
           </div>
 
-          <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border/20">
+          <Card className="theme-panel-soft shadow-xl">
             <CardHeader>
               <CardTitle>My Reported Issues</CardTitle>
               <CardDescription>A complete history of all the civic issues you have reported.</CardDescription>
@@ -153,7 +153,7 @@ export default function MyReportsPage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 bg-muted/50 rounded-lg flex justify-between items-center">
+                        <div className="flex items-center justify-between rounded-xl bg-secondary/60 p-4">
                            <div className="flex items-center gap-4">
                                <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'like')}>
                                    <ThumbsUp className="w-4 h-4 mr-2" />

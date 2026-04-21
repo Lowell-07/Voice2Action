@@ -80,19 +80,19 @@ export default function ExplorePage() {
     
   return (
     <>
-    <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-1">
-        <div className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-headline font-bold text-primary mb-2">
+    <div className="theme-shell flex min-h-screen flex-col">
+      <main className="flex-1" data-testid="page-explore">
+        <div className="container mx-auto max-w-4xl px-6 py-16">
+          <div className="mb-12 text-center">
+            <h1 className="mb-6 text-5xl font-headline font-bold text-primary md:text-6xl">
               Explore Reported Issues
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="mx-auto max-w-3xl text-xl leading-relaxed text-muted-foreground">
               Use the interactive map to see what's happening in different areas. Click on a marker to view details about a reported problem.
             </p>
           </div>
 
-          <Card className="shadow-lg bg-card/80 backdrop-blur-sm border-border/20">
+          <Card className="theme-panel-soft overflow-hidden">
             <CardContent className="p-2 md:p-4 relative">
               <div className="absolute top-4 left-4 z-[51] flex gap-2">
                 <Button onClick={handleGPSClick}>
@@ -103,17 +103,17 @@ export default function ExplorePage() {
               <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden z-0">
                 <MapView problems={problems} mapRef={mapRef} onProblemSelect={setSelectedProblem} />
               </div>
-               <div className="p-4 text-center text-muted-foreground text-sm">
+               <div className="p-4 text-center text-sm text-muted-foreground">
                 Interactive map powered by Leaflet. The markers represent issue statuses.
               </div>
             </CardContent>
           </Card>
 
           <div className="mt-8 max-w-sm">
-            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+            <Card className="theme-panel-soft">
                 <CardHeader>
                     <div className="flex items-center gap-2">
-                        <Info className="w-5 h-5 text-muted-foreground" />
+                        <Info className="h-5 w-5 text-accent" />
                         <CardTitle>Map Legend</CardTitle>
                     </div>
                 </CardHeader>
@@ -153,7 +153,9 @@ export default function ExplorePage() {
         .leaflet-popup-content-wrapper {
             background-color: hsl(var(--card));
             color: hsl(var(--card-foreground));
-            border-radius: var(--radius);
+            border-radius: 14px;
+            border: 1px solid hsl(var(--border));
+            box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.45);
         }
         .leaflet-popup-content {
             margin: 0;
@@ -204,7 +206,7 @@ export default function ExplorePage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 bg-muted/50 rounded-lg flex justify-between items-center">
+                        <div className="flex items-center justify-between rounded-xl bg-secondary/60 p-4">
                            <div className="flex items-center gap-4">
                                <Button variant="outline" onClick={() => voteOnProblem(selectedProblem.id, 'like')}>
                                    <ThumbsUp className="w-4 h-4 mr-2" />

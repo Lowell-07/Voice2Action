@@ -11,9 +11,9 @@ import { ArrowLeft, Frown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { useProblems } from '@/context/problem-context';
-import { useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
 
-export default function IssuesPage() {
+function IssuesPageContent() {
   const searchParams = useSearchParams();
   const state = searchParams.get('state');
   const department = searchParams.get('department');
@@ -30,8 +30,8 @@ export default function IssuesPage() {
 
   if (!state || !department) {
     return (
-        <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12 text-center">
-            <Card className="bg-card/80 backdrop-blur-sm border-destructive/50">
+        <div className="container mx-auto max-w-7xl px-6 py-16 text-center">
+            <Card className="theme-panel-soft border-destructive/30">
                 <CardHeader>
                     <Frown className="w-16 h-16 mx-auto text-destructive" />
                     <CardTitle className="text-2xl mt-4">Invalid Parameters</CardTitle>
@@ -53,13 +53,13 @@ export default function IssuesPage() {
   }
 
   return (
-    <main className="flex-1">
-      <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-headline font-bold text-foreground mb-2">
+    <main className="theme-shell flex-1">
+      <div className="container mx-auto max-w-7xl px-6 py-16">
+        <div className="mb-12 text-center">
+          <h1 className="mb-6 text-5xl font-headline font-bold text-primary md:text-6xl">
             {department} Issues in {state}
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="mx-auto max-w-3xl text-xl leading-relaxed text-muted-foreground">
             Showing all reported problems for this category.
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function IssuesPage() {
         {filteredProblems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProblems.map((problem) => (
-              <Card key={problem.id} className="bg-card/80 backdrop-blur-sm border-border/20 flex flex-col">
+              <Card key={problem.id} className="theme-panel-soft flex flex-col">
                 <CardHeader>
                   <div className="relative aspect-video w-full mb-4">
                       <Image 
@@ -93,7 +93,7 @@ export default function IssuesPage() {
             ))}
           </div>
         ) : (
-          <Card className="bg-card/80 backdrop-blur-sm border-border/20 text-center py-16">
+          <Card className="theme-panel-soft py-16 text-center">
             <CardHeader>
               <Frown className="w-16 h-16 mx-auto text-muted-foreground" />
               <CardTitle className="mt-4">No Reports Found</CardTitle>
@@ -121,5 +121,13 @@ export default function IssuesPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function IssuesPage() {
+  return (
+    <Suspense fallback={<div className="container max-w-7xl mx-auto px-4 py-8 md:py-12" />}>
+      <IssuesPageContent />
+    </Suspense>
   );
 }
