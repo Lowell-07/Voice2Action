@@ -32,6 +32,7 @@ type ComboboxProps = {
   searchPlaceholder?: string;
   noResultsMessage?: string;
   isLoading?: boolean;
+  disabled?: boolean;
 };
 
 export function Combobox({
@@ -43,11 +44,12 @@ export function Combobox({
   searchPlaceholder = "Search items...",
   noResultsMessage = "No item found.",
   isLoading = false,
+  disabled = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(nextOpen) => !disabled && setOpen(nextOpen)}>
       <PopoverTrigger asChild>
         <div className="relative w-full">
             <Input
@@ -55,7 +57,8 @@ export function Combobox({
                 onChange={(e) => onValueChange(e.target.value)}
                 placeholder={placeholder}
                 className="w-full"
-                onClick={() => setOpen(true)}
+                disabled={disabled}
+                onClick={() => !disabled && setOpen(true)}
             />
             {isLoading ? (
                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin opacity-50" />

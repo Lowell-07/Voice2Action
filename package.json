@@ -1,5 +1,5 @@
 {
-  "name": "nextn",
+  "name": "voice2action",
   "version": "0.1.0",
   "private": true,
   "packageManager": "npm@10.x",
@@ -14,7 +14,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
+    "check": "npm run typecheck && npm test -- --runInBand && npm run build",
     "typecheck:watch": "tsc --noEmit --watch",
     "test:watch": "jest --watch",
     "test": "jest"

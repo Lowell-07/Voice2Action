@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { MapPin, Info, Circle, ThumbsUp, Calendar, ThumbsDown, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type L from 'leaflet';
 import { useProblems } from '@/context/problem-context';
 import type { Problem } from '@/lib/definitions';
+import type { Map as LeafletMap, Marker as LeafletMarker } from 'leaflet';
 import {
   Dialog,
   DialogContent,
@@ -28,8 +28,8 @@ const MapView = dynamic(() => import('@/components/map-view'), {
 
 export default function ExplorePage() {
     const { toast } = useToast();
-    const mapRef = useRef<L.Map | null>(null);
-    const userLocationMarkerRef = useRef<L.Marker | null>(null);
+    const mapRef = useRef<LeafletMap | null>(null);
+    const userLocationMarkerRef = useRef<LeafletMarker | null>(null);
     const { problems, voteOnProblem } = useProblems();
     const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
@@ -37,7 +37,7 @@ export default function ExplorePage() {
       if (navigator.geolocation) {
         toast({ title: "Locating...", description: "Zooming into your current location." });
         navigator.geolocation.getCurrentPosition(
-          (position) => {
+          async (position) => {
             const { latitude, longitude } = position.coords;
             if (mapRef.current) {
               mapRef.current.setView([latitude, longitude], 13);
@@ -45,7 +45,8 @@ export default function ExplorePage() {
               if (userLocationMarkerRef.current) {
                 userLocationMarkerRef.current.setLatLng([latitude, longitude]);
               } else {
-                 const userIcon = new L.Icon({
+                const L = await import('leaflet');
+                const userIcon = new L.Icon({
                     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
                     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
                     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',

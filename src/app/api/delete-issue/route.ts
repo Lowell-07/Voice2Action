@@ -1,18 +1,10 @@
 
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 
 // This is a mock API route for the prototype.
 // In a real application, this would interact with Firebase Admin SDK.
 
 export async function POST(request: Request) {
-  const headersList = headers();
-  const authorization = headersList.get('authorization');
-  
-  // In our simplified client-side auth, we won't have a real token.
-  // We'll simulate a successful deletion for the prototype's sake.
-  // The actual logic is now handled in `problem-context.tsx`.
-  
   try {
     const { problemId } = await request.json();
 
