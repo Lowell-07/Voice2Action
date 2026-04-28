@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "npm@10.x",
   "scripts": {
-    "preinstall": "node -e \"const v=process.versions.node.split('.').map(Number); if (v[0]<20 || (v[0]===20 && v[1]<9)) { console.error('Node >= 20.9 required'); process.exit(1); }\"",
+    "preinstall": "node -e \"const v=process.versions.node.split('.').map(Number); if (v[0]<20) process.exit(1);\"",
     "clean": "node -e \"const fs=require('fs'); const targets=['.next','node_modules','package-lock.json']; for (const t of targets) { if (fs.existsSync(t)) fs.rmSync(t,{recursive:true,force:true}); }\"",
     "audit:prod": "npm audit --omit=dev",
     "depcheck": "depcheck --json",
@@ -21,8 +21,8 @@
     "test": "jest"
   },
   "engines": {
-    "node": ">=20.9.0"
-  },
+  "node": "20.x"
+}
   "dependencies": {
     "@genkit-ai/google-genai": "1.31.0",
     "@hookform/resolvers": "5.2.2",
