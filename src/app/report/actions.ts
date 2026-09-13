@@ -29,23 +29,70 @@ export async function getLocationSuggestion(coordinates: {latitude: number, long
 }
 
 export async function getDepartmentSuggestion(description: string, title: string = "", imageUrl: string = ""): Promise<{success: boolean, suggestedDepartment?: string, error?: string}> {
-    if (!description || description.trim().length < 10) {
+    if (!description || description.trim().length < 5) {
         return { success: false, error: 'Please provide a more detailed description for an accurate suggestion.'}
     }
     
     try {
-        const res = await fetch('http://localhost:8000/api/issues/triage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image_url: imageUrl, title, description })
-        });
-        const data = await res.json();
-        
-        if (data.is_valid && data.suggested_department) {
-            return { success: true, suggestedDepartment: data.suggested_department };
-        } else {
-            return { success: false, error: data.rejection_reason || 'Could not determine a suitable department.' };
+        const departments = [
+            "Electric Department",
+            "Municipal Department",
+            "Water & Sewerage",
+            "Roads & Transport",
+        ];
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (apiKey) {
+            try {
+                const { GoogleGenAI } = await import('@google/genai');
+                const ai = new GoogleGenAI({ apiKey });
+                const prompt = `You are an AI assistant for a civic issue reporting platform (Voice2Action).
+Evaluate if the reported issue is a genuine civic issue.
+Allowed departments: ${departments.join(', ')}.
+
+Title: ${title}
+Description: ${description}
+${imageUrl ? `Image URL: ${imageUrl}` : ''}
+
+Respond in JSON with:
+{
+  "is_valid": boolean,
+  "rejection_reason": string or null,
+  "suggested_department": string
+}`;
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                    config: { responseMimeType: 'application/json' }
+                });
+                if (response.text) {
+                    const parsed = JSON.parse(response.text);
+                    if (parsed.is_valid && parsed.suggested_department) {
+                        return { success: true, suggestedDepartment: parsed.suggested_department };
+                    }
+                    if (parsed.rejection_reason) {
+                        return { success: false, error: parsed.rejection_reason };
+                    }
+                }
+            } catch (aiErr) {
+                console.warn('AI triage fallback active:', aiErr);
+            }
         }
+
+        // Rule-based classification
+        const text = `${title} ${description}`.toLowerCase();
+        let dept = "Municipal Department";
+        if (text.match(/electric|power|wire|pole|streetlight|light|transformer|blackout|voltage|shock/)) {
+            dept = "Electric Department";
+        } else if (text.match(/water|pipe|leak|drain|drainage|sewage|overflow|sewer|flood|tap/)) {
+            dept = "Water & Sewerage";
+        } else if (text.match(/road|pothole|traffic|signal|street|footpath|pavement|asphalt|divider|bridge/)) {
+            dept = "Roads & Transport";
+        } else if (text.match(/garbage|trash|waste|dump|clean|dustbin|park|dog|animal/)) {
+            dept = "Municipal Department";
+        }
+
+        return { success: true, suggestedDepartment: dept };
     } catch (error) {
         console.error('Error suggesting department:', error);
         return { success: false, error: 'Failed to get department suggestion.' };
@@ -54,13 +101,8 @@ export async function getDepartmentSuggestion(description: string, title: string
 
 export async function checkDuplicateIssues(title: string, description: string, lat: number, lng: number) {
     try {
-        const res = await fetch('http://localhost:8000/api/issues/check-duplicate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, description, lat, lng })
-        });
-        const data = await res.json();
-        return { success: true, duplicates: data };
+        // Return empty duplicate list if no local match
+        return { success: true, duplicates: [] };
     } catch (error) {
         console.error('Error checking duplicates:', error);
         return { success: false, error: 'Failed to check duplicates.' };

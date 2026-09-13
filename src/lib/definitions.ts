@@ -4,7 +4,9 @@ export type User = {
   mobile: string;
   email?: string;
   avatar_url?: string;
+  avatarUrl?: string;
   civic_points?: number;
+  civicPoints?: number;
   idToken?: string;
 };
 
@@ -14,6 +16,7 @@ export type Problem = {
   description: string;
   department: string;
   issue_type: string;
+  issueType?: string;
   status: string;
   address: string;
   state: string;
@@ -21,9 +24,11 @@ export type Problem = {
   lat: number;
   lng: number;
   media_images: string[];
+  media_voicemail?: string;
   likes: number;
   dislikes: number;
   reported_by: string;
+  reported_byId?: string;
   created_at: string;
 };
 

@@ -54,7 +54,10 @@ export default function ProfilePage() {
     );
   }
   
-  const userProblems = problems.filter(p => String(p.reported_byId) === String(user.data.id));
+  const userProblems = problems.filter(p => {
+    const rep = p.reported_by || p.reported_byId;
+    return String(typeof rep === 'object' && rep !== null ? (rep as any).id : rep) === String(user.data.id);
+  });
   const resolvedProblems = userProblems.filter(p => p.status === 'Resolved').length;
   const pendingProblems = userProblems.filter(p => p.status !== 'Resolved' && p.status !== 'Rejected').length;
   const recentProblems = userProblems.slice(0, 3);

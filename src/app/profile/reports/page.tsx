@@ -47,7 +47,12 @@ export default function MyReportsPage() {
     );
   }
 
-  const userProblems = problems.filter(p => p.reported_by.id === user.data.id);
+  const userProblems = problems.filter(p => {
+    const reporterId = typeof p.reported_by === 'object' && p.reported_by !== null
+      ? (p.reported_by as any).id
+      : p.reported_by;
+    return reporterId === user.data.id;
+  });
 
   const getStatusVariant = (status: string) => {
     switch (status) {

@@ -22,7 +22,7 @@ export default function EditProfilePage() {
 
   const [name, setName] = useState(user.type === 'user' ? user.data.name : '');
   const [email, setEmail] = useState(user.type === 'user' ? user.data.email || '' : '');
-  const [avatar, setAvatar] = useState(user.type === 'user' ? getProfileImageSrc(user.data.avatarUrl) : '');
+  const [avatar, setAvatar] = useState(user.type === 'user' ? getProfileImageSrc(user.data.avatar_url || user.data.avatarUrl) : '');
 
   useEffect(() => {
     if (user.type !== 'user') {
@@ -50,7 +50,8 @@ export default function EditProfilePage() {
       updateUser({
         name,
         email,
-        avatarUrl: avatar
+        avatar_url: avatar,
+        avatarUrl: avatar,
       });
       toast({
         title: "Profile Updated",
