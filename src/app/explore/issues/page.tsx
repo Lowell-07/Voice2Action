@@ -24,7 +24,7 @@ function IssuesPageContent() {
       return [];
     }
     return problems.filter(
-      (p) => p.location.state === state && p.department === department
+      (p) => p.state === state && p.department === department
     );
   }, [problems, state, department]);
 
@@ -71,7 +71,7 @@ function IssuesPageContent() {
                 <CardHeader>
                   <div className="relative aspect-video w-full mb-4">
                       <Image 
-                        src={problem.media.images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
+                        src={problem.media_images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
                         alt={problem.title}
                         fill
                         className="rounded-md object-cover"
@@ -80,7 +80,7 @@ function IssuesPageContent() {
                   </div>
                   <CardTitle>{problem.title}</CardTitle>
                   <div className="flex justify-between items-center text-sm text-muted-foreground pt-1">
-                    <span>{format(new Date(problem.createdAt), 'dd MMM, yyyy')}</span>
+                    <span>{format(new Date(problem.created_at), 'dd MMM, yyyy')}</span>
                     <Badge variant={problem.status === 'Resolved' ? 'default' : problem.status === 'In Progress' ? 'secondary' : 'outline'}>
                       {problem.status}
                     </Badge>

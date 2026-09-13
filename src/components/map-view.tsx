@@ -93,8 +93,8 @@ const MapView = memo(function MapView({ problems, mapRef, onProblemSelect }: Map
     layerGroup.clearLayers(); // Clear old markers
 
     problems.forEach(problem => {
-      if (problem.location.coordinates && problem.location.coordinates.lat && problem.location.coordinates.lng) {
-        const marker = L.marker([problem.location.coordinates.lat, problem.location.coordinates.lng], {
+      if (problem.location.coordinates && problem.lat && problem.lng) {
+        const marker = L.marker([problem.lat, problem.lng], {
           icon: createColoredIcon(getPinColor(problem.status))
         });
         

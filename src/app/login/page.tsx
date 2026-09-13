@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { formatPhoneNumber } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,7 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login, isAuthLoaded } = useAuth();
+  const { user, sendOtp, verifyOtp, isAuthLoaded } = useAuth();
   const { toast } = useToast();
   const [mobile, setMobile] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -30,7 +31,7 @@ export default function LoginPage() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mobile.length !== 10 || !/^\d{10}$/.test(mobile)) {
+    if (!/^\+91\d{10}$/.test(formatPhoneNumber(mobile))) {
         toast({
             title: "Invalid Mobile Number",
             description: "Please enter a valid 10-digit mobile number.",
@@ -39,51 +40,40 @@ export default function LoginPage() {
         return;
     }
     setIsLoading(true);
-
-    // Simulate OTP sending
-    setTimeout(() => {
-        setIsLoading(false);
-        setOtpSent(true);
-        toast({
-            title: "OTP Sent!",
-            description: "An OTP has been sent to your mobile number (use 123456).",
-        });
-    }, 1000);
+    const result = await sendOtp(mobile);
+    setIsLoading(false);
+    if (result.success) {
+      setOtpSent(true);
+      toast({ title: 'OTP Sent!', description: 'An OTP has been sent to your mobile number.' });
+    } else {
+      toast({ title: 'Unable to send OTP', description: result.error, variant: 'destructive' });
+    }
   };
   
   const handleVerify = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (otp !== '123456') {
-          toast({
-              title: "Invalid OTP",
-              description: "The OTP you entered is incorrect.",
-              variant: "destructive",
-          });
-          return;
-      }
       setIsLoading(true);
-
-      const result = await login(mobile);
+      const result = await verifyOtp(mobile, otp);
+      setIsLoading(false);
 
       if (result.success) {
           toast({
               title: "Login Successful!",
               description: "Welcome back to Voice2Action!",
           });
-          // The useEffect will handle the redirect to /profile
+          router.push('/profile');
       } else {
            toast({
               title: "Login Failed",
               description: result.error,
               variant: "destructive",
           });
-          setIsLoading(false);
       }
   };
 
   const cardTitle = otpSent ? "Verify OTP" : "User Login";
   const cardDescription = otpSent 
-    ? `Enter the OTP sent to +91 ${mobile}` 
+    ? `Enter the OTP sent to ${formatPhoneNumber(mobile)}` 
     : "Enter your mobile to get started.";
 
   if (!isAuthLoaded || user.type === 'loading') {
@@ -126,7 +116,7 @@ export default function LoginPage() {
                     placeholder="9876543210"
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
-                    maxLength={10}
+                    maxLength={16}
                     required 
                   />
                 </div>

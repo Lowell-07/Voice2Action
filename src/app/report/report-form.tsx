@@ -362,7 +362,7 @@ export default function ReportForm() {
 
     setIsSubmitting(true);
     
-    // In a real app, you would upload mediaFile.file to Firebase Storage here
+    // In a real app, you would upload mediaFile.file to Supabase Storage here
     // and get a downloadable URL. For now, we'll just use the preview.
     const imageUrl = mediaFile.preview ? mediaFile.preview : `https://picsum.photos/seed/${data.title.replace(/\s/g, '-')}/600/400`;
     
@@ -372,11 +372,8 @@ export default function ReportForm() {
             title: data.title,
             description: data.description,
             department: data.department,
-            issueType: data.issueType,
-            media: {
-                ...editingProblem.media,
-                images: [imageUrl], // update image
-            },
+            issue_type: data.issueType,
+            media_images: [imageUrl], // update image
         };
 
         await updateProblem(editingProblem.id, updatedProblemData);
@@ -394,18 +391,14 @@ export default function ReportForm() {
       title: data.title,
       description: data.description,
       department: data.department,
-      issueType: data.issueType,
+      issue_type: data.issueType,
       status: 'Awaiting Approval',
-      location: {
-        address: data.location,
-        state: finalState,
-        city: 'Unknown',
-        coordinates: coordinates || { lat: 0, lng: 0 },
-      },
-      media: {
-        images: [imageUrl],
-        videos: [],
-      },
+      address: data.location,
+      state: finalState,
+      city: 'Unknown',
+      lat: coordinates?.lat || 0,
+      lng: coordinates?.lng || 0,
+      media_images: [imageUrl],
       likes: 0,
       dislikes: 0,
     };
@@ -429,13 +422,13 @@ export default function ReportForm() {
     setEditingProblem(submittedProblem);
     form.reset({
       title: submittedProblem.title,
-      location: submittedProblem.location.address,
+      location: submittedProblem.address,
       description: submittedProblem.description,
       department: submittedProblem.department,
-      issueType: submittedProblem.issueType,
+      issueType: submittedProblem.issue_type,
     });
-    if (submittedProblem.media.images.length > 0) {
-        setMediaFile({ file: null, preview: submittedProblem.media.images[0] });
+    if (submittedProblem.media_images.length > 0) {
+        setMediaFile({ file: null, preview: submittedProblem.media_images[0] });
     }
     setSubmittedProblem(null);
   };
@@ -462,7 +455,7 @@ export default function ReportForm() {
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">Date & Time</p>
-                            <p className="font-semibold">{format(new Date(submittedProblem.createdAt), 'PPpp')}</p>
+                            <p className="font-semibold">{format(new Date(submittedProblem.created_at), 'PPpp')}</p>
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">Progress Status</p>
@@ -479,7 +472,7 @@ export default function ReportForm() {
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">Issue Type</p>
-                            <p className="font-semibold">{submittedProblem.issueType}</p>
+                            <p className="font-semibold">{submittedProblem.issue_type}</p>
                         </div>
                          <div className="col-span-full">
                             <p className="text-sm text-muted-foreground">Description</p>
@@ -487,15 +480,15 @@ export default function ReportForm() {
                         </div>
                         <div className="col-span-full">
                             <p className="text-sm text-muted-foreground">Location</p>
-                            <p className="font-semibold">{submittedProblem.location.address}</p>
+                            <p className="font-semibold">{submittedProblem.address}</p>
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">Attachments</p>
-                            <p className="font-semibold">{submittedProblem.media.images.length > 0 ? `${submittedProblem.media.images.length} file(s) uploaded` : 'None'}</p>
+                            <p className="font-semibold">{submittedProblem.media_images.length > 0 ? `${submittedProblem.media_images.length} file(s) uploaded` : 'None'}</p>
                         </div>
                          <div>
                             <p className="text-sm text-muted-foreground">Voice Note</p>
-                            <p className="font-semibold">{submittedProblem.media.voicemail ? 'Provided' : 'Not provided'}</p>
+                            <p className="font-semibold">{submittedProblem.media_voicemail ? 'Provided' : 'Not provided'}</p>
                         </div>
                     </div>
                 </CardContent>

@@ -183,7 +183,7 @@ export default function ExplorePage() {
                     <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden">
                            <Image 
-                                src={selectedProblem.media.images[0] || `https://picsum.photos/seed/${selectedProblem.id}/1200/675`}
+                                src={selectedProblem.media_images[0] || `https://picsum.photos/seed/${selectedProblem.id}/1200/675`}
                                 alt={selectedProblem.title}
                                 fill
                                 className="object-cover"
@@ -196,14 +196,14 @@ export default function ExplorePage() {
                                 <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
                                 <div>
                                     <p className="font-semibold">Location</p>
-                                    <p className="text-muted-foreground">{selectedProblem.location.address}</p>
+                                    <p className="text-muted-foreground">{selectedProblem.address}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Calendar className="w-4 h-4 text-muted-foreground mt-1" />
                                 <div>
                                     <p className="font-semibold">Reported On</p>
-                                    <p className="text-muted-foreground">{format(new Date(selectedProblem.createdAt), 'PP')}</p>
+                                    <p className="text-muted-foreground">{format(new Date(selectedProblem.created_at), 'PP')}</p>
                                 </div>
                             </div>
                         </div>

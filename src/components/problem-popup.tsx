@@ -19,7 +19,7 @@ export const ProblemPopup = memo(function ProblemPopup({ problem, voteOnProblem,
         <div className="w-64 font-body">
             <div className="relative w-full h-32 mb-2 rounded-t-lg overflow-hidden">
                 <Image 
-                    src={problem.media.images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
+                    src={problem.media_images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
                     alt={problem.title}
                     fill
                     className="object-cover"

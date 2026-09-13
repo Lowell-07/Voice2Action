@@ -54,7 +54,7 @@ export default function ProfilePage() {
     );
   }
   
-  const userProblems = problems.filter(p => String(p.reportedById) === String(user.data.id));
+  const userProblems = problems.filter(p => String(p.reported_byId) === String(user.data.id));
   const resolvedProblems = userProblems.filter(p => p.status === 'Resolved').length;
   const pendingProblems = userProblems.filter(p => p.status !== 'Resolved' && p.status !== 'Rejected').length;
   const recentProblems = userProblems.slice(0, 3);
@@ -171,7 +171,7 @@ export default function ProfilePage() {
                             <div key={problem.id} className="flex items-center justify-between rounded-xl bg-secondary/55 p-3">
                                 <div>
                                     <p className="font-semibold">{problem.title}</p>
-                                    <p className="text-sm text-muted-foreground">{problem.location.address} &middot; Reported {formatDistanceToNow(new Date(problem.createdAt), { addSuffix: true })}</p>
+                                    <p className="text-sm text-muted-foreground">{problem.address} &middot; Reported {formatDistanceToNow(new Date(problem.created_at), { addSuffix: true })}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant={getStatusVariant(problem.status)}>{problem.status}</Badge>

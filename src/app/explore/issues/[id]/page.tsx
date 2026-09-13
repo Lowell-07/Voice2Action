@@ -85,7 +85,7 @@ export default function IssueDetailsPage() {
                     <CardContent>
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-6">
                            <Image 
-                                src={problem.media.images[0] || `https://picsum.photos/seed/${problem.id}/1200/675`}
+                                src={problem.media_images[0] || `https://picsum.photos/seed/${problem.id}/1200/675`}
                                 alt={problem.title}
                                 fill
                                 className="object-cover"
@@ -130,7 +130,7 @@ export default function IssueDetailsPage() {
                         <MapPin className="w-5 h-5 text-muted-foreground mt-1" />
                         <div>
                             <p className="font-semibold">Location</p>
-                            <p className="text-muted-foreground">{problem.location.address}</p>
+                            <p className="text-muted-foreground">{problem.address}</p>
                         </div>
                         </div>
                          <div className="flex items-start gap-4">
@@ -149,11 +149,11 @@ export default function IssueDetailsPage() {
                         </div>
                         <div className="flex justify-between text-sm">
                             <p className="text-muted-foreground">Reported</p>
-                            <p>{isClient ? format(new Date(problem.createdAt), 'PP') : '...'}</p>
+                            <p>{isClient ? format(new Date(problem.created_at), 'PP') : '...'}</p>
                         </div>
                          <div className="flex justify-between text-sm">
                             <p className="text-muted-foreground">Last Updated</p>
-                            <p>{isClient ? format(new Date(problem.createdAt), 'PP') : '...'}</p>
+                            <p>{isClient ? format(new Date(problem.created_at), 'PP') : '...'}</p>
                         </div>
                     </CardContent>
                     </Card>
@@ -171,7 +171,7 @@ export default function IssueDetailsPage() {
                             </div>
                             <div>
                               <p className="font-semibold">Issue Reported</p>
-                              <p className="text-sm text-muted-foreground">{isClient ? format(new Date(problem.createdAt), 'dd MMMM, yyyy') : '...'}</p>
+                              <p className="text-sm text-muted-foreground">{isClient ? format(new Date(problem.created_at), 'dd MMMM, yyyy') : '...'}</p>
                             </div>
                           </li>
                            <li className="flex gap-4">

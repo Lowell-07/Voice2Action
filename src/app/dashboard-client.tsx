@@ -34,7 +34,7 @@ export default function DashboardClient() {
   const problemsInState = useMemo(() => {
     if (!selectedState) return [];
     return problems
-      .filter((p) => p.location.state === selectedState)
+      .filter((p) => p.state === selectedState)
       .sort((a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes));
   }, [selectedState, problems]);
   
@@ -44,8 +44,8 @@ export default function DashboardClient() {
         counts[state.name] = 0;
     }
     for (const problem of problems) {
-        if (counts[problem.location.state] !== undefined) {
-            counts[problem.location.state]++;
+        if (counts[problem.state] !== undefined) {
+            counts[problem.state]++;
         }
     }
     return counts;
@@ -107,7 +107,7 @@ export default function DashboardClient() {
                         <Card key={problem.id} className="theme-panel-soft flex flex-col overflow-hidden text-left transition-all hover:-translate-y-1 hover:shadow-lg">
                             <div className="relative aspect-video w-full">
                                 <Image 
-                                    src={problem.media.images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
+                                    src={problem.media_images[0] || `https://picsum.photos/seed/${problem.id}/600/400`}
                                     alt={problem.title}
                                     fill
                                     className="object-cover"
@@ -122,11 +122,11 @@ export default function DashboardClient() {
                                 <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
                                     <div className="flex items-center gap-1.5">
                                         <MapPin className="w-3 h-3" />
-                                        <span>{problem.location.address}</span>
+                                        <span>{problem.address}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <Calendar className="w-3 h-3" />
-                                        <span>{format(new Date(problem.createdAt), 'dd/MM/yyyy')}</span>
+                                        <span>{format(new Date(problem.created_at), 'dd/MM/yyyy')}</span>
                                     </div>
                                 </div>
                             </CardHeader>
@@ -186,7 +186,7 @@ export default function DashboardClient() {
                     <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
                         <div className="relative aspect-video w-full rounded-lg overflow-hidden">
                            <Image 
-                                src={selectedProblem.media.images[0] || `https://picsum.photos/seed/${selectedProblem.id}/1200/675`}
+                                src={selectedProblem.media_images[0] || `https://picsum.photos/seed/${selectedProblem.id}/1200/675`}
                                 alt={selectedProblem.title}
                                 fill
                                 className="object-cover"
@@ -199,14 +199,14 @@ export default function DashboardClient() {
                                 <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
                                 <div>
                                     <p className="font-semibold">Location</p>
-                                    <p className="text-muted-foreground">{selectedProblem.location.address}</p>
+                                    <p className="text-muted-foreground">{selectedProblem.address}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Calendar className="w-4 h-4 text-muted-foreground mt-1" />
                                 <div>
                                     <p className="font-semibold">Reported On</p>
-                                    <p className="text-muted-foreground">{format(new Date(selectedProblem.createdAt), 'PP')}</p>
+                                    <p className="text-muted-foreground">{format(new Date(selectedProblem.created_at), 'PP')}</p>
                                 </div>
                             </div>
                         </div>

@@ -124,7 +124,7 @@ export default function AdminDashboardPage() {
                     <TableBody>
                       {filteredReports.length > 0 ? filteredReports.map((report) => (
                         <TableRow key={report.id}>
-                          <TableCell>{format(new Date(report.createdAt), 'dd MMM, yyyy')}</TableCell>
+                          <TableCell>{format(new Date(report.created_at), 'dd MMM, yyyy')}</TableCell>
                           <TableCell className="font-medium">{report.title}</TableCell>
                           <TableCell>{report.department}</TableCell>
                           <TableCell>

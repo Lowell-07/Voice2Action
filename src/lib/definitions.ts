@@ -1,12 +1,11 @@
-
 export type User = {
   id: string;
   name: string;
   mobile: string;
   email?: string;
-  avatarUrl?: string;
-  civicPoints?: number;
-  idToken?: string; // To be used for authenticated API calls
+  avatar_url?: string;
+  civic_points?: number;
+  idToken?: string;
 };
 
 export type Problem = {
@@ -14,27 +13,18 @@ export type Problem = {
   title: string;
   description: string;
   department: string;
-  issueType: string;
-  status: 'Pending' | 'Awaiting Approval' | 'Registered' | 'In Progress' | 'Resolved' | 'Rejected';
-  location: {
-    address: string;
-    state: string;
-    city: string;
-    coordinates: {
-      lat: number;
-      lng: number;
-    };
-  };
-  media: {
-    images: string[];
-    videos: string[];
-    voicemail?: string;
-  };
+  issue_type: string;
+  status: string;
+  address: string;
+  state: string;
+  city: string;
+  lat: number;
+  lng: number;
+  media_images: string[];
   likes: number;
   dislikes: number;
-  reportedById: string; // For improved querying and security rules
-  reportedBy: Pick<User, 'id' | 'name' | 'avatarUrl'>;
-  createdAt: string;
+  reported_by: string;
+  created_at: string;
 };
 
 export type IndianState = {

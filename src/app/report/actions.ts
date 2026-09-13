@@ -1,9 +1,4 @@
-
 'use server';
-
-import { suggestDepartment } from '@/ai/flows/suggest-department';
-import { suggestAddressCompletions } from '@/ai/flows/suggest-address-completions';
-import { departments } from '@/lib/data';
 
 export async function getLocationSuggestion(coordinates: {latitude: number, longitude: number}): Promise<{success: boolean, locationName?: string, state?: string, error?: string}> {
   try {
@@ -12,7 +7,7 @@ export async function getLocationSuggestion(coordinates: {latitude: number, long
 
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Voice2Action App' // OSM requires a user agent
+        'User-Agent': 'Voice2Action App'
       }
     });
 
@@ -33,17 +28,23 @@ export async function getLocationSuggestion(coordinates: {latitude: number, long
   }
 }
 
-export async function getDepartmentSuggestion(description: string): Promise<{success: boolean, suggestedDepartment?: string, error?: string}> {
+export async function getDepartmentSuggestion(description: string, title: string = "", imageUrl: string = ""): Promise<{success: boolean, suggestedDepartment?: string, error?: string}> {
     if (!description || description.trim().length < 10) {
         return { success: false, error: 'Please provide a more detailed description for an accurate suggestion.'}
     }
     
     try {
-        const result = await suggestDepartment({ description, departments });
-        if (result.suggestedDepartment) {
-            return { success: true, suggestedDepartment: result.suggestedDepartment };
+        const res = await fetch('http://localhost:8000/api/issues/triage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_url: imageUrl, title, description })
+        });
+        const data = await res.json();
+        
+        if (data.is_valid && data.suggested_department) {
+            return { success: true, suggestedDepartment: data.suggested_department };
         } else {
-            return { success: false, error: 'Could not determine a suitable department. Please select one manually.' };
+            return { success: false, error: data.rejection_reason || 'Could not determine a suitable department.' };
         }
     } catch (error) {
         console.error('Error suggesting department:', error);
@@ -51,14 +52,32 @@ export async function getDepartmentSuggestion(description: string): Promise<{suc
     }
 }
 
+export async function checkDuplicateIssues(title: string, description: string, lat: number, lng: number) {
+    try {
+        const res = await fetch('http://localhost:8000/api/issues/check-duplicate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, description, lat, lng })
+        });
+        const data = await res.json();
+        return { success: true, duplicates: data };
+    } catch (error) {
+        console.error('Error checking duplicates:', error);
+        return { success: false, error: 'Failed to check duplicates.' };
+    }
+}
+
 export async function getAddressCompletions(query: string): Promise<{success: boolean, suggestions?: string[], error?: string}> {
     if (!query || query.trim().length < 3) {
         return { success: true, suggestions: [] };
     }
-
     try {
-        const result = await suggestAddressCompletions({ query });
-        return { success: true, suggestions: result.suggestions };
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5`, { 
+            headers: { 'User-Agent': 'Voice2Action App' } 
+        });
+        const data = await res.json();
+        const suggestions = data.map((d: any) => d.display_name);
+        return { success: true, suggestions };
     } catch (error) {
         console.error('Error getting address completions:', error);
         return { success: false, error: 'Failed to get address suggestions.' };

@@ -89,7 +89,7 @@ export function HeaderClient({ pathname }: { pathname: string | null }) {
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-border bg-secondary/50 hover:bg-secondary" data-testid="header-profile-trigger">
                      <Avatar className='h-10 w-10'>
-                       {user.type === 'user' && <AvatarImage src={getProfileImageSrc(user.data.avatarUrl)} alt={user.data.name} data-testid="header-profile-image" />}
+                       {user.type === 'user' && <AvatarImage src={getProfileImageSrc(user.data.avatar_url)} alt={user.data.name} data-testid="header-profile-image" />}
                        <AvatarFallback>
                          {user.type === 'user' && user.data.name.charAt(0)}
                          {user.type === 'admin' && user.data.name.charAt(0)}
@@ -105,7 +105,7 @@ export function HeaderClient({ pathname }: { pathname: string | null }) {
                         {user.type === 'admin' && user.data.name}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user.type === 'user' && user.data.email}
+                        {user.type === 'user' && (user.data.email || user.data.mobile)}
                         {user.type === 'admin' && user.data.email}
                       </p>
                     </div>

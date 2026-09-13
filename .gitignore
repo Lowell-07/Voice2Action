@@ -22,6 +22,9 @@ __pycache__/
 .env
 .env.*
 !.env.example
+.env.local
+.env.*.local
+backend/.env
 
 firebase-debug.log
 firestore-debug.log
@@ -46,4 +49,5 @@ Thumbs.db
 .modified
 tests/
 .venv/
+backend/.venv/
 .kilo/

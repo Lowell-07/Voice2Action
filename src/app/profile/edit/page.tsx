@@ -29,7 +29,7 @@ export default function EditProfilePage() {
       router.push('/login');
     }
   }, [user, router]);
-  
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -44,31 +44,31 @@ export default function EditProfilePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
-        updateUser({
-            name,
-            email,
-            avatarUrl: avatar
-        });
-        toast({
-            title: "Profile Updated",
-            description: "Your changes have been saved successfully.",
-        });
-        setIsLoading(false);
-        router.push('/profile');
+      updateUser({
+        name,
+        email,
+        avatarUrl: avatar
+      });
+      toast({
+        title: "Profile Updated",
+        description: "Your changes have been saved successfully.",
+      });
+      setIsLoading(false);
+      router.push('/profile');
     }, 1500);
   };
-  
+
   if (user.type !== 'user') {
     return (
       <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">
-            <div className='flex items-center gap-2 text-lg text-muted-foreground'>
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span>Redirecting...</span>
-            </div>
+          <div className='flex items-center gap-2 text-lg text-muted-foreground'>
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Redirecting...</span>
+          </div>
         </div>
       </div>
     );
@@ -78,15 +78,15 @@ export default function EditProfilePage() {
     <div className="theme-shell flex min-h-screen flex-col">
       <main className="flex-1 py-8 md:py-12">
         <div className="container mx-auto max-w-2xl px-6 py-8">
-           <div className='mb-8'>
-                <Button variant="ghost" size="sm" asChild>
-                    <Link href="/profile">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Profile
-                    </Link>
-                </Button>
-            </div>
-            
+          <div className='mb-8'>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/profile">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Profile
+              </Link>
+            </Button>
+          </div>
+
           <Card className="theme-panel-soft shadow-xl">
             <CardHeader>
               <CardTitle>Edit Profile</CardTitle>
@@ -103,32 +103,32 @@ export default function EditProfilePage() {
                       </AvatarFallback>
                     </Avatar>
                     <Label htmlFor="avatar-upload" className="absolute bottom-0 right-0 block cursor-pointer rounded-full bg-primary p-2 text-primary-foreground shadow-sm transition-colors hover:bg-accent">
-                        <Camera className="h-4 w-4" />
-                        <Input id="avatar-upload" type="file" accept="image/*" className="sr-only" onChange={handleAvatarChange} />
+                      <Camera className="h-4 w-4" />
+                      <Input id="avatar-upload" type="file" accept="image/*" className="sr-only" onChange={handleAvatarChange} />
                     </Label>
                   </div>
-                   <div className='flex-1'>
+                  <div className='flex-1'>
                     <h2 className="text-2xl font-bold font-headline">{name || "Your Name"}</h2>
                     <p className="text-muted-foreground">Update your photo and personal details.</p>
-                   </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input 
-                    id="name" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    required 
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
                   />
                 </div>
-                
-                 <div className="space-y-2">
+
+                <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    value={email} 
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                   />
