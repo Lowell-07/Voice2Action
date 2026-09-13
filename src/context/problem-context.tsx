@@ -22,39 +22,64 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+
     const fetchProblems = async () => {
       try {
-        const { data, error } = await supabase.from('issues').select('*').order('created_at', { ascending: false });
-        if (isMounted && data && data.length > 0) {
-          setProblems(data as Problem[]);
+        const response = await fetch('/api/issues');
+        if (response.ok) {
+          const data = await response.json();
+          if (isMounted && Array.isArray(data) && data.length > 0) {
+            setProblems(data as Problem[]);
+            return;
+          }
         }
-      } catch {
-        // Keep mockProblems
+      } catch (err) {
+        console.warn('[ProblemContext] Could not fetch issues from API:', err);
       }
     };
+
     fetchProblems();
 
+    // Supabase Realtime with defensive error handling
+    let channel: any = null;
     try {
-      const channel = supabase.channel('public:issues')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'issues' }, fetchProblems)
-        .subscribe();
-
-      return () => {
-        isMounted = false;
-        supabase.removeChannel(channel);
-      };
-    } catch {
-      return () => {
-        isMounted = false;
-      };
+      channel = supabase
+        .channel('public:issues')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'issues' },
+          () => {
+            if (isMounted) {
+              fetchProblems().catch((err) => console.warn('[Realtime refresh error]', err));
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn(`[Supabase Realtime] Channel status: ${status}. Running in polling/manual mode.`);
+          }
+        });
+    } catch (realtimeErr) {
+      console.warn('[Supabase Realtime subscription skipped/failed]:', realtimeErr);
     }
+
+    return () => {
+      isMounted = false;
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (e) {
+          console.warn('[Supabase Realtime removal warning]:', e);
+        }
+      }
+    };
   }, []);
 
   const addProblem = useCallback(async (problemData: any): Promise<Problem | null> => {
-    const userId = user.type === 'user' ? user.data.id : 'user-1';
+    const userId = user.type === 'user' ? user.data.id : null;
+    const userName = user.type === 'user' ? user.data.name : 'Citizen Reporter';
 
-    const newProblem: Problem = {
-      id: crypto.randomUUID(),
+    const payload = {
       title: problemData.title || 'Untitled Issue',
       description: problemData.description || '',
       department: problemData.department || 'Municipal Department',
@@ -66,73 +91,101 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       lat: problemData.lat || 0,
       lng: problemData.lng || 0,
       media_images: problemData.media_images || [],
-      likes: 0,
-      dislikes: 0,
       reported_by: userId,
-      created_at: new Date().toISOString(),
+      reported_by_name: userName,
+      reported_by_email: user.type === 'user' ? user.data.email : undefined,
     };
-
-    // Optimistically update local state immediately
-    setProblems(prev => [newProblem, ...prev]);
 
     try {
       const response = await fetch('/api/issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProblem)
+        body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        const resData = await response.json();
-        if (resData.id) {
-          newProblem.id = resData.id;
-        }
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        console.error('[Add Problem Failed]', errJson.error || response.statusText);
+        return null;
       }
-    } catch (error) {
-      console.warn('API sync warning:', error);
-    }
 
-    return newProblem;
+      const resData = await response.json();
+      const savedProblem: Problem = resData.issue || {
+        ...payload,
+        id: resData.id,
+        likes: 0,
+        dislikes: 0,
+        created_at: new Date().toISOString(),
+      };
+
+      // Add to state only after verified database success
+      setProblems((prev) => [savedProblem, ...prev.filter((p) => p.id !== savedProblem.id)]);
+      return savedProblem;
+    } catch (error) {
+      console.error('[Add Problem Network Error]', error);
+      return null;
+    }
   }, [user]);
 
   const updateProblem = useCallback(async (problemId: string, updates: Partial<Problem>) => {
-    setProblems(prev => prev.map(p => p.id === problemId ? { ...p, ...updates } : p));
+    setProblems((prev) => prev.map((p) => (p.id === problemId ? { ...p, ...updates } : p)));
+
     try {
-      await supabase.from('issues').update(updates).eq('id', problemId);
+      const res = await fetch(`/api/issues/${problemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        console.warn(`[Update Problem Warning] Server returned ${res.status}`);
+      }
     } catch (error) {
-      console.error("Error updating problem:", error);
+      console.error('[Error updating problem]:', error);
     }
   }, []);
 
   const deleteProblem = useCallback(async (problemId: string): Promise<{ success: boolean; error?: string }> => {
-    setProblems(prev => prev.filter(p => p.id !== problemId));
+    setProblems((prev) => prev.filter((p) => p.id !== problemId));
+
     try {
-      await supabase.from('issues').delete().eq('id', problemId);
-    } catch (error) {
-      console.warn("Database delete skipped or failed:", error);
+      const res = await fetch(`/api/issues/${problemId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { success: false, error: data.error || 'Failed to delete issue' };
+      }
+      return { success: true };
+    } catch (error: any) {
+      console.warn('[Delete problem warning]:', error);
+      return { success: false, error: error.message };
     }
-    return { success: true };
   }, []);
 
   const voteOnProblem = useCallback(async (problemId: string, voteType: 'like' | 'dislike') => {
     const field = voteType === 'like' ? 'likes' : 'dislikes';
-    setProblems(prev => prev.map(p => {
-      if (p.id === problemId) {
-        return { ...p, [field]: (p[field] || 0) + 1 };
-      }
-      return p;
-    }));
+    let newCount = 1;
+
+    setProblems((prev) =>
+      prev.map((p) => {
+        if (p.id === problemId) {
+          newCount = (p[field] || 0) + 1;
+          return { ...p, [field]: newCount };
+        }
+        return p;
+      })
+    );
 
     try {
-      const problem = problems.find(p => p.id === problemId);
-      if (problem) {
-        const newCount = (problem[field] || 0) + 1;
-        await supabase.from('issues').update({ [field]: newCount }).eq('id', problemId);
-      }
+      await fetch(`/api/issues/${problemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: newCount }),
+      });
     } catch (err) {
-      console.warn("Vote sync error:", err);
+      console.warn('[Vote sync error]:', err);
     }
-  }, [problems]);
+  }, []);
 
   const value = useMemo(() => ({ problems, addProblem, updateProblem, deleteProblem, voteOnProblem }), [problems, addProblem, updateProblem, deleteProblem, voteOnProblem]);
 

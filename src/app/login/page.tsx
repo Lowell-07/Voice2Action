@@ -24,8 +24,9 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   
   useEffect(() => {
+    router.prefetch('/profile');
     if (isAuthLoaded && user.type === 'user') {
-      router.push('/profile');
+      router.replace('/profile');
     }
   }, [user, isAuthLoaded, router]);
 
@@ -61,7 +62,7 @@ export default function LoginPage() {
               title: "Login Successful!",
               description: "Welcome back to Voice2Action!",
           });
-          router.push('/profile');
+          router.replace('/profile');
       } else {
            toast({
               title: "Login Failed",

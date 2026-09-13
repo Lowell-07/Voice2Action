@@ -33,7 +33,7 @@ export default function DepartmentLoginPage() {
 
     if (result.success && result.userType === 'department') {
       toast({ title: 'Department Login Successful' });
-      router.push('/department/dashboard');
+      router.replace('/department/dashboard');
     } else {
       toast({ title: 'Login Failed', variant: 'destructive' });
     }
@@ -41,8 +41,9 @@ export default function DepartmentLoginPage() {
   };
 
   useEffect(() => {
+    router.prefetch('/department/dashboard');
     if (isAuthLoaded && user.type === 'department') {
-      router.push('/department/dashboard');
+      router.replace('/department/dashboard');
     }
   }, [user, isAuthLoaded, router]);
 

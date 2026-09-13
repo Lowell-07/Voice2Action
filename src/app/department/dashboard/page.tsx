@@ -26,16 +26,17 @@ import type { Problem } from '@/lib/definitions';
 type TabFilter = 'active' | 'resolved';
 
 export default function DepartmentDashboardPage() {
-  const { user, logout, incrementCivicPoints } = useAuth();
+  const { user, logout, incrementCivicPoints, isAuthLoaded } = useAuth();
   const router = useRouter();
   const { problems, updateProblem } = useProblems();
   const [tab, setTab] = useState<TabFilter>('active');
 
   useEffect(() => {
-    if (user.type !== 'department') {
-      router.push('/department/login');
+    router.prefetch('/department/login');
+    if (isAuthLoaded && user.type !== 'department') {
+      router.replace('/department/login');
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
   const { activeReports, resolvedReports } = useMemo(() => {
     if (user.type !== 'department') return { activeReports: [], resolvedReports: [] };
@@ -48,7 +49,7 @@ export default function DepartmentDashboardPage() {
     };
   }, [problems, user]);
 
-  if (user.type !== 'department') {
+  if (!isAuthLoaded || user.type !== 'department') {
     return (
       <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">

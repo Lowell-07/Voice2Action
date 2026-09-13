@@ -36,19 +36,29 @@ export default function ProfilePage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
+    router.prefetch('/login');
     if (isAuthLoaded && user.type !== 'user') {
-      router.push('/login');
+      router.replace('/login');
+      const timer = setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/profile')) {
+          window.location.href = '/login';
+        }
+      }, 400);
+      return () => clearTimeout(timer);
     }
   }, [user, isAuthLoaded, router]);
 
   if (!isAuthLoaded || user.type !== 'user') {
     return (
       <div className="theme-shell flex min-h-screen flex-col">
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className='flex items-center gap-2 text-lg text-muted-foreground'>
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <span>Loading Profile...</span>
+                <span>Redirecting to login...</span>
             </div>
+            <Link href="/login" className="text-sm font-medium text-primary underline underline-offset-4 hover:opacity-80">
+              Click here to sign in
+            </Link>
         </div>
       </div>
     );

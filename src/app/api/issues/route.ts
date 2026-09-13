@@ -1,22 +1,63 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseServer } from '@/lib/supabase/server';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET() {
   try {
-    const { data, error } = await supabase.from('issues').select('*').order('created_at', { ascending: false });
-    if (!error && data) {
-      return NextResponse.json(data);
+    const { data, error } = await supabaseServer
+      .from('issues')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[Supabase Issues GET]', error);
+      return NextResponse.json([], { status: 500 });
     }
-  } catch {
-    // Return empty list on db error
+
+    return NextResponse.json(data || []);
+  } catch (err) {
+    console.error('[Supabase Issues GET Unhandled]', err);
+    return NextResponse.json([], { status: 500 });
   }
-  return NextResponse.json([]);
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const issueId = crypto.randomUUID();
+
+    // Verify or safely normalize reported_by to respect foreign key constraint
+    let validReportedBy: string | null = null;
+    const candidateUserId = body.reported_by || body.reported_byId;
+
+    if (candidateUserId && UUID_REGEX.test(candidateUserId)) {
+      const { data: userRow } = await supabaseServer
+        .from('users')
+        .select('id')
+        .eq('id', candidateUserId)
+        .maybeSingle();
+
+      if (userRow) {
+        validReportedBy = userRow.id;
+      } else {
+        // Create user record in public.users to satisfy foreign key
+        const { error: userInsertErr } = await supabaseServer
+          .from('users')
+          .insert({
+            id: candidateUserId,
+            name: body.reported_by_name || 'Citizen User',
+            email: body.reported_by_email || null,
+            civic_points: 0,
+          });
+
+        if (!userInsertErr) {
+          validReportedBy = candidateUserId;
+        } else {
+          console.warn('[Supabase Auto-User Provision Failed]', userInsertErr);
+        }
+      }
+    }
 
     const issueData = {
       id: issueId,
@@ -30,29 +71,41 @@ export async function POST(request: Request) {
       lat: typeof body.lat === 'number' ? body.lat : 0,
       lng: typeof body.lng === 'number' ? body.lng : 0,
       media_images: Array.isArray(body.media_images) ? body.media_images : [],
-      reported_by: body.reported_by || 'user-1',
+      reported_by: validReportedBy,
       status: 'Awaiting Approval',
       likes: 0,
       dislikes: 0,
       created_at: new Date().toISOString(),
     };
 
-    try {
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        await supabase.from('issues').insert(issueData);
-      }
-    } catch (dbErr) {
-      console.warn('Database insert skipped or failed:', dbErr);
+    const { data: insertedRow, error: insertError } = await supabaseServer
+      .from('issues')
+      .insert(issueData)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('[Supabase Issue Insert Error]', insertError);
+      return NextResponse.json(
+        { error: `Database insert failed: ${insertError.message}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
-      { id: issueId, message: 'Issue successfully created and indexed.' },
+      {
+        id: insertedRow.id,
+        issue: insertedRow,
+        message: 'Issue successfully created and persisted to database.',
+      },
       { status: 201 }
     );
   } catch (err: any) {
+    console.error('[API Issues POST Unhandled Error]', err);
     return NextResponse.json(
       { error: err?.message || 'Failed to create issue' },
       { status: 500 }
     );
   }
 }
+

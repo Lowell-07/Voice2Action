@@ -13,7 +13,7 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthLoaded } = useAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -21,19 +21,30 @@ export default function SettingsPage() {
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (user.type === 'guest') {
-      router.push('/login');
+    router.prefetch('/login');
+    router.prefetch('/');
+    if (isAuthLoaded && user.type === 'guest') {
+      router.replace('/login');
+      const timer = setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/profile')) {
+          window.location.href = '/login';
+        }
+      }, 400);
+      return () => clearTimeout(timer);
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
-  if (!mounted || user.type === 'guest') {
+  if (!mounted || !isAuthLoaded || user.type === 'guest') {
     return (
       <div className="theme-shell flex min-h-screen flex-col">
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
           <div className="flex items-center gap-2 text-lg text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Loading...</span>
+            <span>Redirecting to login...</span>
           </div>
+          <Link href="/login" className="text-sm font-medium text-primary underline underline-offset-4 hover:opacity-80">
+            Click here to sign in
+          </Link>
         </div>
       </div>
     );
@@ -130,7 +141,7 @@ export default function SettingsPage() {
           <CardContent>
             <Button variant="destructive" className="w-full" onClick={() => {
               logout();
-              router.push('/');
+              router.replace('/');
             }}>
               <LogOut className="mr-2 h-4 w-4" /> Logout
             </Button>

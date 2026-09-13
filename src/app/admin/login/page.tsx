@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
 
     if (result.success && result.userType === 'admin') {
       toast({ title: 'Admin Login Successful' });
-      router.push('/admin/dashboard');
+      router.replace('/admin/dashboard');
     } else {
       toast({ title: 'Invalid Credentials', variant: 'destructive' });
       setIsLoading(false);
@@ -36,8 +36,9 @@ export default function AdminLoginPage() {
   };
 
   useEffect(() => {
+    router.prefetch('/admin/dashboard');
     if (isAuthLoaded && user.type === 'admin') {
-      router.push('/admin/dashboard');
+      router.replace('/admin/dashboard');
     }
   }, [user, isAuthLoaded, router]);
 

@@ -23,25 +23,35 @@ import {
 
 
 export default function MyReportsPage() {
-  const { user } = useAuth();
+  const { user, isAuthLoaded } = useAuth();
   const router = useRouter();
   const { problems, voteOnProblem } = useProblems();
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
   useEffect(() => {
-    if (user.type !== 'user') {
-      router.push('/login');
+    router.prefetch('/login');
+    if (isAuthLoaded && user.type !== 'user') {
+      router.replace('/login');
+      const timer = setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/profile')) {
+          window.location.href = '/login';
+        }
+      }, 400);
+      return () => clearTimeout(timer);
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
-  if (user.type !== 'user') {
+  if (!isAuthLoaded || user.type !== 'user') {
     return (
       <div className="theme-shell flex min-h-screen flex-col">
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
           <div className='flex items-center gap-2 text-lg text-muted-foreground'>
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Redirecting...</span>
+            <span>Redirecting to login...</span>
           </div>
+          <Link href="/login" className="text-sm font-medium text-primary underline underline-offset-4 hover:opacity-80">
+            Click here to sign in
+          </Link>
         </div>
       </div>
     );

@@ -358,8 +358,6 @@ export default function ReportForm() {
   }, [descriptionValue, form, toast]);
 
   async function onSubmit(data: ReportFormValues) {
-    if (user.type !== 'user') return;
-
     setIsSubmitting(true);
     
     // In a real app, you would upload mediaFile.file to Supabase Storage here
@@ -386,6 +384,8 @@ export default function ReportForm() {
     }
 
     const finalState = problemState || 'Unknown';
+    const reporterName = user.type === 'user' ? user.data.name : 'Citizen Reporter';
+    const reporterId = user.type === 'user' ? user.data.id : 'guest-reporter';
 
     const newProblemData = {
       title: data.title,
@@ -399,8 +399,11 @@ export default function ReportForm() {
       lat: coordinates?.lat || 0,
       lng: coordinates?.lng || 0,
       media_images: [imageUrl],
+      media_voicemail: data.voicemail ? String(data.voicemail) : undefined,
       likes: 0,
       dislikes: 0,
+      reported_by: reporterName,
+      reported_byId: reporterId,
     };
 
     const newProblem = await addProblem(newProblemData as any);

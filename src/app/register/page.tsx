@@ -16,7 +16,7 @@ import Link from 'next/link';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { user, sendOtp, registerWithOtp } = useAuth();
+  const { user, sendOtp, registerWithOtp, isAuthLoaded } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -25,10 +25,11 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState('');
   
   useEffect(() => {
-    if (user.type === 'user') {
-      router.push('/profile');
+    router.prefetch('/profile');
+    if (isAuthLoaded && user.type === 'user') {
+      router.replace('/profile');
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +67,7 @@ export default function RegisterPage() {
               title: "Registration Successful!",
               description: "Welcome to Voice2Action!",
           });
-          // The useEffect will handle the redirect to /profile
+          router.replace('/profile');
       } else {
            toast({
               title: "Registration Failed",

@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { getProfileImageSrc } from '@/lib/profile';
 
 export default function EditProfilePage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, isAuthLoaded } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -25,10 +25,18 @@ export default function EditProfilePage() {
   const [avatar, setAvatar] = useState(user.type === 'user' ? getProfileImageSrc(user.data.avatar_url || user.data.avatarUrl) : '');
 
   useEffect(() => {
-    if (user.type !== 'user') {
-      router.push('/login');
+    router.prefetch('/profile');
+    router.prefetch('/login');
+    if (isAuthLoaded && user.type !== 'user') {
+      router.replace('/login');
+      const timer = setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/profile')) {
+          window.location.href = '/login';
+        }
+      }, 400);
+      return () => clearTimeout(timer);
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -45,24 +53,20 @@ export default function EditProfilePage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      updateUser({
-        name,
-        email,
-        avatar_url: avatar,
-        avatarUrl: avatar,
-      });
-      toast({
-        title: "Profile Updated",
-        description: "Your changes have been saved successfully.",
-      });
-      setIsLoading(false);
-      router.push('/profile');
-    }, 1500);
+    updateUser({
+      name,
+      email,
+      avatar_url: avatar,
+      avatarUrl: avatar,
+    });
+    toast({
+      title: "Profile Updated",
+      description: "Your changes have been saved successfully.",
+    });
+    router.replace('/profile');
   };
 
-  if (user.type !== 'user') {
+  if (!isAuthLoaded || user.type !== 'user') {
     return (
       <div className="theme-shell flex min-h-screen flex-col">
         <div className="flex-1 flex items-center justify-center">

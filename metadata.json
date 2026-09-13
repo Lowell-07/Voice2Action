@@ -2,7 +2,9 @@
   "name": "Voice2Action",
   "description": "Report civic issues, track progress, and build a better community.",
   "requestFramePermissions": [
-    "geolocation"
+    "geolocation",
+    "microphone",
+    "camera"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

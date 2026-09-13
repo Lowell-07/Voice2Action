@@ -52,17 +52,63 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser>({ type: 'loading' });
+  const [user, setUser] = useState<AuthUser>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('v2a_auth_user');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.type) return parsed;
+        }
+        // If no cached user and no Supabase auth token, definitely a guest
+        const hasSupabaseToken = Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (!hasSupabaseToken) {
+          return { type: 'guest' };
+        }
+      } catch {}
+    }
+    return { type: 'loading' };
+  });
+
   const [session, setSession] = useState<Session | null>(null);
-  const [isAuthLoaded, setIsAuthLoaded] = useState(false);
+  const [isAuthLoaded, setIsAuthLoaded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('v2a_auth_user');
+        if (cached) return true;
+        const hasSupabaseToken = Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (!hasSupabaseToken) return true;
+      } catch {}
+    }
+    return false;
+  });
+
+  // Sync user state to localStorage whenever it changes
+  useEffect(() => {
+    if (user.type !== 'loading') {
+      try {
+        localStorage.setItem('v2a_auth_user', JSON.stringify(user));
+      } catch {}
+    }
+  }, [user]);
 
   useEffect(() => {
+    // Fast-path safety timeout: Never allow loading state to stall for more than 150ms
+    const timer = setTimeout(() => {
+      setIsAuthLoaded((loaded) => {
+        if (!loaded) {
+          setUser((curr) => (curr.type === 'loading' ? { type: 'guest' } : curr));
+          return true;
+        }
+        return true;
+      });
+    }, 150);
+
     const setAuthenticatedUser = async (activeSession: Session | null) => {
       setSession(activeSession);
-      console.log('Current Auth User State:', activeSession?.user ?? null);
 
       if (!activeSession) {
-        setUser({ type: 'guest' });
+        setUser((curr) => (curr.type === 'admin' || curr.type === 'department' ? curr : { type: 'guest' }));
         setIsAuthLoaded(true);
         return;
       }
@@ -71,15 +117,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ type: 'user', data: toAppUser(authUser) });
       setIsAuthLoaded(true);
 
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
+      try {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
 
-      if (!error && userData) {
-        setUser({ type: 'user', data: userData as User });
-      }
+        if (!error && userData) {
+          setUser({ type: 'user', data: userData as User });
+        }
+      } catch {}
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, activeSession) => {
@@ -91,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
+      clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, []);
@@ -130,15 +179,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       return { success: true, userType: 'user' as const };
     } catch (e: any) {
-      // In-memory demo citizen fallback
+      // In-memory demo citizen fallback with valid UUID
+      const demoId = '11111111-1111-4111-8111-111111111111';
       const demoCitizen: User = {
-        id: 'user-1',
+        id: demoId,
         name: email.split('@')[0] || 'Demo Citizen',
         mobile: '+919876543210',
         email: email.includes('@') ? email : 'citizen@voice2action.org',
         avatar_url: DEFAULT_PROFILE_IMAGE,
         civic_points: 2450,
       };
+
+      // Persist demo citizen to database in background
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(demoCitizen),
+      }).catch((e) => console.warn('[Demo User Sync Warning]', e));
+
       setUser({ type: 'user', data: demoCitizen });
       return { success: true, userType: 'user' as const };
     }
@@ -154,26 +212,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       
       if (data.user) {
-        await supabase.from('users').insert({
-          id: data.user.id,
-          name,
-          email,
-          mobile: email, // Fallback
-          avatar_url: DEFAULT_PROFILE_IMAGE,
-          civic_points: 0,
-        });
+        await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: data.user.id,
+            name,
+            email,
+            mobile: email,
+            avatar_url: DEFAULT_PROFILE_IMAGE,
+            civic_points: 0,
+          }),
+        }).catch((e) => console.warn('[User API Sync Warning]', e));
       }
       return { success: true };
     } catch (e: any) {
-      // Create citizen in local state
+      // Create citizen in local state with valid UUID
+      const newId = crypto.randomUUID();
       const newUser: User = {
-        id: crypto.randomUUID(),
+        id: newId,
         name,
         email,
         mobile: '+919876543210',
         avatar_url: DEFAULT_PROFILE_IMAGE,
         civic_points: 50,
       };
+      await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      }).catch((err) => console.warn('[User API Sync Warning]', err));
+
       setUser({ type: 'user', data: newUser });
       return { success: true };
     }
@@ -253,6 +322,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('v2a_auth_user');
+      }
       await supabase.auth.signOut();
     } catch {
       // Ignore
@@ -263,17 +335,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUser = async (updates: Partial<User>) => {
     if (user.type === 'user') {
-      await supabase.from('users').update(updates).eq('id', user.data.id);
-      setUser({ type: 'user', data: { ...user.data, ...updates } });
+      const updatedUser = { ...user.data, ...updates };
+      setUser({ type: 'user', data: updatedUser });
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser),
+      }).catch((e) => console.warn('[Update User Sync Warning]', e));
     }
   };
 
   const incrementCivicPoints = async (userId: string, points: number) => {
     if (user.type === 'user') {
-      const { data: userData } = await supabase.from('users').select('civic_points').eq('id', userId).single();
-      if (userData) {
-        await supabase.from('users').update({ civic_points: (userData.civic_points || 0) + points }).eq('id', userId);
-      }
+      const newPoints = (user.data.civic_points || 0) + points;
+      const updatedUser = { ...user.data, civic_points: newPoints };
+      setUser({ type: 'user', data: updatedUser });
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser),
+      }).catch((e) => console.warn('[Increment Points Sync Warning]', e));
     }
   };
 

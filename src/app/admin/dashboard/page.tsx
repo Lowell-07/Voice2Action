@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 type StatusFilter = 'Awaiting Approval' | 'Registered' | 'Rejected';
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth();
+  const { user, isAuthLoaded } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { problems, updateProblem } = useProblems();
@@ -45,12 +45,15 @@ export default function AdminDashboardPage() {
   }, [problems, statusFilter]);
 
   useEffect(() => {
-    if (user.type !== 'admin') {
-      router.push('/admin/login');
-    } else {
-      setIsAuthorized(true);
+    router.prefetch('/admin/login');
+    if (isAuthLoaded) {
+      if (user.type !== 'admin') {
+        router.replace('/admin/login');
+      } else {
+        setIsAuthorized(true);
+      }
     }
-  }, [user, router]);
+  }, [user, isAuthLoaded, router]);
   
   const handleApproval = (id: string, approved: boolean) => {
     const newStatus = approved ? 'Registered' : 'Rejected';
